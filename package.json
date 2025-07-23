@@ -1,3 +1,4 @@
+
 {
     "name": "ascend-avoid",
     "version": "1.0.0",
@@ -11,9 +12,14 @@
         "dev:server": "cd server && tsx --watch index.ts",
         "start": "npm run dev",
         "build": "npm run build:client && npm run build:server",
-        "build:server": "cd server && tsc",
+        "build:client": "vite build --mode production",
+        "build:server": "cd server && npm run build",
+        "build:prod": "npm run clean && npm run build",
         "preview": "vite preview",
-        "preview:prod": "npm run build && cross-env NODE_ENV=production cd server && node dist/index.js",
+        "preview:prod": "npm run build && npm run start:prod",
+        "start:prod": "cross-env NODE_ENV=production node ./server/dist/index.js",
+        "start:prod:safe": "npm run verify:server && npm run start:prod",
+        "verify:server": "node -e \"const fs=require('fs'); if(!fs.existsSync('./server/dist/index.js')) {console.error('❌ Server not built! Run: npm run build:server'); process.exit(1);} else {console.log('✅ Server build verified');}\"",
         "docker:build": "docker build -t ascend-avoid .",
         "docker:run": "docker run -p 3000:3000 ascend-avoid",
         "docker:dev": "docker-compose up --build",
@@ -24,15 +30,18 @@
         "clean:all": "rimraf node_modules server/node_modules package-lock.json server/package-lock.json",
         "install:all": "npm install && cd server && npm install",
         "test": "jest",
-        "start:prod": "cross-env NODE_ENV=production node ./server/dist/index.js",
-         "build:client": "vite build --mode production"
+        "deploy:local": "npm run build:prod && npm run start:prod",
+        "debug:server": "cd server && tsx index.ts",
+        "debug:server:compiled": "cd server && node --inspect dist/index.js"
     },
     "keywords": [
         "game",
         "canvas",
         "javascript",
         "html5",
-        "responsive"
+        "responsive",
+        "multiplayer",
+        "colyseus"
     ],
     "author": "",
     "license": "MIT",

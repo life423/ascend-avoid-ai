@@ -1,10 +1,11 @@
 // server/rooms/GameRoom.ts
 
 import { Room, Client } from "colyseus";
-import { GameState } from "../schema/GameState";
+// import { GameState } from "../schema/GameState";
+// import { GameState } from "../schema/GameState";
 import { GAME_CONSTANTS } from "../constants/serverConstants";
 import logger from "../utils/logger";
-
+import { GameState } from '../schema/GameState';
 /**
  * Options sent by clients when joining a room
  */

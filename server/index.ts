@@ -1,34 +1,33 @@
-import pkg from "colyseus";
-const { Server } = pkg;
+// server/index.ts
+import { Server } from "colyseus";
 import { WebSocketTransport } from "@colyseus/ws-transport";
 import { createServer } from "http";
 import express from "express";
 import cors from "cors";
-import { monitor } from "@colyseus/monitor";
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { GameRoom } from "./rooms/GameRoom";
+import config from "./config";
+import logger from "./utils/logger";
 
-// Import our game room
-import { GameRoom } from "./rooms/GameRoom.js";
-import { GAME_CONSTANTS } from "./constants/serverConstants.js";
-import config from "./config.js";
-import logger from "./utils/logger.js";
-
-// ES modules compatibility for __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Create the Express app
+// Create an Express application
+// Express handles HTTP requests, while Colyseus handles WebSocket connections
 const app = express();
 
-// Apply middleware
+// Enable CORS to allow connections from your game client
+// This is like putting up a sign that says "players from other domains are welcome"
 app.use(cors());
+
+// Parse JSON bodies for any REST endpoints you might add later
 app.use(express.json());
 
-// Create HTTP server
+// Serve static files from the client build directory
+// This allows you to host your game client from the same server
+app.use(express.static("../dist"));
+
+// Create the HTTP server using our Express app
 const httpServer = createServer(app);
 
-// Create colyseus server
+// Initialize Colyseus with our HTTP server
+// This creates the game server that will manage all your rooms and players
 const gameServer = new Server({
   transport: new WebSocketTransport({
     server: httpServer,
@@ -37,98 +36,48 @@ const gameServer = new Server({
   })
 });
 
-// IMPORTANT: Define API routes BEFORE static file serving
+// Register your game room
+// This tells Colyseus: "When a player wants to join a game called 'game_room', 
+// create or find an instance of our GameRoom class"
+gameServer.define("game_room", GameRoom);
 
-// Health check endpoint
-app.get('/health', (_req, res) => {
-  res.status(200).json({ 
-    status: 'healthy',
+// Add a simple health check endpoint
+// This is useful for monitoring if your server is running
+app.get("/health", (_req, res) => {
+  res.json({ 
+    status: "healthy",
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
-    port: config.port
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// API routes with /api prefix
-app.get("/api/status", (_req, res) => {
-  res.json({
-    server: "running",
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
-  });
-});
+// Start listening for connections
+const PORT = config.port;
+gameServer.listen(PORT);
 
-// Register game rooms
-gameServer.define(GAME_CONSTANTS.GAME.ROOM_NAME, GameRoom)
-  .enableRealtimeListing();
-
-// Register colyseus monitor (only in development)
-if (process.env.NODE_ENV !== 'production') {
-  app.use(config.monitorPath, monitor());
-}
-
-// IMPORTANT: Serve static files AFTER all API routes
-if (process.env.NODE_ENV === 'production') {
-  // In production, serve static files from the src directory
-  // Since we're running in dev mode in production, serve the source files
-  const staticPath = path.join(__dirname, '..', 'src');
-  app.use(express.static(staticPath));
+logger.info(`🎮 Ascend & Avoid Game Server is running on port ${PORT}`);
+logger.info(`🌐 Health check available at http://localhost:${PORT}/health`);
   
-  // Serve index.html for all non-API routes (SPA routing)
-  app.get('*', (req, res, next) => {
-    // Skip API and WebSocket routes
-    if (req.path.startsWith('/api') || 
-        req.path.startsWith('/ws') || 
-        req.path.startsWith('/health') ||
-        req.path.startsWith(config.monitorPath)) {
-      return next();
-    }
-    
-    // Serve index.html for SPA routing
-    const indexPath = path.join(__dirname, '..', 'src', 'index.html');
-    res.sendFile(indexPath);
-  });
-} else {
-  // Development mode - don't serve static files, let Vite handle it
-  app.get("/", (_req, res) => {
-    res.json({
-      message: "Multiplayer game server is running in development mode",
-      websocket: `ws://localhost:${config.port}`,
-      frontend: "http://localhost:5173 (served by Vite)",
-      monitor: `http://localhost:${config.port}${config.monitorPath}`
-    });
-  });
-}
-
-// Error handling middleware
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  logger.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+  // In production, you might want to log the actual server URL
+  if (process.env.NODE_ENV === 'production') {
+    logger.info(`🚀 Server is running in production mode`);
+  } else {
+    logger.info(`🔧 Server is running in development mode`);
+  }
 });
 
-// Start the server
-const port = config.port;
-gameServer.listen(port);
+// Graceful shutdown handling
+// This ensures players are properly disconnected when the server stops
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM signal received: closing HTTP server');
+  httpServer.close(() => {
+    logger.info('HTTP server closed');
+  });
+});
 
-if (process.env.NODE_ENV === 'production') {
-  logger.info(`
-🎮 Production Server - Single Port Architecture
------------------------------------------------
-✅ Frontend: http://localhost:${port} (static files)
-✅ Backend API: http://localhost:${port}/api/*
-✅ WebSocket: ws://localhost:${port}
-✅ Environment: ${process.env.NODE_ENV}
------------------------------------------------
-Everything runs on port ${port} 🚀
-`);
-} else {
-  logger.info(`
-🎮 Development Server
----------------------------------------
-Backend: http://localhost:${port}
-Frontend: http://localhost:5173 (Vite)
-Monitor: http://localhost:${port}${config.monitorPath}
-Environment: ${process.env.NODE_ENV || 'development'}
-`);
-}
+process.on('SIGINT', () => {
+  logger.info('SIGINT signal received: closing HTTP server');
+  httpServer.close(() => {
+    logger.info('HTTP server closed');
+  });
+});
