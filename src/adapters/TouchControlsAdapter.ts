@@ -60,7 +60,8 @@ export class TouchControlsAdapter {
         const htmlButton = button as HTMLElement;
         htmlButton.style.width = `${buttonSize}px`;
         htmlButton.style.height = `${buttonSize}px`;
-        htmlButton.style.transform = 'rotate(-15deg)';
+        
+        // No rotation for straight text
         
         // Apply offset to B button (first button)
         if (index === 0) { // B button
@@ -69,15 +70,10 @@ export class TouchControlsAdapter {
           htmlButton.style.right = `${offsetX}px`;
         }
         
-        // Adjust font size based on button size
-        const fontSize = Math.max(16, Math.min(buttonSize * 0.4, 24));
+        // Calculate font size based on button size and viewport
+        const fontSize = this.calculateFontSize(buttonSize, viewport);
         htmlButton.style.fontSize = `${fontSize}px`;
-        
-        // Adjust label size
-        const label = htmlButton.querySelector('.button-label');
-        if (label) {
-          (label as HTMLElement).style.fontSize = `${Math.max(10, fontSize * 0.6)}px`;
-        }
+        htmlButton.style.fontWeight = 'bold';
       });
     }
     
@@ -156,6 +152,21 @@ export class TouchControlsAdapter {
         return Math.min(12, viewport.width * 0.015);
       default:
         return 10;
+    }
+  }
+  
+  private calculateFontSize(buttonSize: number, viewport: ViewportInfo): number {
+    // Base font size on button size with min/max constraints
+    const baseFontSize = buttonSize * 0.5; // 50% of button size
+    
+    // Adjust based on device type
+    switch (viewport.screenType) {
+      case 'phone':
+        return Math.max(16, Math.min(baseFontSize, 24));
+      case 'tablet':
+        return Math.max(18, Math.min(baseFontSize, 28));
+      default:
+        return Math.max(18, Math.min(baseFontSize, 30));
     }
   }
   

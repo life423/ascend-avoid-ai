@@ -233,29 +233,18 @@ export default class TouchControls {
             button.className = 'control-button action-button'
             button.dataset.action = action
 
-            // Button content with icon and label
-            const buttonIcon = document.createElement('span')
-            buttonIcon.textContent = this.buttons[action].symbol
-
-            const buttonLabel = document.createElement('span')
-            buttonLabel.className = 'button-label'
-            buttonLabel.textContent = action === 'boost' ? 'B' : 'A' // GameBoy style labels
-            buttonLabel.style.fontSize = '14px'
-            buttonLabel.style.fontWeight = 'bold'
-            buttonLabel.style.marginTop = '2px'
-
-            button.appendChild(buttonIcon)
-            button.appendChild(buttonLabel)
-
+            // Only use the letter label (A or B), no icon
+            button.textContent = action === 'boost' ? 'B' : 'A' // GameBoy style labels
+            
             // Basic button styling (adapter will handle responsive sizing)
             button.style.backgroundColor = 'rgba(0, 188, 212, 0.3)'
             button.style.border = '3px solid var(--accent-primary, #00bcd4)'
             button.style.borderRadius = '50%'
             button.style.display = 'flex'
-            button.style.flexDirection = 'column'
-            button.style.justifyContent = 'center'
-            button.style.alignItems = 'center'
+            button.style.justifyContent = 'center' // Center horizontally
+            button.style.alignItems = 'center' // Center vertically
             button.style.color = 'white'
+            button.style.fontWeight = 'bold'
             button.style.userSelect = 'none'
             button.style.touchAction = 'none'
             button.style.boxShadow = '0 3px 5px rgba(0,0,0,0.3)'
