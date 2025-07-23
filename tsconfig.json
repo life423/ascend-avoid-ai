@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    
+    /* For mixed JS/TS projects */
+    "allowJs": true,
+    "checkJs": false,
+    
+    /* Type Checking - Improved strictness */
+    "strict": true,         /* Enable all strict type checking options */
+    "noImplicitAny": true,  /* Raise error on expressions and declarations with an implied 'any' type */
+    "strictNullChecks": true, /* Enable strict null checks */
+    "noImplicitThis": true, /* Raise error on 'this' expressions with an implied 'any' type */
+    "alwaysStrict": true,   /* Ensure 'use strict' is always emitted */
+    "strictFunctionTypes": true, /* Check function parameter and return types */
+    "noUnusedLocals": true, /* Report errors on unused locals */
+    "noUnusedParameters": true, /* Report errors on unused parameters */
+    "forceConsistentCasingInFileNames": true, /* Ensure consistent casing in file names */
+    
+    /* Path aliases to match the new directory structure */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@core/*": ["src/core/*"],
+      "@entities/*": ["src/entities/*"],
+      "@managers/*": ["src/managers/*"],
+      "@ui/*": ["src/ui/*"],
+      "@utils/*": ["src/utils/*"],
+      "@constants/*": ["src/constants/*"],
+      "@server/*": ["server/*"]
+    }
+  },
+  "include": [
+    "src/**/*.ts", 
+    "src/**/*.d.ts", 
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "server/**/*.ts",
+    "server/**/*.js"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

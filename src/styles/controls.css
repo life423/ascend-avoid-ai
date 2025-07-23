@@ -1,0 +1,270 @@
+/* ============================================
+   CONTROLS & FLOATING MENU
+   ============================================ */
+
+/* Global control panel updated with responsive fix */
+.control-panel {
+    flex: 0 0 auto;
+    padding: var(--space-sm);
+    position: relative;
+    height: auto !important;
+}
+
+.touch-controller {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    z-index: 10;
+}
+
+/* ============================================
+   FLOATING ACTION MENU
+   ============================================ */
+.float-menu {
+    position: fixed;
+    bottom: var(--space-md);
+    right: var(--space-md);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.float-trigger {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-medium);
+    transition: transform var(--transition);
+    border: none;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.float-trigger:hover {
+    transform: scale(1.1);
+}
+
+.float-trigger:active {
+    transform: scale(0.95);
+}
+
+/* Menu dots for hamburger icon */
+.menu-dot {
+    width: 4px;
+    height: 4px;
+    background: var(--text-dark);
+    border-radius: 50%;
+    display: block;
+}
+
+.float-options {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--space-sm);
+    transition: all 0.3s ease;
+    transform-origin: bottom right;
+    position: absolute;
+    bottom: 70px;
+    right: 5px;
+    z-index: 2000;
+    background: var(--nav-bg);
+    padding: var(--space-sm);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-heavy);
+    border: 1px solid var(--accent-primary);
+}
+
+.float-options.hidden {
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    display: none;
+}
+
+.float-options button {
+    margin-bottom: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--border-radius);
+    background: var(--accent-primary);
+    color: var(--text-dark);
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    box-shadow: var(--shadow-medium);
+    cursor: pointer;
+    text-transform: uppercase;
+    width: 120px;
+    text-align: center;
+    transition: all var(--transition);
+}
+
+.float-options button:last-child {
+    margin-bottom: 0;
+}
+
+.float-options button:hover {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+}
+
+.float-options button:active {
+    transform: translateY(2px);
+}
+
+/* ============================================
+   TOUCH CONTROLS (D-PAD & BUTTONS)
+   ============================================ */
+
+/* Touch control container */
+.touch-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+    padding: var(--space-sm);
+    gap: var(--space-md);
+}
+
+/* D-pad container */
+.dpad-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 2px;
+    width: 120px;
+    height: 120px;
+}
+
+/* D-pad buttons */
+.dpad-btn {
+    background: var(--accent-primary);
+    border: 2px solid var(--accent-secondary);
+    border-radius: var(--border-radius);
+    color: var(--text-dark);
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all var(--transition);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+.dpad-btn:active {
+    background: var(--accent-secondary);
+    transform: scale(0.95);
+}
+
+/* D-pad positioning */
+.dpad-up {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.dpad-left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.dpad-right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.dpad-down {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+/* Action buttons container */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+/* Action buttons */
+.action-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    border: 2px solid var(--accent-secondary);
+    color: var(--text-dark);
+    font-weight: bold;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all var(--transition);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+.action-btn:active {
+    background: var(--accent-secondary);
+    transform: scale(0.9);
+}
+
+/* Specific button styles */
+.btn-a {
+    background: var(--success);
+    border-color: #66bb6a;
+}
+
+.btn-b {
+    background: var(--warning);
+    border-color: #ff7043;
+}
+
+/* ============================================
+   BUTTON UTILITIES
+   ============================================ */
+.btn-action {
+    padding: var(--space-sm) var(--space-md);
+    background: var(--accent-primary);
+    color: var(--text-dark);
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all var(--transition);
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+.btn-action:hover {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.btn-action:active {
+    transform: translateY(0);
+}
+
+/* Disabled state */
+.btn-action:disabled {
+    background: var(--side-panel-accent);
+    color: var(--text-light);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-action:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}

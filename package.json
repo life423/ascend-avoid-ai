@@ -1,0 +1,76 @@
+{
+    "name": "ascend-avoid",
+    "version": "1.0.0",
+    "description": "A multiplayer game where players need to ascend and avoid obstacles",
+    "main": "index.html",
+    "type": "module",
+    "scripts": {
+        "dev": "npm run kill-ports && concurrently -k \"npm:dev:client\" \"npm:dev:server\" --names \"CLIENT,SERVER\" --prefix-colors \"cyan,green\"",
+        "kill-ports": "kill-port 3000 5173 || true",
+        "dev:client": "vite --open",
+        "dev:server": "cd server && tsx --watch index.ts",
+        "start": "npm run dev",
+        "build": "npm run build:client && npm run build:server",
+        "build:client": "vite build --mode production",
+        "build:server": "cd server && tsc",
+        "start:prod": "cross-env NODE_ENV=production cd server && node dist/index.js",
+        "preview": "vite preview",
+        "preview:prod": "npm run build && cross-env NODE_ENV=production cd server && node dist/index.js",
+        "docker:build": "docker build -t ascend-avoid .",
+        "docker:run": "docker run -p 3000:3000 ascend-avoid",
+        "docker:dev": "docker-compose up --build",
+        "lint": "eslint src/**/*.{ts,js} server/**/*.{ts,js}",
+        "lint:fix": "eslint --fix src/**/*.{ts,js} server/**/*.{ts,js}",
+        "type-check": "tsc --noEmit && cd server && tsc --noEmit",
+        "clean": "rimraf dist server/dist node_modules/.cache",
+        "clean:all": "rimraf node_modules server/node_modules package-lock.json server/package-lock.json",
+        "install:all": "npm install && cd server && npm install"
+    },
+    "keywords": [
+        "game",
+        "canvas",
+        "javascript",
+        "html5",
+        "responsive"
+    ],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/body-parser": "^1.19.6",
+        "@types/cors": "^2.8.17",
+        "@types/express": "^5.0.1",
+        "@types/node": "^22.14.0",
+        "@types/qs": "^6.14.0",
+        "@types/range-parser": "^1.2.7",
+        "@types/send": "^0.17.5",
+        "@types/serve-static": "^1.15.8",
+        "@types/uuid": "^10.0.0",
+        "@typescript-eslint/eslint-plugin": "^8.29.1",
+        "@typescript-eslint/parser": "^8.29.1",
+        "@vitejs/plugin-legacy": "^6.0.2",
+        "concurrently": "^9.1.2",
+        "eslint": "^8.23.0",
+        "kill-port": "^2.0.1",
+        "rimraf": "^5.0.10",
+        "tsx": "^4.19.2",
+        "typescript": "^5.8.3",
+        "vite": "^6.2.5",
+        "vite-plugin-checker": "^0.9.1",
+        "vite-plugin-node-polyfills": "^0.23.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "browserslist": [
+        ">0.2%",
+        "not dead",
+        "not ie <= 11",
+        "not op_mini all"
+    ],
+    "dependencies": {
+        "buffer": "^6.0.3",
+        "colyseus.js": "^0.15.0",
+        "cors": "^2.8.5",
+        "express": "^4.19.2"
+    }
+}
