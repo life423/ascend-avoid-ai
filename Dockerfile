@@ -1,39 +1,65 @@
-# Stage 1: Build stage (compile frontend and backend)
+# Stage 1: Install dependencies and build the application
 FROM node:20-alpine AS builder
+
 WORKDIR /app
 
-# Install build dependencies (if any native modules need compilation)
-RUN apk add --no-cache g++ make python3
+# Install build tools that some npm packages might need
+RUN apk add --no-cache python3 make g++ && \
+    ln -sf python3 /usr/bin/python
 
-# Copy package manifests and install all dependencies (including devDependencies)
+# Copy all package.json files to install dependencies
+# We do this first to leverage Docker's layer caching
 COPY package*.json ./
-RUN npm ci
+COPY server/package*.json ./server/
 
-# Copy source code (frontend in /src, backend in /server) and build it
-COPY . . 
-RUN npm run build  # This should run Vite build and tsc for the server
+# Install dependencies for both root and server
+# The root dependencies include Vite and build tools
+# The server dependencies include Colyseus and Express
+RUN npm ci --workspace=server --include-workspace-root || \
+    (npm ci && cd server && npm ci)
 
-# Remove devDependencies to trim down the node_modules for production
-RUN npm prune --omit=dev
+# Copy the entire project
+COPY . .
 
-# Stage 2: Production stage (only runtime deps and built files)
-FROM node:20-alpine AS runner
+# Build the client (Vite) and server (TypeScript)
+RUN npm run build
+
+# Create the module type configuration for the server
+RUN echo '{"type":"commonjs"}' > server/dist/package.json
+
+# Stage 2: Create the production image
+FROM node:20-alpine AS production
+
+# Install dumb-init for proper signal handling in containers
+RUN apk add --no-cache dumb-init
+
+# Create a non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
 WORKDIR /app
 
-# Copy production Node modules, package definition, and build artifacts from builder
-COPY --from=builder --chown=node:node /app/node_modules ./node_modules
-COPY --from=builder --chown=node:node /app/package*.json ./
-COPY --from=builder --chown=node:node /app/dist ./dist             # Vite static assets
-COPY --from=builder --chown=node:node /app/server/dist ./server/dist   # Compiled server code
+# Copy the built application and its dependencies
+# We need both the root node_modules (for shared dependencies)
+# and the server node_modules (for server-specific dependencies)
+COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/server/package*.json ./server/
+COPY --from=builder --chown=nodejs:nodejs /app/server/node_modules ./server/node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/server/dist ./server/dist
 
-# Expose only the server port
+# Switch to non-root user
+USER nodejs
+
+# Expose the correct production port
 EXPOSE 3000
 
-# Use a non-root user for security (the official Node image has a "node" user)
-USER node
-
-# Set NODE_ENV for production optimizations
+# Set production environment
 ENV NODE_ENV=production
 
-# Start the server (serves static files from /dist and handles Colyseus)
-CMD ["npm", "run", "start:prod"]
+# Use dumb-init to properly handle signals
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the production server
+CMD ["node", "server/dist/index.js"]
