@@ -11,9 +11,7 @@
         "dev:server": "cd server && tsx --watch index.ts",
         "start": "npm run dev",
         "build": "npm run build:client && npm run build:server",
-        "build:client": "vite build --mode production",
         "build:server": "cd server && tsc",
-        "start:prod": "cross-env NODE_ENV=production cd server && node dist/index.js",
         "preview": "vite preview",
         "preview:prod": "npm run build && cross-env NODE_ENV=production cd server && node dist/index.js",
         "docker:build": "docker build -t ascend-avoid .",
@@ -25,7 +23,9 @@
         "clean": "rimraf dist server/dist node_modules/.cache",
         "clean:all": "rimraf node_modules server/node_modules package-lock.json server/package-lock.json",
         "install:all": "npm install && cd server && npm install",
-        "test": "jest"
+        "test": "jest",
+        "start:prod": "cross-env NODE_ENV=production node ./server/dist/index.js",
+         "build:client": "vite build --mode production"
     },
     "keywords": [
         "game",
@@ -51,6 +51,7 @@
         "@typescript-eslint/parser": "^8.29.1",
         "@vitejs/plugin-legacy": "^6.0.2",
         "concurrently": "^9.1.2",
+        "cross-env": "^7.0.3",
         "eslint": "^8.23.0",
         "jest": "^30.0.5",
         "jest-environment-jsdom": "^30.0.5",
