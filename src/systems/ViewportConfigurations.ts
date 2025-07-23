@@ -18,11 +18,11 @@ export const VIEWPORT_CONFIGS: ViewportConfig[] = [
         test: (v) => v.screenType === 'phone' && v.orientation === 'portrait',
         className: 'viewport-phone-portrait',
         canvasStrategy: {
+            mode: 'fit',
+            designWidth: 400,
+            designHeight: 600,
             maxWidth: 400,
-            maxHeight: 600,
-            scalingMode: 'fit',
-            maintainAspectRatio: true,
-            targetAspectRatio: 3/4  // Slightly taller for portrait
+            maxHeight: 600
         },
         controlLayout: {
             position: 'bottom',
@@ -45,11 +45,11 @@ export const VIEWPORT_CONFIGS: ViewportConfig[] = [
         test: (v) => v.screenType === 'phone' && v.orientation === 'landscape',
         className: 'viewport-phone-landscape',
         canvasStrategy: {
+            mode: 'fill',
+            designWidth: 800,
+            designHeight: 400,
             maxWidth: 800,
-            maxHeight: 400,
-            scalingMode: 'fill',
-            maintainAspectRatio: true,
-            targetAspectRatio: 16/9
+            maxHeight: 400
         },
         controlLayout: {
             position: 'sides',    // Controls on left and right
@@ -72,11 +72,11 @@ export const VIEWPORT_CONFIGS: ViewportConfig[] = [
         test: (v) => v.screenType === 'tablet',
         className: 'viewport-tablet',
         canvasStrategy: {
+            mode: 'fit',
+            designWidth: 1024,
+            designHeight: 768,
             maxWidth: 1024,
-            maxHeight: 768,
-            scalingMode: 'fit',
-            maintainAspectRatio: true,
-            targetAspectRatio: 4/3
+            maxHeight: 768
         },
         controlLayout: {
             position: 'bottom',
@@ -99,11 +99,11 @@ export const VIEWPORT_CONFIGS: ViewportConfig[] = [
         test: (v) => v.screenType === 'desktop',
         className: 'viewport-desktop',
         canvasStrategy: {
+            mode: 'pixelPerfect',
+            designWidth: 1200,
+            designHeight: 800,
             maxWidth: 1200,
-            maxHeight: 800,
-            scalingMode: 'pixel-perfect',
-            maintainAspectRatio: true,
-            targetAspectRatio: 16/10
+            maxHeight: 800
         },
         controlLayout: {
             position: 'hidden',   // No touch controls on desktop
@@ -126,11 +126,11 @@ export const VIEWPORT_CONFIGS: ViewportConfig[] = [
         test: (v) => v.screenType === 'tv',
         className: 'viewport-tv',
         canvasStrategy: {
+            mode: 'fit',
+            designWidth: 1920,
+            designHeight: 1080,
             maxWidth: 1920,
-            maxHeight: 1080,
-            scalingMode: 'fit',
-            maintainAspectRatio: true,
-            targetAspectRatio: 16/9
+            maxHeight: 1080
         },
         controlLayout: {
             position: 'hidden',   // Assume gamepad or remote
@@ -157,11 +157,11 @@ export const DEFAULT_CONFIG: ViewportConfig = {
     test: () => true,  // Always matches
     className: 'viewport-fallback',
     canvasStrategy: {
+        mode: 'fit',
+        designWidth: 800,
+        designHeight: 600,
         maxWidth: 800,
-        maxHeight: 600,
-        scalingMode: 'fit',
-        maintainAspectRatio: true,
-        targetAspectRatio: 4/3
+        maxHeight: 600
     },
     controlLayout: {
         position: 'bottom',

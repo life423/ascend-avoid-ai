@@ -22,12 +22,20 @@ export interface ViewportInfo {
     screenType: 'phone' | 'tablet' | 'desktop' | 'tv'
 }
 
+/** How to derive logical canvasSize given a viewport */
 export interface CanvasStrategy {
-    maxWidth: number
-    maxHeight: number
-    scalingMode: 'fit' | 'fill' | 'stretch' | 'pixel-perfect'
-    maintainAspectRatio: boolean
-    targetAspectRatio?: number
+  mode: 'fit' | 'fill' | 'stretch' | 'pixelPerfect';
+  designWidth: number;   // your internal coord‑sys, e.g. 720
+  designHeight: number;  //                 , e.g. 1280
+  maxWidth?: number;     // optional caps
+  maxHeight?: number;
+  minScale?: number;     // optional floor so things never get microscopic
+}
+
+export interface ResolvedCanvas {
+  cssWidth: number;   // physical CSS pixels
+  cssHeight: number;
+  scale: number;      // cssPx / designPx (same for x & y except 'stretch')
 }
 
 export interface ControlLayout {
