@@ -18,7 +18,9 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from the client build directory
-app.use(express.static("../dist"));
+// In Docker, the dist folder is at /app/dist, in dev it's at ../dist
+const distPath = process.env.NODE_ENV === 'production' ? './dist' : '../dist';
+app.use(express.static(distPath));
 
 // Create the HTTP server using our Express app
 const httpServer = createServer(app);
