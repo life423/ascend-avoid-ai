@@ -4,7 +4,7 @@
  */
 import Game from '../core/Game'
 import Player from '../entities/Player'
-import { SCALE_FACTOR } from '../utils/utils'
+import { TouchControlsAdapter } from '../adapters/TouchControlsAdapter'
 
 // Interface for control button definition
 interface ControlButton {
@@ -30,7 +30,7 @@ interface ButtonElements {
 export default class TouchControls {
     private game: Game
     private player: Player
-    private currentScale: number
+    private controlsAdapter: TouchControlsAdapter | null = null
 
     // Control button properties with symbols
     private buttons: Record<string, ControlButton>
@@ -38,8 +38,8 @@ export default class TouchControls {
     // Active button state - maps button keys to touch IDs
     private activeButtons: Record<string, number> // DOM elements
     private container: HTMLElement | null = null
-    private directionControls: HTMLElement
-    buttonElements: ButtonElements
+    private directionControls!: HTMLElement
+    buttonElements!: ButtonElements
 
     // Device detection
     private isTouchDevice: boolean
@@ -51,9 +51,6 @@ export default class TouchControls {
     constructor(game: Game) {
         this.game = game
         this.player = game.player
-
-        // Save current scale for comparison on resize
-        this.currentScale = SCALE_FACTOR
 
         // Control button properties with symbols
         this.buttons = {
@@ -91,13 +88,14 @@ export default class TouchControls {
             navigator.maxTouchPoints > 0 ||
             window.matchMedia('(pointer: coarse)').matches
 
-        // Initialize DOM element references (will be set in createControlElements)        this.container = null!
-        this.directionControls = null!
-        this.buttonElements = null!
-
         // Always create controls, but hide them on non-touch devices
         this.createControlElements()
         this.setupTouchListeners()
+
+        // Initialize the adapter with the container
+        if (this.container) {
+            this.controlsAdapter = new TouchControlsAdapter(this.container);
+        }
 
         // Hide controls on desktop/mouse-based devices or when desktop layout is forced
         if (
@@ -128,7 +126,6 @@ export default class TouchControls {
         if (isSmallScreen && !isLargeDisplay) {
             console.log('Showing touch controls on small screen')
             this.show()
-            this.resize() // Adjust sizes based on new dimensions
         } else {
             console.log('Hiding touch controls on large screen')
             this.hide()
@@ -150,7 +147,7 @@ export default class TouchControls {
             this.container = document.createElement('div')
             this.container.className = 'touch-controller'
             this.container.setAttribute('data-controller', 'main')
-            this.container.style.position = 'fixed' // Changed to fixed positioning
+            this.container.style.position = 'fixed'
             this.container.style.bottom = '0'
             this.container.style.left = '0'
             this.container.style.right = '0'
@@ -158,11 +155,11 @@ export default class TouchControls {
             this.container.style.display = 'flex'
             this.container.style.justifyContent = 'space-between'
             this.container.style.alignItems = 'center'
-            this.container.style.padding = '10px 10px 30px 10px' // Extra padding at bottom
+            this.container.style.padding = '10px 10px 30px 10px'
             this.container.style.zIndex = '1000'
             this.container.style.pointerEvents = 'none' // Parent container doesn't intercept clicks
             this.container.style.background =
-                'linear-gradient(to top, rgba(10, 25, 47, 0.8), transparent)' // Gradient background
+                'linear-gradient(to top, rgba(10, 25, 47, 0.8), transparent)'
 
             document.body.appendChild(this.container)
         } else {
@@ -173,7 +170,7 @@ export default class TouchControls {
         const leftControls = document.createElement('div')
         leftControls.className = 'left-controls'
         leftControls.style.display = 'flex'
-        leftControls.style.justifyContent = 'center' // Center in its area
+        leftControls.style.justifyContent = 'center'
         leftControls.style.alignItems = 'center'
         leftControls.style.flex = '1'
         leftControls.style.pointerEvents = 'auto' // Enable pointer events for controls
@@ -194,8 +191,17 @@ export default class TouchControls {
             button.dataset.direction = direction
             button.textContent = this.buttons[direction].symbol
 
-            // Style the button
-            this.styleButton(button)
+            // Basic button styling (adapter will handle responsive sizing)
+            button.style.backgroundColor = 'rgba(0, 188, 212, 0.3)'
+            button.style.border = '3px solid var(--accent-primary, #00bcd4)'
+            button.style.borderRadius = '50%'
+            button.style.display = 'flex'
+            button.style.justifyContent = 'center'
+            button.style.alignItems = 'center'
+            button.style.color = 'white'
+            button.style.userSelect = 'none'
+            button.style.touchAction = 'none'
+            button.style.boxShadow = '0 3px 5px rgba(0,0,0,0.3)'
 
             // Position in grid based on direction
             button.style.gridArea = direction
@@ -209,16 +215,17 @@ export default class TouchControls {
         const rightControls = document.createElement('div')
         rightControls.className = 'right-controls'
         rightControls.style.display = 'flex'
-        rightControls.style.justifyContent = 'center' // Center in its area
+        rightControls.style.justifyContent = 'center'
         rightControls.style.alignItems = 'center'
         rightControls.style.flex = '1'
-        rightControls.style.pointerEvents = 'auto' // Enable pointer events for controls
+        rightControls.style.pointerEvents = 'auto'
 
-        // Create action buttons container
+        // Create action buttons container - horizontal layout for GameBoy style
         const actionButtons = document.createElement('div')
         actionButtons.className = 'action-buttons'
         actionButtons.style.display = 'flex'
-        actionButtons.style.gap = '15px'
+        actionButtons.style.flexDirection = 'row' // Horizontal layout
+        actionButtons.style.gap = '25px' // Increased spacing between buttons
 
         // Create two action buttons: boost and missile (GameBoy A and B style)
         for (const action of ['boost', 'missile']) {
@@ -240,18 +247,24 @@ export default class TouchControls {
             button.appendChild(buttonIcon)
             button.appendChild(buttonLabel)
 
-            // Style the button
-            this.styleButton(button)
+            // Basic button styling (adapter will handle responsive sizing)
+            button.style.backgroundColor = 'rgba(0, 188, 212, 0.3)'
+            button.style.border = '3px solid var(--accent-primary, #00bcd4)'
+            button.style.borderRadius = '50%'
             button.style.display = 'flex'
             button.style.flexDirection = 'column'
+            button.style.justifyContent = 'center'
             button.style.alignItems = 'center'
+            button.style.color = 'white'
+            button.style.userSelect = 'none'
+            button.style.touchAction = 'none'
+            button.style.boxShadow = '0 3px 5px rgba(0,0,0,0.3)'
 
             actionButtons.appendChild(button)
         }
 
         // Add action buttons to right controls
-        rightControls.appendChild(actionButtons) // No restart button anymore
-        // Empty placeholder - no restart control needed
+        rightControls.appendChild(actionButtons)
 
         // Assemble the layout
         this.container.appendChild(leftControls)
@@ -280,25 +293,6 @@ export default class TouchControls {
             restart: null as unknown as HTMLElement, // No restart button but keep the property
             shield: null as unknown as HTMLElement,
         }
-    }
-
-    /**
-     * Helper method for consistent button styling
-     */
-    private styleButton(button: HTMLElement): void {
-        button.style.width = '65px'
-        button.style.height = '65px'
-        button.style.backgroundColor = 'rgba(0, 188, 212, 0.3)'
-        button.style.border = '3px solid var(--accent-primary, #00bcd4)'
-        button.style.borderRadius = '50%'
-        button.style.display = 'flex'
-        button.style.justifyContent = 'center'
-        button.style.alignItems = 'center'
-        button.style.fontSize = '24px'
-        button.style.color = 'white'
-        button.style.userSelect = 'none'
-        button.style.touchAction = 'none'
-        button.style.boxShadow = '0 3px 5px rgba(0,0,0,0.3)'
     }
 
     /**
@@ -434,70 +428,6 @@ export default class TouchControls {
     }
 
     /**
-     * Resize touch controls based on screen size
-     */
-    resize(): void {
-        // If scale factor changed significantly, adjust button sizes
-        if (Math.abs(this.currentScale - SCALE_FACTOR) > 0.05) {
-            this.currentScale = SCALE_FACTOR
-
-            // Calculate new button size based on viewport
-            const buttonSize = Math.max(50, Math.min(70 * SCALE_FACTOR, 100))
-            const fontSize = Math.max(18, Math.min(28 * SCALE_FACTOR, 36))
-            const labelSize = Math.max(10, Math.min(14 * SCALE_FACTOR, 18)) // Get all control buttons
-            if (!this.container) return
-            const buttons = this.container.querySelectorAll('.control-button')
-
-            // Update size and font for all buttons
-            buttons.forEach(button => {
-                ;(button as HTMLElement).style.width = `${buttonSize}px`
-                ;(button as HTMLElement).style.height = `${buttonSize}px`
-                ;(button as HTMLElement).style.fontSize = `${fontSize}px`
-
-                // Update label size if present
-                const label = button.querySelector('.button-label')
-                if (label) {
-                    ;(label as HTMLElement).style.fontSize = `${labelSize}px`
-                }
-            })
-
-            // Adjust DPad grid
-            this.directionControls.style.gap = `${Math.max(
-                5,
-                Math.min(10 * SCALE_FACTOR, 15)
-            )}px`
-
-            // Adjust spacing in container
-            const containerPadding = Math.max(
-                5,
-                Math.min(15 * SCALE_FACTOR, 20)
-            )
-            if (this.container) {
-                this.container.style.padding = `${containerPadding}px`
-
-                // Adjust gap between action buttons
-                const actionButtons =
-                    this.container.querySelector('.action-buttons')
-                if (actionButtons) {
-                    ;(actionButtons as HTMLElement).style.gap = `${Math.max(
-                        5,
-                        Math.min(15 * SCALE_FACTOR, 20)
-                    )}px`
-                }
-                // Adjust spacing between controls in left side
-                const leftControls =
-                    this.container.querySelector('.left-controls')
-                if (leftControls) {
-                    ;(leftControls as HTMLElement).style.gap = `${Math.max(
-                        10,
-                        Math.min(30 * SCALE_FACTOR, 40)
-                    )}px`
-                }
-            }
-        }
-    }
-
-    /**
      * Hide the touch controls - called when touch is not supported or not needed
      */
     hide(): void {
@@ -534,9 +464,12 @@ export default class TouchControls {
             this.createControlElements()
             this.setupTouchListeners()
 
+            // Reinitialize the adapter
             if (this.container) {
-                ;(this.container as HTMLElement).style.display = 'flex'
-                this.resize() // Re-apply proper sizing
+                this.controlsAdapter = new TouchControlsAdapter(this.container);
+                // Fix for TypeScript error - container is definitely HTMLElement here
+                const containerElement = this.container as HTMLElement;
+                containerElement.style.display = 'flex';
             }
         }
     }
@@ -565,6 +498,12 @@ export default class TouchControls {
                     button.replaceWith(button.cloneNode(true))
                 }
             })
+        }
+
+        // Clean up the adapter
+        if (this.controlsAdapter) {
+            this.controlsAdapter.dispose();
+            this.controlsAdapter = null;
         }
 
         // Remove container if needed
