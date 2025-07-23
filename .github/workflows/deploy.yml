@@ -79,7 +79,7 @@ jobs:
           BUILDKIT_INLINE_CACHE=1
     
     - name: Azure Login
-      uses: azure/login@v2
+      uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
