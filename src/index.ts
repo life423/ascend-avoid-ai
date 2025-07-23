@@ -5,7 +5,7 @@
 
 // Import core game components
 import Game from './core/Game'
-import { ResponsiveSystem } from './systems/UnifiedResponsiveSystem'
+// import { ResponsiveSystem } from './systems/UnifiedResponsiveSystem'
 
 // Helper function for device detection
 function detectDevice() {
@@ -219,41 +219,41 @@ function initializeMultiplayer() {
             )
         })
     // Create a test function that runs only in development
-    function testResponsiveSystem() {
-        // Subscribe to configuration changes
-        const unsubscribe = ResponsiveSystem.subscribe((config, viewport) => {
-            console.log('🎯 Responsive Update:', {
-                configuration: config.name,
-                viewport: {
-                    size: `${viewport.width}x${viewport.height}`,
-                    type: viewport.screenType,
-                    orientation: viewport.orientation,
-                },
-                canvas: config.canvasStrategy,
-                controls: config.controlLayout,
-                performance: config.performanceProfile,
-            })
-        })
+    // function testResponsiveSystem() {
+    //     // Subscribe to configuration changes
+    //     const unsubscribe = ResponsiveSystem.subscribe((config, viewport) => {
+    //         console.log('🎯 Responsive Update:', {
+    //             configuration: config.name,
+    //             viewport: {
+    //                 size: `${viewport.width}x${viewport.height}`,
+    //                 type: viewport.screenType,
+    //                 orientation: viewport.orientation,
+    //             },
+    //             canvas: config.canvasStrategy,
+    //             controls: config.controlLayout,
+    //             performance: config.performanceProfile,
+    //         })
+    //     })
 
-        // Make it available in the console for testing
-        ;(window as any).ResponsiveSystem = ResponsiveSystem
-        ;(window as any).unsubscribeResponsive = unsubscribe
-        ;(window as any).testResponsive = () => {
-            console.log(
-                'Current configuration:',
-                ResponsiveSystem.getCurrentConfig()
-            )
-            console.log('Viewport info:', ResponsiveSystem.getViewportInfo())
-        }
+    //     // Make it available in the console for testing
+    //     ;(window as any).ResponsiveSystem = ResponsiveSystem
+    //     ;(window as any).unsubscribeResponsive = unsubscribe
+    //     ;(window as any).testResponsive = () => {
+    //         console.log(
+    //             'Current configuration:',
+    //             ResponsiveSystem.getCurrentConfig()
+    //         )
+    //         console.log('Viewport info:', ResponsiveSystem.getViewportInfo())
+    //     }
 
-        console.log(
-            '✅ ResponsiveSystem ready! Try resizing your window or use testResponsive() in console'
-        )
-    }
+    //     console.log(
+    //         '✅ ResponsiveSystem ready! Try resizing your window or use testResponsive() in console'
+    //     )
+    // }
 
-    // Only run in development
-    const isDevelopment = process.env.NODE_ENV !== 'production';
-    if (isDevelopment) {
-        testResponsiveSystem()
-    }
+    // // Only run in development
+    // const isDevelopment = process.env.NODE_ENV !== 'production';
+    // if (isDevelopment) {
+    //     testResponsiveSystem()
+    // }
 }
