@@ -1,33 +1,39 @@
-# Simple single-stage build - run dev setup in production
-FROM node:22-alpine
+# Stage 1: Build stage (compile frontend and backend)
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install wget for health check and concurrently for running both servers
-RUN apk add --no-cache wget
+# Install build dependencies (if any native modules need compilation)
+RUN apk add --no-cache g++ make python3
 
-# Copy package files
+# Copy package manifests and install all dependencies (including devDependencies)
 COPY package*.json ./
-COPY server/package*.json ./server/
-
-# Install all dependencies (including dev dependencies)
 RUN npm ci
-RUN cd server && npm ci
 
-# Copy all source code
-COPY . .
+# Copy source code (frontend in /src, backend in /server) and build it
+COPY . . 
+RUN npm run build  # This should run Vite build and tsc for the server
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
+# Remove devDependencies to trim down the node_modules for production
+RUN npm prune --omit=dev
 
+# Stage 2: Production stage (only runtime deps and built files)
+FROM node:20-alpine AS runner
+WORKDIR /app
 
-# Expose ports (3000 for backend, 5173 for Vite)
+# Copy production Node modules, package definition, and build artifacts from builder
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/package*.json ./
+COPY --from=builder --chown=node:node /app/dist ./dist             # Vite static assets
+COPY --from=builder --chown=node:node /app/server/dist ./server/dist   # Compiled server code
+
+# Expose only the server port
 EXPOSE 3000
-EXPOSE 5173
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+# Use a non-root user for security (the official Node image has a "node" user)
+USER node
 
-# Start both servers like npm run dev
-CMD ["npm", "run", "dev"]
+# Set NODE_ENV for production optimizations
+ENV NODE_ENV=production
+
+# Start the server (serves static files from /dist and handles Colyseus)
+CMD ["npm", "run", "start:prod"]
