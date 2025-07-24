@@ -43,11 +43,11 @@
     
     /* Updated mobile control-panel per responsive fix */
     .control-panel {
-        flex: 0 0 auto;
-        height: auto;
-        min-height: 120px;
+        flex: 0 0 auto; /* Don't grow/shrink - reserve space permanently */
+        min-height: var(--ctrl-h, 120px); /* Use CSS variable for height control */
         max-height: 25vh;
         padding: var(--space-xs) var(--space-sm);
+        padding-bottom: env(safe-area-inset-bottom, 0); /* iOS home indicator clearance */
         position: relative;
         z-index: var(--z-ui);
         background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);

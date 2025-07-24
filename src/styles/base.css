@@ -39,6 +39,16 @@
     --z-ui: 100;           /* Game UI elements (panels, menus) */
     --z-overlay: 1000;     /* Overlays and modals */
     --z-critical: 9999;    /* Critical system elements (errors, loading) */
+
+    /* Layout Control Variables */
+    --ctrl-h: 120px;       /* Control panel height - can be updated by JS for responsive scaling */
+}
+
+/* Responsive control height scaling */
+@media (min-width: 768px) and (max-width: 1199px) {
+    :root {
+        --ctrl-h: 160px;   /* Larger controls on tablets */
+    }
 }
 
 /* ============================================

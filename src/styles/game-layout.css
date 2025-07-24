@@ -12,7 +12,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: hidden; /* 🔒 Hard viewport boundary - prevents controls being pushed off-screen */
     position: relative;
     margin: 0 auto;
 }
@@ -58,7 +58,8 @@
    GAME AREA & CANVAS LAYOUT
    ============================================ */
 .game-main {
-    flex: 1;
+    flex: 1 1 0; /* Allow shrinking when space is tight - critical for mobile */
+    min-height: 0; /* Secret sauce - allows flex child to shrink below content size */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -102,10 +103,12 @@
     box-shadow: 0 0 20px var(--divider-line);
     /* Prevent touch interactions from scrolling */
     touch-action: none;
-    /* Ensure canvas scales properly */
-    object-fit: contain;
+    /* Critical: Canvas must respect container limits to prevent overflow */
+    width: 100%;
+    height: 100%;
     max-width: 100%;
-    max-height: 100%;
+    max-height: 100%; /* Never exceed parent container */
+    object-fit: contain;
 }
 
 /* ============================================
