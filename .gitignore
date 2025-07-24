@@ -51,6 +51,9 @@ logs/
 ehthumbs.db
 Thumbs.db
 
+# Claude AI assistant configuration
+.claude/
+
 # Testing
 /coverage/
 /.nyc_output/
