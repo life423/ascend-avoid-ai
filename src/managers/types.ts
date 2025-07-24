@@ -123,12 +123,4 @@ export interface ResponsiveConfig {
     devicePixelRatio: boolean
 }
 
-// Global window interface extension
-declare global {
-    interface Window {
-        game?: {
-            onResize?: (widthScale: number, heightScale: number, isDesktop: boolean) => void
-            [key: string]: any
-        }
-    }
-}
+// Note: Global Window interface is declared in src/types.d.ts
