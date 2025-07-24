@@ -10,7 +10,9 @@
       "Bash(gh run view:*)",
       "WebFetch(domain:ascend-avoid.azurecontainerapps.io)",
       "WebFetch(domain:ascend.drewclark.io)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }
