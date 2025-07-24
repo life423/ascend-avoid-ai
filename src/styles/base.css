@@ -32,6 +32,13 @@
     --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.2);
     --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.3);
     --shadow-heavy: 0 5px 15px rgba(0, 0, 0, 0.5);
+
+    /* Z-Index Scale - Organized layering system */
+    --z-base: 1;           /* Base level elements */
+    --z-controls: 10;      /* Touch controls and game controls */
+    --z-ui: 100;           /* Game UI elements (panels, menus) */
+    --z-overlay: 1000;     /* Overlays and modals */
+    --z-critical: 9999;    /* Critical system elements (errors, loading) */
 }
 
 /* ============================================

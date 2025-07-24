@@ -49,7 +49,7 @@
         max-height: 25vh;
         padding: var(--space-xs) var(--space-sm);
         position: relative;
-        z-index: 100;
+        z-index: var(--z-ui);
         background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);
     }
     

@@ -15,17 +15,17 @@
     justify-content: center;
     align-items: center;
     padding: var(--space-sm) 0;
-    z-index: 10;
+    z-index: var(--z-controls);
 }
 
 /* ============================================
    FLOATING ACTION MENU
    ============================================ */
 .float-menu {
-    position: fixed;
+    position: absolute;
     bottom: var(--space-md);
     right: var(--space-md);
-    z-index: 1000;
+    z-index: var(--z-ui);
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -73,7 +73,7 @@
     position: absolute;
     bottom: 70px;
     right: 5px;
-    z-index: 2000;
+    z-index: var(--z-overlay);
     background: var(--nav-bg);
     padding: var(--space-sm);
     border-radius: var(--border-radius);

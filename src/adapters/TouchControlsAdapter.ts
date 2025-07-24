@@ -100,12 +100,9 @@ export class TouchControlsAdapter {
     const sidePadding = viewport.screenType === 'phone' ? 10 : 15;
     this.container.style.padding = `${sidePadding}px ${sidePadding}px ${bottomPadding}px ${sidePadding}px`;
     
-    // Ensure container is properly positioned
-    this.container.style.position = 'fixed';
-    this.container.style.bottom = '0';
-    this.container.style.left = '0';
-    this.container.style.right = '0';
-    this.container.style.zIndex = '1000';
+    // Ensure container uses relative positioning within the layout flow
+    this.container.style.position = 'relative';
+    this.container.style.width = '100%';
     this.container.style.display = 'flex';
     this.container.style.justifyContent = 'space-between';
     

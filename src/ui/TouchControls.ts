@@ -147,16 +147,13 @@ export default class TouchControls {
             this.container = document.createElement('div')
             this.container.className = 'touch-controller'
             this.container.setAttribute('data-controller', 'main')
-            this.container.style.position = 'fixed'
-            this.container.style.bottom = '0'
-            this.container.style.left = '0'
-            this.container.style.right = '0'
+            // Use relative positioning within the CSS layout flow instead of fixed
+            this.container.style.position = 'relative'
             this.container.style.width = '100%'
             this.container.style.display = 'flex'
             this.container.style.justifyContent = 'space-between'
             this.container.style.alignItems = 'center'
             this.container.style.padding = '10px 10px 30px 10px'
-            this.container.style.zIndex = '1000'
             this.container.style.pointerEvents = 'none' // Parent container doesn't intercept clicks
             this.container.style.background =
                 'linear-gradient(to top, rgba(10, 25, 47, 0.8), transparent)'

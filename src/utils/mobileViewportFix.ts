@@ -78,54 +78,7 @@ export function applyFirefoxMobileFixes(): void {
         // Add class for Firefox-specific CSS
         document.body.classList.add('firefox-mobile');
         
-        // Firefox mobile fix for position:fixed bottom elements
-        fixFirefoxBottomPositioning();
+        // Note: Firefox position:fixed workarounds removed since we now use flexbox layout
+        // Touch controls are now positioned using CSS Grid/Flexbox instead of fixed positioning
     }
-}
-
-/**
- * Fix Firefox mobile position:fixed bottom positioning issues
- */
-function fixFirefoxBottomPositioning(): void {
-    // Wait for DOM to be ready
-    const applyFix = () => {
-        const touchControllers = document.querySelectorAll('.touch-controller[data-controller="main"]');
-        
-        touchControllers.forEach((controller) => {
-            const element = controller as HTMLElement;
-            if (element.style.position === 'fixed' && element.style.bottom === '0px') {
-                // Firefox workaround: use top positioning instead of bottom
-                element.style.bottom = 'auto';
-                element.style.top = 'calc(100vh - 120px)'; // Approximate height of controls
-                element.style.height = '120px'; // Set explicit height
-            }
-        });
-    };
-
-    // Apply immediately if DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', applyFix);
-    } else {
-        applyFix();
-    }
-
-    // Also apply when touch controls are dynamically created
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    const element = node as Element;
-                    if (element.classList?.contains('touch-controller') || 
-                        element.querySelector?.('.touch-controller')) {
-                        setTimeout(applyFix, 100); // Small delay to ensure styles are applied
-                    }
-                }
-            });
-        });
-    });
-
-    observer.observe(document.body, { 
-        childList: true, 
-        subtree: true 
-    });
 }
