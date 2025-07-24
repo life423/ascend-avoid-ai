@@ -41,11 +41,11 @@
         padding: 0;
     }
     
-    /* Updated mobile control-panel per responsive fix */
+    /* Updated mobile control-panel - adaptive sizing based on content */
     .control-panel {
-        flex: 0 0 auto; /* Don't grow/shrink - reserve space permanently */
-        min-height: var(--ctrl-h, 120px); /* Use CSS variable for height control */
-        max-height: 25vh;
+        flex: 0 0 auto; /* Don't grow/shrink - but let content determine size */
+        /* Remove rigid min-height - let content and viewport constraints determine size */
+        max-height: 25vh; /* Still cap maximum to prevent taking over screen */
         padding: var(--space-xs) var(--space-sm);
         padding-bottom: env(safe-area-inset-bottom, 0); /* iOS home indicator clearance */
         position: relative;
@@ -53,13 +53,14 @@
         background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);
     }
     
-    /* Updated mobile touch-controller per responsive fix */
+    /* Updated mobile touch-controller - responsive sizing */
     .touch-controller {
         display: flex;
         justify-content: center;
         height: auto;
-        min-height: auto;
-        padding: var(--space-sm) 0;
+        /* Responsive sizing based on viewport height - adapts to device constraints */
+        min-height: clamp(60px, 12vh, 100px); /* Scale with viewport, never too small or huge */
+        padding: clamp(8px, 2vh, 16px) 0; /* Responsive padding */
     }
     
     .info-panel {
@@ -75,7 +76,7 @@
     }
 }
 
-/* Very Small Screens (up to 400px) */
+/* Very Small Screens - Progressive space negotiation */
 @media (max-width: 400px) {
     .game-main {
         padding: var(--space-xs);
@@ -83,23 +84,76 @@
     
     .game-canvas {
         border-width: 1px !important;
-        max-width: calc(100vw - 10px);
-        max-height: calc(100vh - 200px);
+        max-width: calc(100vw - 0.625rem);
+        /* Reduce max-height further on small screens to ensure controls fit */
+        max-height: calc(100vh - var(--ctrl-h) - 6rem);
     }
     
     .app-header {
         padding: var(--space-xs);
-        min-height: 60px;
+        min-height: 3.5rem; /* Slightly smaller header on tiny screens */
     }
     
     .score-panel {
-        gap: var(--space-sm);
+        gap: var(--space-xs); /* Reduce gap on small screens */
         padding: var(--space-xs) 0;
         margin: var(--space-xs) 0 0;
+        font-size: 0.9rem; /* Slightly smaller text */
     }
     
     .control-panel {
         padding: var(--space-xs);
+        /* Ensure controls don't exceed remaining space */
+        max-height: calc(100vh - 200px);
+    }
+    
+    /* Compact controls on very small screens */
+    .touch-controls {
+        max-width: 95vw;
+        gap: clamp(8px, 2vw, 16px);
+    }
+    
+    .dpad-container {
+        width: clamp(70px, 18vw, 100px);
+        height: clamp(70px, 18vw, 100px);
+    }
+    
+    .action-btn {
+        width: clamp(35px, 10vw, 50px);
+        height: clamp(35px, 10vw, 50px);
+        font-size: clamp(12px, 3vw, 16px);
+    }
+}
+
+/* Extremely small screens - emergency space negotiation */
+@media (max-height: 500px) {
+    .app-header h1 {
+        font-size: 1rem; /* Smaller title */
+    }
+    
+    .score-panel {
+        display: none; /* Hide score on extremely short screens to save space */
+    }
+    
+    .control-panel {
+        padding: 4px;
+        max-height: 25vh;
+    }
+    
+    .touch-controls {
+        gap: 8px;
+    }
+    
+    .dpad-container {
+        width: 60px;
+        height: 60px;
+        gap: 1px;
+    }
+    
+    .action-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 10px;
     }
 }
 

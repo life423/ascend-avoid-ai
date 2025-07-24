@@ -40,14 +40,20 @@
     --z-overlay: 1000;     /* Overlays and modals */
     --z-critical: 9999;    /* Critical system elements (errors, loading) */
 
-    /* Layout Control Variables */
-    --ctrl-h: 120px;       /* Control panel height - can be updated by JS for responsive scaling */
+    /* Layout Control Variables - Dynamic responsive sizing */
+    --ctrl-h: clamp(60px, 15vh, 140px); /* Scales with viewport height, prevents tiny/huge extremes */
 }
 
-/* Responsive control height scaling */
+/* Responsive control height scaling based on device size */
 @media (min-width: 768px) and (max-width: 1199px) {
     :root {
-        --ctrl-h: 160px;   /* Larger controls on tablets */
+        --ctrl-h: clamp(80px, 18vh, 160px); /* Larger controls on tablets */
+    }
+}
+
+@media (max-height: 600px) {
+    :root {
+        --ctrl-h: clamp(50px, 10vh, 80px); /* Smaller controls on short screens */
     }
 }
 

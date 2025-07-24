@@ -123,25 +123,26 @@
    TOUCH CONTROLS (D-PAD & BUTTONS)
    ============================================ */
 
-/* Touch control container */
+/* Touch control container - responsive sizing */
 .touch-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    max-width: 400px;
-    padding: var(--space-sm);
-    gap: var(--space-md);
+    max-width: clamp(320px, 80vw, 500px); /* Scales with viewport width */
+    padding: clamp(4px, 1vw, 12px); /* Responsive padding */
+    gap: clamp(12px, 4vw, 24px); /* Responsive gap */
 }
 
-/* D-pad container */
+/* D-pad container - responsive sizing */
 .dpad-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    gap: 2px;
-    width: 120px;
-    height: 120px;
+    gap: clamp(2px, 0.5vw, 4px);
+    /* Scale D-pad size with viewport - addresses tablet tiny controls issue */
+    width: clamp(80px, 20vw, 140px);
+    height: clamp(80px, 20vw, 140px);
 }
 
 /* D-pad buttons */
@@ -195,16 +196,17 @@
     align-items: center;
 }
 
-/* Action buttons */
+/* Action buttons - responsive sizing */
 .action-btn {
-    width: 50px;
-    height: 50px;
+    /* Responsive size that scales with viewport - addresses tablet scaling issue */
+    width: clamp(40px, 12vw, 70px);
+    height: clamp(40px, 12vw, 70px);
     border-radius: 50%;
     background: var(--accent-primary);
     border: 2px solid var(--accent-secondary);
     color: var(--text-dark);
     font-weight: bold;
-    font-size: 18px;
+    font-size: clamp(14px, 4vw, 22px); /* Scale font size with button */
     cursor: pointer;
     transition: all var(--transition);
     display: flex;
