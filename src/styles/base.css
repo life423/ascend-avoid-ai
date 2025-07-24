@@ -42,6 +42,13 @@
 
     /* Layout Control Variables - Dynamic responsive sizing */
     --ctrl-h: clamp(60px, 15vh, 140px); /* Scales with viewport height, prevents tiny/huge extremes */
+    
+    /* Shared responsive values to reduce duplication */
+    --touch-min: 44px;          /* WCAG minimum touch target */
+    --dpad-size: clamp(90px, 20vw, 140px);  /* D-pad container size */
+    --action-btn-size: clamp(44px, 12vw, 70px); /* Action button size */
+    --control-gap: clamp(8px, 2vh, 16px);   /* Responsive control spacing */
+    --control-padding: clamp(4px, 1vw, 12px); /* Responsive padding */
 }
 
 /* Responsive control height scaling based on device size */

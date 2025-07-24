@@ -16,6 +16,13 @@ export function initMobileViewportFix(): void {
     window.addEventListener('resize', setViewportHeight);
     window.addEventListener('orientationchange', setViewportHeight);
 
+    // Modern Visual Viewport API support for better mobile browser handling
+    if ('visualViewport' in window && window.visualViewport) {
+        // Visual Viewport API provides more accurate viewport size changes
+        window.visualViewport.addEventListener('resize', setViewportHeight);
+        window.visualViewport.addEventListener('scroll', setViewportHeight);
+    }
+
     // Also update when the page becomes visible (handles browser UI changes)
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
@@ -23,7 +30,7 @@ export function initMobileViewportFix(): void {
         }
     });
 
-    // Fix for Chrome mobile address bar
+    // Fix for Chrome mobile address bar (fallback for browsers without Visual Viewport API)
     let lastHeight = window.innerHeight;
     const checkHeight = () => {
         if (window.innerHeight !== lastHeight) {
@@ -33,7 +40,9 @@ export function initMobileViewportFix(): void {
     };
 
     // Check periodically for height changes (addresses Chrome mobile quirks)
-    setInterval(checkHeight, 100);
+    // Reduced frequency when Visual Viewport API is available
+    const interval = window.visualViewport ? 500 : 100;
+    setInterval(checkHeight, interval);
 }
 
 /**

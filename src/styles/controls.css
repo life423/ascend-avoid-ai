@@ -130,7 +130,7 @@
     align-items: center;
     width: 100%;
     max-width: clamp(320px, 80vw, 500px); /* Scales with viewport width */
-    padding: clamp(4px, 1vw, 12px); /* Responsive padding */
+    padding: var(--control-padding); /* Use shared responsive padding */
     gap: clamp(12px, 4vw, 24px); /* Responsive gap */
 }
 
@@ -140,9 +140,9 @@
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     gap: clamp(2px, 0.5vw, 4px);
-    /* Scale D-pad size with viewport - addresses tablet tiny controls issue */
-    width: clamp(80px, 20vw, 140px);
-    height: clamp(80px, 20vw, 140px);
+    /* Use shared D-pad size variables */
+    width: var(--dpad-size);
+    height: var(--dpad-size);
 }
 
 /* D-pad buttons */
@@ -198,9 +198,9 @@
 
 /* Action buttons - responsive sizing */
 .action-btn {
-    /* Responsive size that scales with viewport - addresses tablet scaling issue */
-    width: clamp(40px, 12vw, 70px);
-    height: clamp(40px, 12vw, 70px);
+    /* Use shared action button size variables */
+    width: var(--action-btn-size);
+    height: var(--action-btn-size);
     border-radius: 50%;
     background: var(--accent-primary);
     border: 2px solid var(--accent-secondary);

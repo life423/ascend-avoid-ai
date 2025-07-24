@@ -255,11 +255,20 @@ export default class ResponsiveManager {
                 '.control-panel[data-section="controls"]'
             ) as HTMLElement | null
 
-            // Get actual heights of fixed elements
+            // Get actual heights of fixed elements - use modern measurement approach
             const headerHeight = header ? header.offsetHeight : 80
-            const controlsHeight = controlPanel
-                ? controlPanel.offsetHeight
-                : 140
+            
+            // Dynamic control height calculation - accounts for responsive CSS
+            let controlsHeight: number
+            if (controlPanel) {
+                // Force layout calculation to get accurate size after CSS changes
+                controlPanel.offsetHeight // Trigger reflow
+                controlsHeight = controlPanel.offsetHeight
+            } else {
+                // Use CSS custom property as fallback instead of hardcoded value
+                const ctrlH = getComputedStyle(document.documentElement).getPropertyValue('--ctrl-h')
+                controlsHeight = parseFloat(ctrlH) || 120 // Parse clamp() result or fallback
+            }
             const margin = 20 // Total margin (10px each side)
 
             // Calculate available space more accurately
@@ -270,8 +279,8 @@ export default class ResponsiveManager {
             ) // Minimum 250px height
             availableWidth = Math.max(window.innerWidth - margin, 280) // Minimum 280px width
 
-            // Apply mobile-specific limits
-            availableWidth = Math.min(availableWidth, CANVAS.MAX_MOBILE_WIDTH)
+            // Apply mobile-specific limits - increased to give more canvas space
+            availableWidth = Math.min(availableWidth, CANVAS.MAX_MOBILE_WIDTH * 1.2)
 
             console.log(
                 `Mobile canvas sizing: ${availableWidth}x${availableHeight} available (header: ${headerHeight}px, controls: ${controlsHeight}px)`
@@ -289,8 +298,8 @@ export default class ResponsiveManager {
         const canvasWidth = Math.floor(this.baseCanvasWidth * scale)
         const canvasHeight = Math.floor(this.baseCanvasHeight * scale)
 
-        // Ensure minimum playable size (higher minimums for desktop)
-        const minHeight = this.isDesktop ? 500 : 250
+        // Ensure minimum playable size - more aggressive mobile sizing
+        const minHeight = this.isDesktop ? 500 : 200 // Reduced mobile minimum
         const minWidth = Math.floor(
             (minHeight / this.baseCanvasHeight) * this.baseCanvasWidth
         )
