@@ -42,7 +42,7 @@ export class CanvasManager {
         this.resizeCanvas(initialInfo);
     }
 
-    private handleResponsiveUpdate(config: ViewportConfig, info: ViewportInfo): void {
+    private handleResponsiveUpdate(_config: ViewportConfig, info: ViewportInfo): void {
         this.resizeCanvas(info);
     }
 

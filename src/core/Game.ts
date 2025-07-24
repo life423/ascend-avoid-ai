@@ -1066,7 +1066,7 @@ export default class Game {
      * @param config - New viewport configuration
      * @param info - Updated viewport information
      */
-    private onResponsiveUpdate(config: ViewportConfig, info: ViewportInfo): void {
+    private onResponsiveUpdate(_config: ViewportConfig, info: ViewportInfo): void {
         // Update device detection
         this.isDesktop = info.screenType === 'desktop' || info.width >= 1024;
         
