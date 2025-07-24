@@ -3,7 +3,11 @@
     "allow": [
       "Bash(rm:*)",
       "Bash(del \"C:\\Users\\aiand\\Desktop\\ascend-avoid-major-refactor\\viewport-fix.html\")",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(gh secret:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": []
   }
