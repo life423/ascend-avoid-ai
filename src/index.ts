@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body.classList.add('desktop-layout')
     }
 
-    // Canvas management is now handled by ResponsiveManager in Game.ts
+    // Canvas management is now handled by UnifiedResponsiveSystem in Game.ts
 
     // Create multiplayer button with proper styling
     createMultiplayerButton()

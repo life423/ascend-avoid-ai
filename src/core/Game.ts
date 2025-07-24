@@ -8,7 +8,9 @@ import { GameObject, InputState, PerformanceStats, ScalingInfo } from '../types'
 // Import player and background entities
 import Background from '../entities/Background'
 import Player from '../entities/Player'
-import ResponsiveManager from '../managers/ResponsiveManager'
+import { ResponsiveSystem } from '../systems/UnifiedResponsiveSystem'
+import type { ViewportConfig, ViewportInfo } from '../systems/UnifiedResponsiveSystem'
+import { CanvasManager } from '../managers/CanvasManager'
 import TouchControls from '../ui/TouchControls'
 
 // Fallback constants in case imports fail
@@ -62,7 +64,8 @@ export default class Game {
     // Canvas and rendering context
     canvas: HTMLCanvasElement
     ctx: CanvasRenderingContext2D
-    responsiveManager!: ResponsiveManager
+    private unsubscribeResponsive?: () => void
+    private canvasManager?: CanvasManager
 
     // UI elements
     scoreElement: HTMLElement | null
@@ -132,7 +135,7 @@ export default class Game {
                 console.warn(
                     'Canvas has zero dimensions - may need explicit sizing'
                 )
-                // Don't set size here yet - let ResponsiveManager handle it
+                // Don't set size here yet - let UnifiedResponsiveSystem handle it
             }
         } else {
             console.error('Canvas element not found in DOM!')
@@ -165,8 +168,8 @@ export default class Game {
             frameCount: 0,
         }
 
-        // Device detection now handled by ResponsiveManager
-        // Default to desktop for initial rendering before ResponsiveManager initializes
+        // Device detection now handled by UnifiedResponsiveSystem
+        // Default to desktop for initial rendering before responsive system initializes
         this.isDesktop = window.matchMedia('(min-width: 1200px)').matches
 
         // Create configuration with platform detection
@@ -226,15 +229,22 @@ export default class Game {
         this.assetManager = new AssetManager()
         await this.preloadAssets()
 
-        // Initialize the responsive manager
-        this.responsiveManager = new ResponsiveManager(this)
-        this.responsiveManager.init(this.canvas)
+        // Initialize canvas manager for proper canvas sizing
+        this.canvasManager = new CanvasManager(this.canvas);
+        this.canvasManager.onResize((scalingInfo) => {
+            this.scalingInfo = scalingInfo;
+            this.onResize(); // Call existing resize logic
+        });
 
-        // Get the scaling info from the responsive manager
-        this.scalingInfo = this.responsiveManager.getScalingInfo()
+        // Subscribe to responsive system updates
+        this.unsubscribeResponsive = ResponsiveSystem.subscribe(
+            (config: ViewportConfig, info: ViewportInfo) => {
+                this.onResponsiveUpdate(config, info);
+            }
+        );
 
-        // Set callback for resize events
-        this.responsiveManager.onResize = this.onResize.bind(this)
+        // Get initial scaling info from canvas manager
+        this.scalingInfo = this.canvasManager.getScalingInfo();
 
         // Create background
         this.background = new Background(this.canvas)
@@ -380,11 +390,14 @@ export default class Game {
         _heightScale?: number,
         _isDesktop?: boolean
     ): void {
-        // Get updated scaling info from responsive manager
-        this.scalingInfo = this.responsiveManager.getScalingInfo()
+        // Get updated scaling info from canvas manager
+        if (this.canvasManager) {
+            this.scalingInfo = this.canvasManager.getScalingInfo();
+        }
 
-        // Update device detection
-        this.isDesktop = window.innerWidth >= 1024
+        // Update device detection from viewport info
+        const viewportInfo = ResponsiveSystem.getViewportInfo();
+        this.isDesktop = viewportInfo.screenType === 'desktop' || viewportInfo.width >= 1024;
 
         // Update game config with new device info
         this.config.setDesktopMode(this.isDesktop)
@@ -1030,9 +1043,14 @@ export default class Game {
             this.currentGameMode = null
         }
 
-        // Clean up managers
-        if (this.responsiveManager) {
-            this.responsiveManager.dispose()
+        // Clean up responsive system subscription
+        if (this.unsubscribeResponsive) {
+            this.unsubscribeResponsive();
+        }
+
+        // Clean up canvas manager
+        if (this.canvasManager) {
+            this.canvasManager.dispose();
         }
 
         if (this.touchControls) {
@@ -1042,4 +1060,21 @@ export default class Game {
         // Clear any remaining intervals/timeouts
         // (none currently used, but good practice for future additions)
     }
+
+    /**
+     * Handle responsive system updates
+     * @param config - New viewport configuration
+     * @param info - Updated viewport information
+     */
+    private onResponsiveUpdate(config: ViewportConfig, info: ViewportInfo): void {
+        // Update device detection
+        this.isDesktop = info.screenType === 'desktop' || info.width >= 1024;
+        
+        // Update game config
+        this.config.setDesktopMode(this.isDesktop);
+        
+        // Canvas sizing is handled by CanvasManager automatically
+        // onResize will be called by the canvas manager's callback
+    }
+
 }

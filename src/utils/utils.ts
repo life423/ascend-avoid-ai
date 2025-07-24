@@ -171,7 +171,7 @@ export function resizeCanvas(canvas: HTMLCanvasElement): ScalingInfo {
     widthScale: canvasWidth / BASE_CANVAS_WIDTH,
     heightScale: canvasHeight / BASE_CANVAS_HEIGHT,
     pixelRatio: window.devicePixelRatio || 1,
-    reducedResolution: false // Default value, can be updated by ResponsiveManager
+    reducedResolution: false // Default value, can be updated by UnifiedResponsiveSystem
   };
 }
 
