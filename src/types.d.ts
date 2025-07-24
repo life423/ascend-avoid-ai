@@ -330,6 +330,7 @@ declare global {
             restart?: () => void
             toggleMultiplayer?: () => void
             getStats?: () => PerformanceStats
+            [key: string]: any
         }
         devicePixelRatio: number
     }
