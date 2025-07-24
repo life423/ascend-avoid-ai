@@ -15,6 +15,7 @@ import { DeviceInfo } from './types';
 // Import utility functions
 import { setupPolyfills } from './utils/polyfills';
 import { setupPerformanceMonitoring } from './utils/performance';
+import { initMobileViewportFix, applyChromeMobileFixes } from './utils/mobileViewportFix';
 
 // Global game instance
 let gameInstance: Game | null = null;
@@ -31,6 +32,15 @@ class GameApplication {
   constructor() {
     this.setupGlobalErrorHandling();
     this.setupPerformanceMonitoring();
+    this.initMobileFixes();
+  }
+
+  /**
+   * Initialize mobile-specific fixes
+   */
+  private initMobileFixes(): void {
+    initMobileViewportFix();
+    applyChromeMobileFixes();
   }
 
   /**

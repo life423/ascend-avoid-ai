@@ -5,7 +5,10 @@
 /* Mobile Layout (up to 1199px) */
 @media (max-width: 1199px) {
     .app-root {
+        height: 100vh;
         height: 100dvh;
+        height: calc(var(--vh, 1vh) * 100);
+        max-height: 100vh;
     }
     
     .app-header {
@@ -42,9 +45,12 @@
     .control-panel {
         flex: 0 0 auto;
         height: auto;
-        min-height: auto;
+        min-height: 120px;
+        max-height: 25vh;
         padding: var(--space-xs) var(--space-sm);
         position: relative;
+        z-index: 100;
+        background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);
     }
     
     /* Updated mobile touch-controller per responsive fix */
@@ -78,6 +84,7 @@
     .game-canvas {
         border-width: 1px !important;
         max-width: calc(100vw - 10px);
+        max-height: calc(100vh - 200px);
     }
     
     .app-header {
@@ -142,6 +149,23 @@
     .mobile-only {
         display: none;
     }
+}
+
+/* Chrome Mobile Specific Fixes */
+.chrome-mobile .app-root {
+    height: 100vh !important;
+    /* Disable dvh on Chrome mobile due to inconsistent behavior */
+}
+
+.chrome-mobile .control-panel {
+    /* Ensure touch controls are always visible on Chrome mobile */
+    min-height: 100px !important;
+    padding-bottom: var(--space-lg) !important;
+}
+
+.chrome-mobile .game-canvas {
+    /* More conservative canvas sizing for Chrome mobile */
+    max-height: calc(100vh - 150px) !important;
 }
 
 /* ============================================
