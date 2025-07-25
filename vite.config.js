@@ -4,6 +4,10 @@ import checker from 'vite-plugin-checker';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
+// ✨ Cutting-edge: SWC transformer (10x faster than default)
+import react from '@vitejs/plugin-react-swc';
+// ✨ Cutting-edge: Type-safe CSS-in-TS
+import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 
 // ←–– add these two lines so __dirname exists in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -16,6 +20,10 @@ export default defineConfig(({ mode }) => {
     root: 'src',
     publicDir: '../public',
     plugins: [
+      // ✨ SWC transformer for lightning-fast builds
+      react(),
+      // ✨ Type-safe CSS-in-TS with vanilla-extract
+      vanillaExtractPlugin(),
       legacy({ targets: ['defaults', 'not IE 11'] }),
       checker({ typescript: true }),
       nodePolyfills({

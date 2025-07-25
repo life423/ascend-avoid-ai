@@ -1,7 +1,11 @@
 /* ============================================
    COMBINED GAME LAYOUT & CANVAS STYLES
    Merges layout.css and canvas.css for better organization
+   
+   Modern CSS: Cascade layers for controlled specificity
    ============================================ */
+
+@layer base, components, utilities;
 
 /* ============================================
    MAIN APP LAYOUT STRUCTURE
@@ -114,66 +118,112 @@
 /* ============================================
    DESKTOP SIDEBAR LAYOUT
    ============================================ */
+@layer components {
 .info-panel {
     display: none;
     background: var(--primary-light);
     border-radius: var(--border-radius);
-    border-left: 4px solid var(--accent-primary);
+    /* Modern CSS: Logical properties for internationalization */
+    border-inline-start: 4px solid var(--accent-primary);
     box-shadow: var(--shadow-medium);
-    overflow-y: auto;
+    /* Surgical flexbox fix */
     flex-direction: column;
-    justify-content: space-between;
+    /* Modern CSS: Logical sizing */
+    block-size: 100%;
+    padding: var(--space-lg);
+    /* Container queries support */
+    container-type: size;
 }
 
 .panel-content {
-    padding: var(--space-lg);
     flex: 1;
+    margin-bottom: var(--space-xxl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
 }
 
 .panel-content h3 {
     color: var(--accent-secondary);
-    font-size: 1.3rem;
-    margin-bottom: var(--space-md);
+    font-size: 1.25rem;
+    margin: 0 0 var(--space-sm) 0;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.panel-content p {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--text-light);
+}
+
+.panel-content p + p {
+    margin-top: var(--space-md);
 }
 
 .panel-content ul {
-    padding-left: var(--space-md);
-    margin: var(--space-md) 0;
+    margin: 0;
+    padding-left: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
 }
 
 .panel-content li {
-    margin-bottom: var(--space-sm);
-    list-style-type: square;
+    margin: 0;
+    line-height: 1.5;
+    color: var(--text-light);
 }
 
 .panel-content .note {
     font-style: italic;
     color: var(--accent-secondary);
-    margin: var(--space-md) 0;
+    font-size: 0.9rem;
+    margin: 0;
+    padding: var(--space-sm);
+    background: rgba(0, 188, 212, 0.1);
+    border-radius: var(--border-radius);
+    border-left: 3px solid var(--accent-secondary);
 }
 
-.desktop-nav-buttons {
+.info-actions {
+    /* Surgical fix: push buttons to bottom */
+    margin-top: auto;
     display: flex;
+    gap: 0.75rem;
+    /* Modern CSS: Logical padding */
+    padding-block: var(--space-lg) 1.5rem; /* breathing room */
+    border-block-start: 2px solid var(--divider-line);
+    align-items: center;
     justify-content: center;
-    gap: var(--space-md);
-    padding: var(--space-lg);
-    border-top: 1px solid var(--divider-line);
 }
+
+/* Make buttons stretch equal width (your optional enhancement) */
+.info-actions button {
+    flex: 1 1 0;
+    /* Modern CSS: Dynamic button sizing */
+    --button-count: 2;
+    min-inline-size: calc(100% / var(--button-count) - 0.75rem);
+}
+} /* End @layer components */
 
 /* ============================================
    NAVIGATION BUTTONS
    ============================================ */
 .nav-button {
-    padding: var(--space-sm) var(--space-lg);
+    padding: var(--space-md) var(--space-xl);
     background: var(--accent-primary);
     color: var(--text-dark);
     border: none;
     border-radius: var(--border-radius);
-    font-weight: bold;
+    font-weight: 600;
     cursor: pointer;
     transition: all var(--transition);
     text-transform: uppercase;
-    font-size: 14px;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+    min-width: 100px;
+    flex: 1;
 }
 
 .nav-button:hover {
