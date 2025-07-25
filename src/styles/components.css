@@ -118,45 +118,36 @@
         border: 2px solid var(--text-dark);
     }
     
-    .multiplayer-button {
-        border: 2px solid var(--text-dark);
-    }
 }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-    .btn,
-    .multiplayer-button {
+    .btn {
         transition: none;
     }
     
-    .btn:hover:not(:disabled),
-    .multiplayer-button:hover:not(:disabled) {
+    .btn:hover:not(:disabled) {
         transform: none;
     }
 }
 
 /* Focus management for keyboard navigation */
-.btn:focus,
-.multiplayer-button:focus {
+.btn:focus {
     outline: none; /* Remove default outline */
 }
 
-.btn:focus-visible,
-.multiplayer-button:focus-visible {
+.btn:focus-visible {
     outline: 3px solid var(--accent-secondary);
     outline-offset: 2px;
 }
 
 /* Loading state for buttons */
-.btn[disabled],
-.multiplayer-button[disabled] {
+.btn[disabled] {
     position: relative;
     color: transparent;
 }
 
-.btn[disabled]::after,
-.multiplayer-button[disabled]::after {
+.btn[disabled]::after {
     content: 'Loading...';
     position: absolute;
     top: 50%;
@@ -167,75 +158,6 @@
     font-weight: var(--font-medium);
 }
 
-/* Multiplayer button specific */
-.multiplayer-button {
-    position: fixed;
-    top: var(--space-sm);
-    right: var(--space-sm);
-    z-index: var(--z-ui);
-    
-    /* Use primary button as base */
-    background: var(--button-primary-bg);
-    color: var(--button-primary-text);
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: var(--text-sm);
-    font-weight: var(--font-semibold);
-    line-height: var(--leading-tight);
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: all var(--transition);
-    box-shadow: var(--shadow-medium);
-    white-space: nowrap;
-    user-select: none;
-}
-
-.multiplayer-button:hover:not(:disabled) {
-    background: var(--button-primary-hover);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-heavy);
-}
-
-.multiplayer-button:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: var(--shadow-light);
-}
-
-.multiplayer-button:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none !important;
-}
-
-.multiplayer-button:focus-visible {
-    outline: 2px solid var(--accent-secondary);
-    outline-offset: 2px;
-}
-
-/* Multiplayer button icon */
-.multiplayer-button .btn-icon {
-    font-size: var(--text-lg);
-    padding: 0;
-    min-width: auto;
-}
-
-/* Responsive multiplayer button */
-@media (max-width: 767px) {
-    .multiplayer-button {
-        padding: var(--space-xs) var(--space-sm);
-        font-size: var(--text-xs);
-        top: var(--space-xs);
-        right: var(--space-xs);
-    }
-    
-    .multiplayer-button .btn-icon {
-        font-size: var(--text-base);
-    }
-}
 
 /* ============================================
    TYPOGRAPHY UTILITIES

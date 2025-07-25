@@ -382,8 +382,8 @@ export class DrawerUI {
                 }
             }
 
-            /* Hide hamburger button on desktop when multiplayer button is visible */
-            @media (min-width: 769px) {
+            /* Hide hamburger button on desktop when desktop-nav-buttons is visible */
+            @media (min-width: 1200px) {
                 .hamburger-button {
                     display: none !important;
                 }

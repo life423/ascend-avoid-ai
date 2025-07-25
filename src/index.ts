@@ -53,12 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize drawer UI (always present)
     const drawerUI = new DrawerUI()
 
-    // Create multiplayer button with proper styling (desktop only)
-    const deviceInfo2 = detectDevice()
-    if (!deviceInfo2.isMobile && !deviceInfo2.isTablet) {
-        createMultiplayerButton()
-    }
-
     // Initialize the game
     const game = new Game()
 
@@ -80,70 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Game initialized successfully')
 })
 
-/**
- * Creates styled multiplayer button with proper responsive behavior
- */
-function createMultiplayerButton() {
-    // Create multiplayer button container
-    const mpButtonContainer = document.createElement('div')
-    mpButtonContainer.className = 'mp-button-container'
-    mpButtonContainer.style.position = 'fixed'
-    mpButtonContainer.style.top = '10px'
-    mpButtonContainer.style.right = '10px'
-    mpButtonContainer.style.zIndex = '100'
-
-    // Create the button element
-    const mpButton = document.createElement('button')
-    mpButton.textContent = 'Multiplayer'
-    mpButton.className = 'multiplayer-button'
-    mpButton.style.background = '#0CC7C7'
-    mpButton.style.color = 'black'
-    mpButton.style.border = 'none'
-    mpButton.style.padding = '10px 15px'
-    mpButton.style.borderRadius = '4px'
-    mpButton.style.fontWeight = 'bold'
-    mpButton.style.cursor = 'pointer'
-    mpButton.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.3)'
-    mpButton.style.transition = 'all 0.2s ease'
-
-    // Add button hover effects
-    mpButton.addEventListener('mouseenter', () => {
-        mpButton.style.transform = 'scale(1.05)'
-        mpButton.style.boxShadow = '0 0 15px rgba(12, 199, 199, 0.5)'
-    })
-
-    mpButton.addEventListener('mouseleave', () => {
-        mpButton.style.transform = 'scale(1)'
-        mpButton.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.3)'
-    })
-
-    // Make button responsive on smaller screens
-    const mediaQuery = window.matchMedia('(max-width: 600px)')
-    function updateButtonSize(mq: MediaQueryListEvent | MediaQueryList) {
-        if (mq.matches) {
-            // Smaller button on mobile
-            mpButton.style.padding = '8px 12px'
-            mpButton.style.fontSize = '0.9rem'
-        } else {
-            // Regular size on desktop
-            mpButton.style.padding = '10px 15px'
-            mpButton.style.fontSize = '1rem'
-        }
-    }
-
-    // Initialize button size based on screen
-    updateButtonSize(mediaQuery)
-
-    // Update button when screen size changes
-    mediaQuery.addEventListener('change', updateButtonSize)
-
-    // Add click handler to initialize multiplayer
-    mpButton.addEventListener('click', initializeMultiplayer)
-
-    // Add button to container and container to document
-    mpButtonContainer.appendChild(mpButton)
-    document.body.appendChild(mpButtonContainer)
-}
 
 /**
  * Initializes multiplayer functionality on demand using the Game mode system
