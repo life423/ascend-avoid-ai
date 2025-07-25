@@ -9,6 +9,7 @@ import './styles/touch-controls.css'
 // Import core game components
 import Game from './core/Game'
 import { ResponsiveSystem } from './systems/UnifiedResponsiveSystem'
+import { DrawerUI } from './ui/DrawerUI'
 
 // Helper function for device detection
 function detectDevice() {
@@ -49,14 +50,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Canvas management is now handled by ResponsiveManager in Game.ts
 
-    // Create multiplayer button with proper styling
-    createMultiplayerButton()
+    // Initialize drawer UI (always present)
+    const drawerUI = new DrawerUI()
+
+    // Create multiplayer button with proper styling (desktop only)
+    const deviceInfo2 = detectDevice()
+    if (!deviceInfo2.isMobile && !deviceInfo2.isTablet) {
+        createMultiplayerButton()
+    }
 
     // Initialize the game
     const game = new Game()
 
     // Store references for debugging and future use
     ;(window as any).game = game
+    ;(window as any).drawerUI = drawerUI
+
+    // Make initializeMultiplayer available globally for drawer
+    ;(window as any).initializeMultiplayer = initializeMultiplayer
 
     // Remove loading indicator after initialization
     if (loader) {
