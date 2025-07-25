@@ -15,19 +15,27 @@
     }
     
     .app-header {
-        padding: var(--space-xs);
+        padding: var(--space-sm) var(--space-md);
+        padding-top: max(var(--space-sm), env(safe-area-inset-top, 8px));
         min-height: 50px;
     }
     
     .app-header h1 {
-        font-size: 1.2rem;
-        margin: 0;
+        font-size: 1.5rem;
+        margin: 0 0 var(--space-xs) 0;
     }
     
     .score-panel {
         gap: var(--space-sm);
         padding: var(--space-xs) 0;
-        margin: var(--space-xs) 0 0;
+        margin: 0;
+    }
+    
+    .score-panel h4 {
+        font-size: 0.6875rem; /* 11px equivalent - clearly metadata */
+        margin: 0;
+        opacity: 0.75; /* Muted appearance */
+        letter-spacing: 0.025em; /* Subtle distinction */
     }
     
     .game-main {
@@ -94,7 +102,8 @@
     }
     
     .app-header {
-        padding: var(--space-xs);
+        padding: var(--space-sm);
+        padding-top: max(var(--space-sm), env(safe-area-inset-top, 8px));
         min-height: 3.5rem; /* Slightly smaller header on tiny screens */
     }
     
@@ -102,7 +111,13 @@
         gap: var(--space-xs); /* Reduce gap on small screens */
         padding: var(--space-xs) 0;
         margin: var(--space-xs) 0 0;
-        font-size: 0.9rem; /* Slightly smaller text */
+    }
+    
+    .score-panel h4 {
+        font-size: 0.6875rem; /* 11px equivalent - metadata level */
+        margin: 0;
+        opacity: 0.7; /* Even more muted on small screens */
+        letter-spacing: 0.025em;
     }
     
     .control-panel {
@@ -135,7 +150,8 @@
 /* Extremely small screens - emergency space negotiation */
 @media (max-height: 500px) {
     .app-header h1 {
-        font-size: 1rem; /* Smaller title */
+        font-size: 1.25rem; /* Smaller but still prominent title */
+        margin: 0 0 var(--space-xs) 0;
     }
     
     .score-panel {
