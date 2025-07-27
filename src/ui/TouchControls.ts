@@ -6,6 +6,8 @@
 import Game from '../core/Game'
 import { EventBus } from '../core/EventBus'
 import { TouchControlsAdapter } from '../adapters/TouchControlsAdapter'
+import { SmartResponsiveness, TouchInteractionData, createSmartResponsiveness } from '../systems/SmartResponsiveness'
+import { FluidResponsiveSystem } from '../systems/FluidResponsiveSystem'
 
 // Interface for control button definition
 interface ControlButton {
@@ -31,6 +33,7 @@ interface ButtonElements {
 export default class TouchControls {
     private eventBus: EventBus
     private controlsAdapter: TouchControlsAdapter | null = null
+    private smartResponsiveness: SmartResponsiveness | null = null
 
     // Control button properties with symbols
     private buttons: Record<string, ControlButton>
@@ -43,6 +46,10 @@ export default class TouchControls {
 
     // Device detection
     private isTouchDevice: boolean
+    
+    // Neural network data collection
+    private touchStartTimes: Map<string, number> = new Map()
+    private touchStartPositions: Map<string, { x: number; y: number }> = new Map()
 
     constructor(_game: Game, eventBus: EventBus) {
         this.eventBus = eventBus
@@ -90,6 +97,24 @@ export default class TouchControls {
         // Initialize the adapter with the container
         if (this.container) {
             this.controlsAdapter = new TouchControlsAdapter(this.container);
+        }
+
+        // Initialize Smart Responsiveness for neural network optimization
+        if (this.isTouchDevice) {
+            this.smartResponsiveness = createSmartResponsiveness({
+                enabled: true,
+                learningRate: 0.15, // Slightly faster learning for mobile games
+                minButtonSize: 35,
+                maxButtonSize: 75,
+                adaptationThreshold: 3 // Start adapting after just 3 interactions
+            })
+            
+            // Subscribe to optimization updates
+            this.smartResponsiveness.subscribe((optimizations) => {
+                this.applyButtonOptimizations(optimizations)
+            })
+            
+            console.log('🧠 Neural network button optimization enabled')
         }
 
         // Hide controls on desktop/mouse-based devices or when desktop layout is forced
@@ -268,17 +293,32 @@ export default class TouchControls {
 
             button.addEventListener('touchstart', (e: TouchEvent) => {
                 e.preventDefault()
-                this.handleButtonActivation(key, true, e.changedTouches[0].identifier)
+                const touch = e.changedTouches[0]
+                
+                // Collect neural network data
+                this.recordTouchStart(key, touch, button)
+                
+                this.handleButtonActivation(key, true, touch.identifier)
             }, { passive: false })
 
             button.addEventListener('touchend', (e: TouchEvent) => {
                 e.preventDefault()
-                this.handleButtonActivation(key, false, e.changedTouches[0].identifier)
+                const touch = e.changedTouches[0]
+                
+                // Collect neural network data
+                this.recordTouchEnd(key, touch, button, true) // Successful touch
+                
+                this.handleButtonActivation(key, false, touch.identifier)
             }, { passive: false })
 
             button.addEventListener('touchcancel', (e: TouchEvent) => {
                 e.preventDefault()
-                this.handleButtonActivation(key, false, e.changedTouches[0].identifier)
+                const touch = e.changedTouches[0]
+                
+                // Record as unsuccessful touch
+                this.recordTouchEnd(key, touch, button, false)
+                
+                this.handleButtonActivation(key, false, touch.identifier)
             }, { passive: false })
 
             button.addEventListener('touchmove', (e: TouchEvent) => {
@@ -291,6 +331,8 @@ export default class TouchControls {
                     touch.clientY < buttonRect.top ||
                     touch.clientY > buttonRect.bottom
                 ) {
+                    // Touch moved outside button - record as unsuccessful
+                    this.recordTouchEnd(key, touch, button, false)
                     this.handleButtonActivation(key, false, touch.identifier)
                 }
             }, { passive: false })
