@@ -605,7 +605,7 @@ export default class Game {
             const particleRatio = Math.max(0.3, Math.min(2.0, canvasArea / baseArea))
             const maxParticles = Math.floor(500 * particleRatio)
             
-            (this.particleSystem as any).setMaxParticles(maxParticles)
+            ;(this.particleSystem as any).setMaxParticles(maxParticles)
             console.log(`  Adjusted max particles to ${maxParticles} (ratio: ${particleRatio.toFixed(2)})`)
         }
     }
@@ -635,7 +635,7 @@ export default class Game {
         // Check if touch controls have layout update method
         if (typeof (this.touchControls as any).updateLayout === 'function') {
             const isDesktop = this.responsiveManager?.isDesktopDevice() || false
-            (this.touchControls as any).updateLayout(isDesktop)
+            ;(this.touchControls as any).updateLayout(isDesktop)
         }
     }
     

@@ -54,6 +54,10 @@
     
     .game-main {
         padding: var(--space-xs);
+        flex: 1; /* Take remaining space */
+        display: flex;
+        flex-direction: column;
+        min-height: 0; /* Allow shrinking */
     }
     
     .game-area {
@@ -64,6 +68,30 @@
         justify-content: center;
         align-items: center;
         padding: 0;
+    }
+    
+    /* Ensure canvas viewport and canvas are visible and properly sized on mobile */
+    .canvas-viewport {
+        width: 100%;
+        height: 100%;
+        max-width: calc(100vw - 2rem);
+        max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 6rem);
+        /* Fallback for browsers without custom property support */
+        max-height: calc(100vh - 120px - 6rem);
+        min-width: 280px; /* Ensure minimum container size */
+        min-height: 200px; /* Ensure minimum container size */
+        flex: 1; /* Take available space in flex container */
+    }
+    
+    .game-canvas {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        min-width: 300px; /* Ensure minimum canvas size */
+        min-height: 300px; /* Ensure minimum canvas size */
+        border: 4px solid #ff0000 !important; /* Debug: bright red border */
+        background: #001122 !important; /* Debug: dark blue background */
     }
     
     /* Updated mobile control-panel - adaptive sizing based on content */
@@ -80,12 +108,14 @@
     
     /* Updated mobile touch-controller - responsive sizing */
     .touch-controller {
-        display: flex;
+        display: flex !important;
         justify-content: center;
         height: auto;
         /* Responsive sizing based on viewport height - adapts to device constraints */
         min-height: clamp(60px, 12vh, 100px); /* Scale with viewport, never too small or huge */
         padding: var(--control-gap) 0; /* Use shared responsive padding */
+        background: #ff00ff !important; /* Debug: bright magenta background */
+        border: 2px solid #00ff00 !important; /* Debug: bright green border */
     }
     
     .info-panel {
@@ -282,6 +312,49 @@
     /* Landscape touch devices get optimized canvas size */
     max-width: calc(100vw - var(--ctrl-h, 120px) - 2rem);
     max-height: calc(var(--vh, 1vh) * 100 - 4rem);
+}
+
+/* Enhanced landscape layout for better horizontal device experience */
+@media (orientation: landscape) and (max-width: 1199px) {
+    .app-header {
+        padding: var(--space-sm) var(--space-md);
+        min-height: 50px;
+    }
+    
+    .app-header h1 {
+        font-size: 1.25rem;
+        margin: 0 0 var(--space-xs) 0;
+    }
+    
+    .score-panel {
+        gap: var(--space-md);
+        padding: var(--space-xs) 0;
+        margin: var(--space-xs) 0 0;
+    }
+    
+    .score-panel h4 {
+        font-size: 0.75rem;
+        margin: 0;
+    }
+    
+    .game-main {
+        padding: var(--space-sm);
+    }
+    
+    .control-panel {
+        padding: var(--space-xs) var(--space-sm);
+        max-height: 20vh; /* Reduce control panel height in landscape */
+    }
+    
+    .touch-controller {
+        min-height: clamp(50px, 10vh, 80px); /* Smaller controls in landscape */
+    }
+    
+    /* Optimize canvas for landscape - use more of the horizontal space */
+    .game-canvas {
+        max-width: calc(100vw - 1rem);
+        max-height: calc(var(--vh, 1vh) * 100 - 8rem); /* Account for header and controls */
+    }
 }
 
 /* ============================================
