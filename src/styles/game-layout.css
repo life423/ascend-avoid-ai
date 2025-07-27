@@ -79,7 +79,7 @@
     grid-template-rows: 1fr;
     grid-template-columns: 1fr;
     overflow: hidden;
-    gap: var(--space-lg);
+    gap: 0; /* No gap - desktop will have no space between canvas and panel */
 }
 
 /* Canvas viewport - combines positioning from both files */
@@ -121,74 +121,87 @@
 @layer components {
 .info-panel {
     display: none;
-    background: var(--primary-light);
-    border-radius: var(--border-radius);
-    /* Modern CSS: Logical properties for internationalization */
-    border-inline-start: 4px solid var(--accent-primary);
-    box-shadow: var(--shadow-medium);
+    /* Modern glass-morphism background */
+    background: linear-gradient(145deg, rgba(10, 25, 47, 0.95), rgba(23, 42, 70, 0.9));
+    border-radius: calc(var(--border-radius) * 1.5); /* Larger radius for modern feel */
+    /* Subtle modern border instead of thick accent */
+    border: 1px solid rgba(0, 188, 212, 0.2);
+    /* Enhanced depth with layered shadows */
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 2px 8px rgba(0, 188, 212, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
     /* Modern CSS Grid layout */
     display: grid;
-    grid-template-rows: 1fr auto;
-    gap: clamp(1.5rem, 4cqh, 2.5rem);
+    grid-template-rows: auto 1fr auto; /* Header, content, actions */
+    gap: 0; /* Remove gap - use padding for control */
     /* Modern CSS: Logical sizing */
     block-size: 100%;
-    padding: clamp(1.5rem, 4cqw, 2rem);
+    padding: 0; /* Reset - individual sections will have padding */
     /* Container queries support */
     container-type: size;
+    /* Modern backdrop blur effect */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 
 .panel-content {
     /* Grid child - takes available space */
-    display: grid;
-    grid-template-rows: auto 1fr;
-    gap: clamp(1rem, 3cqh, 1.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.5rem, 4cqh, 2rem); /* Generous spacing */
     overflow-y: auto;
     scrollbar-gutter: stable;
-    padding: clamp(1rem, 3cqw, 1.5rem);
-    background: rgba(10, 25, 47, 0.3);
-    border-radius: calc(var(--border-radius) * 0.75);
-    border: 1px solid rgba(0, 188, 212, 0.15);
+    padding: clamp(2rem, 5cqw, 2.5rem); /* Generous padding for breathing room */
+    background: transparent; /* Clean, minimal background */
+    border-radius: 0;
+    border: none;
+    /* Custom scrollbar for modern look */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 188, 212, 0.3) transparent;
 }
 
 .panel-content h3 {
-    color: var(--accent-secondary);
-    font-size: clamp(1.25rem, 3cqw, 1.5rem);
+    color: var(--text-light); /* Clean white instead of accent */
+    font-size: clamp(1.75rem, 4cqw, 2rem); /* Even larger for strong hierarchy */
     margin: 0;
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
+    font-weight: 600; /* Slightly lighter weight for modern look */
+    line-height: 1.1;
+    letter-spacing: -0.03em; /* Tighter for modern typography */
+    text-transform: none; /* Remove uppercase for cleaner look */
     position: relative;
-    padding-bottom: clamp(0.5rem, 2cqh, 0.75rem);
+    padding-bottom: clamp(1rem, 3cqh, 1.25rem); /* More space below */
 }
 
 .panel-content h3::after {
     content: '';
     position: absolute;
-    bottom: 0;
+    bottom: clamp(0.375rem, 1.5cqh, 0.5rem);
     left: 0;
-    width: clamp(2.5rem, 15cqw, 3.5rem);
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent-secondary), transparent);
-    border-radius: 2px;
+    width: clamp(2rem, 12cqw, 2.5rem); /* Smaller, more subtle */
+    height: 2px; /* Thinner line */
+    background: var(--accent-primary); /* Solid color instead of gradient */
+    border-radius: 1px;
+    opacity: 0.6; /* Subtle accent */
 }
 
 .panel-content p {
     margin: 0;
-    line-height: 1.7;
-    color: rgba(245, 245, 245, 0.85);
-    font-size: clamp(0.875rem, 2.5cqw, 1rem);
+    line-height: 1.6; /* Optimal reading line-height */
+    color: rgba(245, 245, 245, 0.9); /* Higher contrast for better readability */
+    font-size: clamp(1rem, 2.8cqw, 1.125rem); /* Larger base size for better readability */
 }
 
 .panel-content p:first-of-type {
-    font-size: clamp(0.95rem, 2.8cqw, 1.1rem);
+    font-size: clamp(1.125rem, 3.2cqw, 1.25rem); /* Lead paragraph - larger */
     font-weight: 500;
     color: var(--text-light);
-    margin-bottom: clamp(0.75rem, 2cqh, 1rem);
+    margin-bottom: clamp(1.25rem, 3cqh, 1.5rem); /* More space below lead */
+    line-height: 1.5; /* Tighter for larger text */
 }
 
 .panel-content p + p {
-    margin-top: clamp(0.75rem, 2cqh, 1rem);
+    margin-top: clamp(1rem, 2.5cqh, 1.25rem); /* Consistent paragraph spacing */
 }
 
 .panel-content ul {
@@ -258,19 +271,64 @@
 
 .info-actions {
     /* Grid child - stays at bottom naturally */
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: clamp(0.75rem, 2cqw, 1rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 2.5cqw, 1.25rem); /* Stack buttons vertically with generous spacing */
     /* Modern CSS: Logical padding with fluid spacing */
-    padding-block: clamp(1rem, 3cqh, 1.5rem);
-    border-block-start: 2px solid var(--divider-line);
+    padding: clamp(1.5rem, 4cqw, 2rem); /* Generous padding all around */
+    border-top: 1px solid rgba(0, 188, 212, 0.1); /* Subtle divider */
+    background: rgba(0, 0, 0, 0.1); /* Subtle background differentiation */
+    border-radius: 0 0 calc(var(--border-radius) * 1.5) calc(var(--border-radius) * 1.5); /* Match panel radius */
 }
 
-/* Buttons fill grid cells naturally */
+/* Modern button styling with responsive-first approach */
 .info-actions button {
-    /* Grid children automatically stretch */
     width: 100%;
-    min-height: clamp(2.75rem, 8cqh, 3.5rem);
+    min-height: clamp(3rem, 8cqh, 3.5rem); /* Taller for better touch targets */
+    padding: clamp(0.75rem, 2cqw, 1rem) clamp(1.25rem, 3cqw, 1.5rem);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border: 1px solid rgba(0, 188, 212, 0.3);
+    border-radius: calc(var(--border-radius) * 0.75);
+    color: var(--text-dark);
+    font-weight: 500;
+    font-size: clamp(0.875rem, 2.5cqw, 1rem);
+    letter-spacing: 0.025em;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Modern easing */
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+/* Modern hover effects */
+.info-actions button:hover {
+    background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+    border-color: rgba(0, 188, 212, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 
+        0 8px 25px rgba(0, 188, 212, 0.25),
+        0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Modern active state */
+.info-actions button:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 2px 8px rgba(0, 188, 212, 0.2),
+        inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Focus state for accessibility */
+.info-actions button:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* Responsive-first: Ensure touch-friendly on mobile */
+@media (max-width: 1199px) {
+    .info-actions button {
+        min-height: 44px; /* Minimum touch target */
+        font-size: 1rem; /* Larger text on mobile */
+    }
 }
 } /* End @layer components */
 
@@ -439,15 +497,15 @@
     .info-panel {
         display: grid;
         grid-column: 2;
-        width: 280px;
-        min-width: 280px;
-        max-width: 280px;
+        width: 320px; /* Wider for better content layout */
+        min-width: 320px;
+        max-width: 320px;
     }
     
     .game-area {
         display: grid;
-        grid-template-columns: 1fr 280px;
-        gap: var(--space-lg);
+        grid-template-columns: 1fr 320px; /* Wider panel for better content breathing room */
+        gap: var(--space-xl); /* Generous gap for modern visual separation */
         height: 100%;
     }
     
@@ -457,5 +515,10 @@
     
     .mobile-only {
         display: none;
+    }
+    
+    /* Modern panel positioning with proper spacing */
+    .info-panel {
+        /* Panel gets full modern styling - no border adjustments needed */
     }
 }
