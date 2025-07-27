@@ -206,13 +206,7 @@
         left: -9999px !important;
     }
     
-    .info-panel {
-        display: flex;
-        grid-column: 2;
-        width: 280px;
-        min-width: 280px;
-        max-width: 280px;
-    }
+    /* .info-panel styles moved to game-layout.css to avoid cascade conflicts */
     
     .game-area {
         display: grid;
