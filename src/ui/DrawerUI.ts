@@ -38,19 +38,19 @@ export class DrawerUI {
                 <div class="menu-section">
                     <h3>How to Play</h3>
                     <div class="instructions">
-                        <p>Move the <span class="highlight">white block</span> to the top without hitting the <span class="highlight">blue blocks</span>.</p>
+                        <p>Survive as the last player standing! Move your <span class="highlight">colored block</span> to avoid collisions while the arena shrinks.</p>
                         
                         <h4>Controls</h4>
                         <ul>
                             <li>Use <span class="highlight">arrow keys</span> or <span class="highlight">WASD</span> to move</li>
-                            <li>Press <span class="highlight">'R'</span> to restart the game</li>
+                            <li>Use <span class="highlight">touch controls</span> on mobile devices</li>
                         </ul>
                         
                         <div class="emphasis">
-                            Game speed increases as you score more points!
+                            Last player alive wins the round!
                         </div>
                         
-                        <p>Try to beat your high score and climb the leaderboard!</p>
+                        <p>Compete with players from around the world in real-time multiplayer battles!</p>
                     </div>
                 </div>
                 
@@ -58,7 +58,7 @@ export class DrawerUI {
                     <h3>Game Modes</h3>
                     <button class="menu-button multiplayer-menu-btn">
                         <span class="button-icon">👥</span>
-                        <span class="button-text">Multiplayer</span>
+                        <span class="button-text">Multiplayer (Active)</span>
                     </button>
                 </div>
             </div>
@@ -99,17 +99,26 @@ export class DrawerUI {
     }
 
     private handleMultiplayerClick(): void {
+        console.log('🎮 Multiplayer button clicked from drawer')
+        
         // Close drawer first
         this.close();
 
-        // Get game reference and initialize multiplayer
-        const game = (window as any).game;
-        if (game) {
-            // Use the same multiplayer initialization logic from index.ts
-            if (typeof (window as any).initializeMultiplayer === 'function') {
-                (window as any).initializeMultiplayer();
-            }
+        // In multiplayer branch, the game is already in multiplayer mode
+        // Focus the canvas for better UX
+        const canvas = document.getElementById('gameCanvas')
+        if (canvas) {
+            canvas.focus()
+            console.log('✅ Multiplayer is already active! Focusing game canvas.')
         }
+        
+        // Show a brief message to user
+        console.log('💡 You are already in multiplayer mode! Use the controls to move your player.')
+        
+        // If there was a global initializeMultiplayer function, we could call it:
+        // if (typeof (window as any).initializeMultiplayer === 'function') {
+        //     (window as any).initializeMultiplayer();
+        // }
     }
 
     private injectStyles(): void {
@@ -121,20 +130,20 @@ export class DrawerUI {
             /* Hamburger Button */
             .hamburger-button {
                 position: fixed;
-                top: 20px;
-                right: 20px;
-                width: 40px;
-                height: 40px;
+                top: var(--space-lg);
+                right: var(--space-lg);
+                width: clamp(36px, 8vw, 40px);
+                height: clamp(36px, 8vw, 40px);
                 background: rgba(12, 199, 199, 0.1);
                 border: 2px solid rgba(12, 199, 199, 0.3);
-                border-radius: 8px;
+                border-radius: var(--border-radius);
                 cursor: pointer;
                 z-index: 1001;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                gap: 4px;
+                gap: var(--space-xs);
                 transition: all 0.3s ease;
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
@@ -216,7 +225,7 @@ export class DrawerUI {
 
             /* Drawer Header */
             .drawer-header {
-                padding: 30px 25px 20px;
+                padding: var(--space-xl) var(--space-lg) var(--space-lg);
                 border-bottom: 1px solid rgba(12, 199, 199, 0.2);
                 background: rgba(12, 199, 199, 0.05);
             }
@@ -231,7 +240,7 @@ export class DrawerUI {
 
             /* Drawer Content */
             .drawer-content {
-                padding: 25px;
+                padding: var(--space-lg);
             }
 
             .menu-section {
@@ -309,7 +318,7 @@ export class DrawerUI {
                 padding: 15px 20px;
                 background: rgba(12, 199, 199, 0.1);
                 border: 1px solid rgba(12, 199, 199, 0.3);
-                border-radius: 8px;
+                border-radius: var(--border-radius);
                 color: #0CC7C7;
                 font-size: 16px;
                 font-weight: 500;

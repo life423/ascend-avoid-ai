@@ -11,10 +11,12 @@ import { DeviceInfo } from './types'
 import { setupPolyfills } from './utils/polyfills'
 import { setupPerformanceMonitoring } from './utils/performance'
 import { initMobileViewportFix, applyChromeMobileFixes } from './utils/mobileViewportFix'
+import { DrawerUI } from './ui/DrawerUI'
 
 // Global game instance
 let gameInstance: Game | null = null
 let responsiveCanvas: ResponsiveCanvas | null = null
+let drawerUI: DrawerUI | null = null
 
 class DeviceDetector {
   static getInfo(): DeviceInfo {
@@ -147,6 +149,11 @@ class GameApplication {
     try {
       gameInstance = new Game()
       console.log('Multiplayer game instance created')
+      
+      // Initialize DrawerUI for mobile menu
+      drawerUI = new DrawerUI()
+      console.log('🍔 Mobile drawer menu initialized')
+      
     } catch (error) {
       console.error('Failed to initialize game:', error)
       throw error
@@ -259,6 +266,11 @@ class GameApplication {
     if (responsiveCanvas) {
       responsiveCanvas.destroy()
       responsiveCanvas = null
+    }
+    
+    if (drawerUI) {
+      drawerUI.destroy()
+      drawerUI = null
     }
     
     if (gameInstance && typeof (gameInstance as any).dispose === 'function') {
