@@ -85,13 +85,18 @@ export class GameRoom extends Room<GameState> {
       const player = this.state.players.get(client.sessionId);
       if (!player) {
         console.log(`⚠️ SERVER: No player found for input from ${client.sessionId}`);
+        // Send a message back to the client to let them know their player doesn't exist yet
+        client.send("playerNotReady", { sessionId: client.sessionId });
         return;
       }
 
-      player.upKey = data.up ?? false;
-      player.downKey = data.down ?? false;
-      player.leftKey = data.left ?? false;
-      player.rightKey = data.right ?? false;
+      // Only update input if player is alive
+      if (player.state === "alive") {
+        player.upKey = data.up ?? false;
+        player.downKey = data.down ?? false;
+        player.leftKey = data.left ?? false;
+        player.rightKey = data.right ?? false;
+      }
     });
 
     this.onMessage("updateName", (client: Client, data: NameUpdateMessage) => {

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mid-Game Join Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-container {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .test-panel {
+            border: 2px solid #444;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 5px;
+            width: 400px;
+        }
+        .status {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .success { background: #2d5016; color: #4CAF50; }
+        .warning { background: #3d2914; color: #ff9800; }
+        .error { background: #3d1a1a; color: #f44336; }
+        .info { background: #1a2332; color: #2196F3; }
+        
+        .log {
+            background: #111;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover { background: #45a049; }
+        button:disabled { background: #666; cursor: not-allowed; }
+        
+        .game-state {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mid-Game Join Test</h1>
+    <p>This test verifies that players can join and control their character even when refreshing during an active game.</p>
+    
+    <div class="test-container">
+        <div class="test-panel">
+            <h3>Test Instructions</h3>
+            <div class="info">
+                <p><strong>How to test:</strong></p>
+                <ol>
+                    <li>Click "Connect & Wait for Game Start"</li>
+                    <li>Wait for the game to begin (obstacles start falling)</li>
+                    <li>Click "Refresh & Rejoin" to simulate page refresh</li>
+                    <li>Check that you can still control your character</li>
+                    <li>Player should spawn safely in upper part of arena</li>
+                </ol>
+            </div>
+            
+            <button id="connectBtn" onclick="connect()">Connect & Wait for Game Start</button>
+            <button id="refreshBtn" onclick="refreshAndRejoin()" disabled>Refresh & Rejoin</button>
+            <button onclick="clearLog()">Clear Log</button>
+            
+            <div class="game-state" id="gameState">Game State: Unknown</div>
+            <div class="game-state" id="playerState">Player State: Not Connected</div>
+        </div>
+        
+        <div class="test-panel">
+            <h3>Connection Log</h3>
+            <div class="log" id="connectionLog"></div>
+        </div>
+    </div>
+    
+    <div class="test-panel" style="width: 100%;">
+        <h3>Movement Test</h3>
+        <p>Use arrow keys or WASD to test player movement after reconnection.</p>
+        <div class="log" id="movementLog" style="height: 150px;"></div>
+    </div>
+
+    <script src="https://unpkg.com/colyseus.js@0.15.7/dist/colyseus.js"></script>
+    <script>
+        let client = null;
+        let room = null;
+        let localSessionId = '';
+        let playerReady = false;
+        let inputState = { up: false, down: false, left: false, right: false };
+        
+        function log(message, type = 'info') {
+            const connectionLog = document.getElementById('connectionLog');
+            const time = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+            connectionLog.innerHTML += `<div class="${className}">[${time}] ${message}</div>`;
+            connectionLog.scrollTop = connectionLog.scrollHeight;
+            console.log(`[${time}] ${message}`);
+        }
+        
+        function logMovement(message) {
+            const movementLog = document.getElementById('movementLog');
+            const time = new Date().toLocaleTimeString();
+            movementLog.innerHTML += `<div>[${time}] ${message}</div>`;
+            movementLog.scrollTop = movementLog.scrollHeight;
+        }
+        
+        function updateGameState(gameState, playerCount) {
+            document.getElementById('gameState').textContent = `Game State: ${gameState} | Players: ${playerCount}`;
+        }
+        
+        function updatePlayerState(state, position) {
+            document.getElementById('playerState').textContent = `Player State: ${state} | Position: ${position}`;
+        }
+        
+        async function connect() {
+            try {
+                log('🔌 Connecting to server...', 'info');
+                
+                client = new Colyseus.Client('ws://localhost:3000');
+                room = await client.joinOrCreate('game_room', {
+                    playerName: 'MidGameTester_' + Math.random().toString(36).substr(2, 5)
+                });
+                
+                localSessionId = room.sessionId;
+                log(`✅ Connected! Session: ${localSessionId}`, 'success');
+                
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('refreshBtn').disabled = false;
+                
+                // Monitor game state changes
+                room.onStateChange((state) => {
+                    updateGameState(state.gameState, state.totalPlayers);
+                    
+                    if (state.gameState === 'playing') {
+                        log('🎮 GAME STARTED! Now you can test refresh & rejoin', 'success');
+                    }
+                });
+                
+                // Set up state change handler
+                room.onStateChange.once((state) => {
+                    log('📡 Initial state received', 'success');
+                    
+                    if (state.players) {
+                        state.players.onAdd((player, sessionId) => {
+                            if (sessionId === localSessionId) {
+                                playerReady = true;
+                                const gameState = state.gameState || 'unknown';
+                                log(`🎮 Our player ready! State: ${player.state}, Game: ${gameState}`, 'success');
+                                updatePlayerState(player.state, `(${Math.round(player.x)}, ${Math.round(player.y)})`);
+                                
+                                if (gameState === 'playing') {
+                                    log('⚠️ Joined during active game - testing mid-game spawn!', 'warning');
+                                }
+                                
+                                // Monitor position changes
+                                player.onChange(() => {
+                                    updatePlayerState(player.state, `(${Math.round(player.x)}, ${Math.round(player.y)})`);
+                                });
+                            }
+                        });
+                        
+                        // Process existing players
+                        state.players.forEach((player, sessionId) => {
+                            if (sessionId === localSessionId) {
+                                state.players.onAdd(player, sessionId);
+                            }
+                        });
+                    }
+                });
+                
+                room.onError((code, message) => {
+                    log(`❌ Room error ${code}: ${message}`, 'error');
+                });
+                
+                // Start input loop
+                startInputLoop();
+                
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function refreshAndRejoin() {
+            log('🔄 Simulating page refresh...', 'warning');
+            
+            // Disconnect current connection
+            if (room) {
+                room.leave();
+                room = null;
+                client = null;
+                playerReady = false;
+                localSessionId = '';
+            }
+            
+            updatePlayerState('Disconnected', 'N/A');
+            
+            // Reconnect after a short delay
+            setTimeout(() => {
+                log('🔄 Reconnecting...', 'info');
+                connect();
+            }, 1000);
+        }
+        
+        function startInputLoop() {
+            setInterval(() => {
+                if (room && playerReady) {
+                    // Send input if any keys are pressed
+                    if (inputState.up || inputState.down || inputState.left || inputState.right) {
+                        room.send('input', {
+                            up: inputState.up,
+                            down: inputState.down,
+                            left: inputState.left,
+                            right: inputState.right
+                        });
+                        
+                        const activeInputs = Object.keys(inputState).filter(key => inputState[key]);
+                        logMovement(`📤 Sent: ${activeInputs.join(', ')}`);
+                    }
+                }
+            }, 50); // 20 FPS input
+        }
+        
+        function clearLog() {
+            document.getElementById('connectionLog').innerHTML = '';
+            document.getElementById('movementLog').innerHTML = '';
+        }
+        
+        // Keyboard event handlers
+        function handleKeyDown(e) {
+            let direction = null;
+            switch(e.key) {
+                case 'ArrowUp': case 'w': case 'W': direction = 'up'; break;
+                case 'ArrowDown': case 's': case 'S': direction = 'down'; break;
+                case 'ArrowLeft': case 'a': case 'A': direction = 'left'; break;
+                case 'ArrowRight': case 'd': case 'D': direction = 'right'; break;
+            }
+            
+            if (direction && !inputState[direction]) {
+                inputState[direction] = true;
+                logMovement(`⬇️ ${direction.toUpperCase()} pressed`);
+            }
+        }
+        
+        function handleKeyUp(e) {
+            let direction = null;
+            switch(e.key) {
+                case 'ArrowUp': case 'w': case 'W': direction = 'up'; break;
+                case 'ArrowDown': case 's': case 'S': direction = 'down'; break;
+                case 'ArrowLeft': case 'a': case 'A': direction = 'left'; break;
+                case 'ArrowRight': case 'd': case 'D': direction = 'right'; break;
+            }
+            
+            if (direction && inputState[direction]) {
+                inputState[direction] = false;
+                logMovement(`⬆️ ${direction.toUpperCase()} released`);
+            }
+        }
+        
+        // Set up keyboard listeners
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
+        
+        // Focus the page for keyboard input
+        window.focus();
+    </script>
+</body>
+</html>

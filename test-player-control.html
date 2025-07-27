@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Player Control Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .debug-container {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .debug-panel {
+            border: 2px solid #444;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 5px;
+            width: 300px;
+        }
+        .status {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .success { background: #2d5016; color: #4CAF50; }
+        .warning { background: #3d2914; color: #ff9800; }
+        .error { background: #3d1a1a; color: #f44336; }
+        .info { background: #1a2332; color: #2196F3; }
+        
+        .controls {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .key-test {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 5px;
+            background: #555;
+            border-radius: 5px;
+            min-width: 50px;
+            text-align: center;
+        }
+        .key-test.active { background: #4CAF50; }
+        
+        .room-info {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover { background: #45a049; }
+        button:disabled { background: #666; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>Player Control Debug Test</h1>
+    
+    <div class="debug-container">
+        <div class="debug-panel">
+            <h3>Connection Status</h3>
+            <div id="connectionStatus" class="status">Not connected</div>
+            <div id="sessionInfo" class="room-info">Session: Not available</div>
+            <div id="roomInfo" class="room-info">Room: Not available</div>
+            <div id="playerInfo" class="room-info">Player: Not created</div>
+        </div>
+        
+        <div class="debug-panel">
+            <h3>Input Status</h3>
+            <div class="controls">
+                <div>Keyboard Input Test:</div>
+                <div class="key-test" id="key-up">↑ UP</div>
+                <div class="key-test" id="key-down">↓ DOWN</div>
+                <div class="key-test" id="key-left">← LEFT</div>
+                <div class="key-test" id="key-right">→ RIGHT</div>
+            </div>
+            <div id="inputLog" class="room-info" style="height: 150px; overflow-y: auto;"></div>
+        </div>
+        
+        <div class="debug-panel">
+            <h3>Player State</h3>
+            <div id="playerStates" class="room-info" style="height: 200px; overflow-y: auto;"></div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button id="connectBtn" onclick="connect()">Connect to Server</button>
+        <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+        <button onclick="testInputBurst()">Test Input Burst</button>
+    </div>
+    
+    <div class="debug-panel" style="width: 100%;">
+        <h3>Debug Log</h3>
+        <div id="debugLog" class="room-info" style="height: 300px; overflow-y: auto;"></div>
+    </div>
+
+    <script src="https://unpkg.com/colyseus.js@0.15.7/dist/colyseus.js"></script>
+    <script>
+        let client = null;
+        let room = null;
+        let localSessionId = '';
+        let inputState = { up: false, down: false, left: false, right: false };
+        let playerCreated = false;
+        let lastInputSent = Date.now();
+        let inputQueue = [];
+        
+        function log(message, type = 'info') {
+            const debugLog = document.getElementById('debugLog');
+            const time = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+            debugLog.innerHTML += `<div class="${className}">[${time}] ${message}</div>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(`[${time}] ${message}`);
+        }
+        
+        function updateConnectionStatus(status, className) {
+            document.getElementById('connectionStatus').textContent = status;
+            document.getElementById('connectionStatus').className = `status ${className}`;
+        }
+        
+        function updateSessionInfo(sessionId, roomId) {
+            document.getElementById('sessionInfo').textContent = `Session: ${sessionId}`;
+            document.getElementById('roomInfo').textContent = `Room: ${roomId}`;
+        }
+        
+        function updatePlayerInfo(info) {
+            document.getElementById('playerInfo').textContent = `Player: ${info}`;
+        }
+        
+        function logInput(direction, pressed) {
+            const inputLog = document.getElementById('inputLog');
+            const time = new Date().toLocaleTimeString();
+            const action = pressed ? 'PRESSED' : 'RELEASED';
+            inputLog.innerHTML += `<div>[${time}] ${direction.toUpperCase()} ${action}</div>`;
+            inputLog.scrollTop = inputLog.scrollHeight;
+        }
+        
+        function updatePlayerStates() {
+            if (!room || !room.state || !room.state.players) return;
+            
+            const statesDiv = document.getElementById('playerStates');
+            let html = `<strong>Total Players: ${room.state.players.size}</strong><br>`;
+            
+            room.state.players.forEach((player, sessionId) => {
+                const isLocal = sessionId === localSessionId;
+                const inputs = `U:${player.upKey ? '✓' : '✗'} D:${player.downKey ? '✓' : '✗'} L:${player.leftKey ? '✓' : '✗'} R:${player.rightKey ? '✓' : '✗'}`;
+                html += `<div style="margin: 5px 0; padding: 5px; background: ${isLocal ? '#2d5016' : '#1a2332'};">`;
+                html += `<strong>${isLocal ? 'YOU' : 'REMOTE'}: ${player.name}</strong><br>`;
+                html += `Session: ${sessionId}<br>`;
+                html += `Position: (${Math.round(player.x)}, ${Math.round(player.y)})<br>`;
+                html += `State: ${player.state}<br>`;
+                html += `Inputs: ${inputs}<br>`;
+                html += `</div>`;
+            });
+            
+            statesDiv.innerHTML = html;
+        }
+        
+        async function connect() {
+            try {
+                updateConnectionStatus('Connecting...', 'warning');
+                log('🔌 Connecting to server...', 'info');
+                
+                client = new Colyseus.Client('ws://localhost:3000');
+                room = await client.joinOrCreate('game_room', {
+                    playerName: 'ControlTest_' + Math.random().toString(36).substr(2, 5)
+                });
+                
+                localSessionId = room.sessionId;
+                updateConnectionStatus('Connected', 'success');
+                updateSessionInfo(localSessionId, room.id);
+                log(`✅ Connected! Session: ${localSessionId}, Room: ${room.id}`, 'success');
+                
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+                
+                // Set up state change handler
+                room.onStateChange.once((state) => {
+                    log('📡 Initial state received', 'success');
+                    playerCreated = true;
+                    updatePlayerInfo('Created and synchronized');
+                    
+                    // Set up player monitoring
+                    if (state.players) {
+                        state.players.onAdd((player, sessionId) => {
+                            log(`➕ Player added: ${sessionId} (${player.name})`, 'success');
+                            if (sessionId === localSessionId) {
+                                log('👤 Our player object created on server!', 'success');
+                                updatePlayerInfo(`Created - Index: ${player.playerIndex}, Pos: (${Math.round(player.x)}, ${Math.round(player.y)})`);
+                            }
+                            
+                            // Monitor this player's input keys
+                            player.onChange(() => {
+                                updatePlayerStates();
+                                
+                                // Log when OUR player's server-side input state changes
+                                if (sessionId === localSessionId) {
+                                    const serverInputs = `U:${player.upKey} D:${player.downKey} L:${player.leftKey} R:${player.rightKey}`;
+                                    log(`🎮 Server input state: ${serverInputs}`, 'info');
+                                }
+                            });
+                        });
+                        
+                        state.players.onRemove((player, sessionId) => {
+                            log(`➖ Player removed: ${sessionId}`, 'warning');
+                        });
+                        
+                        // Process existing players
+                        state.players.forEach((player, sessionId) => {
+                            state.players.onAdd(player, sessionId);
+                        });
+                    }
+                });
+                
+                // Listen for game messages
+                room.onMessage('playerJoined', (data) => {
+                    log(`🟢 Player joined: ${data.name}`, 'success');
+                });
+                
+                room.onError((code, message) => {
+                    log(`❌ Room error ${code}: ${message}`, 'error');
+                });
+                
+                room.onLeave((code) => {
+                    log(`👋 Left room with code: ${code}`, 'warning');
+                    updateConnectionStatus('Disconnected', 'error');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                });
+                
+                // Start input monitoring
+                startInputLoop();
+                
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error');
+                updateConnectionStatus('Connection failed', 'error');
+                document.getElementById('connectBtn').disabled = false;
+            }
+        }
+        
+        function disconnect() {
+            if (room) {
+                room.leave();
+                room = null;
+                client = null;
+                localSessionId = '';
+                playerCreated = false;
+                updateConnectionStatus('Disconnected', 'error');
+                updateSessionInfo('Not available', 'Not available');
+                updatePlayerInfo('Not created');
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+            }
+        }
+        
+        function sendInput() {
+            if (!room || !playerCreated) return;
+            
+            const now = Date.now();
+            const timeSinceLastInput = now - lastInputSent;
+            
+            // Only send if there's actual input or if it's been a while
+            if (inputState.up || inputState.down || inputState.left || inputState.right || timeSinceLastInput > 100) {
+                const inputData = {
+                    up: inputState.up,
+                    down: inputState.down,
+                    left: inputState.left,
+                    right: inputState.right
+                };
+                
+                room.send('input', inputData);
+                lastInputSent = now;
+                
+                const activeInputs = Object.keys(inputData).filter(key => inputData[key]);
+                if (activeInputs.length > 0) {
+                    log(`📤 Sent input: ${activeInputs.join(', ')}`, 'info');
+                }
+            }
+        }
+        
+        function startInputLoop() {
+            setInterval(() => {
+                sendInput();
+                updatePlayerStates();
+            }, 16); // ~60 FPS
+        }
+        
+        function testInputBurst() {
+            if (!room || !playerCreated) {
+                log('❌ Cannot test: not connected or player not created', 'error');
+                return;
+            }
+            
+            log('🧪 Testing input burst...', 'warning');
+            
+            // Send a burst of inputs to test server responsiveness
+            const directions = ['up', 'down', 'left', 'right'];
+            directions.forEach((dir, index) => {
+                setTimeout(() => {
+                    inputState[dir] = true;
+                    sendInput();
+                    setTimeout(() => {
+                        inputState[dir] = false;
+                        sendInput();
+                    }, 100);
+                }, index * 200);
+            });
+        }
+        
+        function clearLogs() {
+            document.getElementById('debugLog').innerHTML = '';
+            document.getElementById('inputLog').innerHTML = '';
+        }
+        
+        // Keyboard event handlers
+        function handleKeyDown(e) {
+            let direction = null;
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    direction = 'up';
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    direction = 'down';
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    direction = 'left';
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    direction = 'right';
+                    break;
+            }
+            
+            if (direction && !inputState[direction]) {
+                inputState[direction] = true;
+                document.getElementById(`key-${direction}`).classList.add('active');
+                logInput(direction, true);
+                
+                if (room && playerCreated) {
+                    sendInput();
+                } else {
+                    log(`⚠️ Input ignored: ${direction} (not ready)`, 'warning');
+                }
+            }
+        }
+        
+        function handleKeyUp(e) {
+            let direction = null;
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    direction = 'up';
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    direction = 'down';
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    direction = 'left';
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    direction = 'right';
+                    break;
+            }
+            
+            if (direction && inputState[direction]) {
+                inputState[direction] = false;
+                document.getElementById(`key-${direction}`).classList.remove('active');
+                logInput(direction, false);
+                
+                if (room && playerCreated) {
+                    sendInput();
+                }
+            }
+        }
+        
+        // Set up keyboard listeners
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
+        
+        // Auto-connect on page load for quick testing
+        setTimeout(() => {
+            // Uncomment to auto-connect:
+            // connect();
+        }, 500);
+    </script>
+</body>
+</html>

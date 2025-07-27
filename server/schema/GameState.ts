@@ -47,16 +47,72 @@ class GameState extends SharedGameState {
     const playerIndex = this.totalPlayers;
     const player = new PlayerSchema(sessionId, playerIndex);
     
-    // Position player at bottom of screen with distributed spawn points
-    player.resetPosition(this.arenaWidth, this.arenaHeight, playerIndex, this.totalPlayers + 1);
+    // Position player safely based on current game state
+    if (this.gameState === GAME_CONSTANTS.STATE.PLAYING) {
+      // Game is active - find a safe spawn position
+      this.spawnPlayerSafely(player, playerIndex);
+      console.log(`Player ${playerIndex} joined mid-game - spawned safely at (${player.x.toFixed(1)}, ${player.y.toFixed(1)})`);
+    } else {
+      // Game not started yet - use normal spawn positioning
+      player.resetPosition(this.arenaWidth, this.arenaHeight, playerIndex, this.totalPlayers + 1);
+      console.log(`Player ${playerIndex} spawned at (${player.x.toFixed(1)}, ${player.y.toFixed(1)}) - game not active yet`);
+    }
     
     this.players.set(sessionId, player);
     this.aliveCount++;
     this.totalPlayers++;
     
-    console.log(`Player ${playerIndex} spawned at (${player.x.toFixed(1)}, ${player.y.toFixed(1)})`);
+    console.log(`Total players: ${this.totalPlayers}, alive: ${this.aliveCount}, game state: ${this.gameState}`);
     
     return player;
+  }
+  
+  /**
+   * Spawn a player safely during an active game
+   * @param player - The player to spawn
+   * @param playerIndex - The player's index
+   */
+  private spawnPlayerSafely(player: PlayerSchema, playerIndex: number): void {
+    // Calculate current safe play area based on arena shrinking
+    const currentArenaWidth = this.arenaWidth * this.areaPercentage / 100;
+    const currentArenaHeight = this.arenaHeight * this.areaPercentage / 100;
+    const arenaOffsetX = (this.arenaWidth - currentArenaWidth) / 2;
+    const arenaOffsetY = (this.arenaHeight - currentArenaHeight) / 2;
+    
+    // Try to find a safe position (avoid obstacles and other players)
+    let attempts = 0;
+    let safePosition = false;
+    
+    while (!safePosition && attempts < 20) {
+      // Spawn in upper half of current arena to avoid bottom obstacles
+      player.x = arenaOffsetX + (Math.random() * (currentArenaWidth - player.width));
+      player.y = arenaOffsetY + (Math.random() * (currentArenaHeight * 0.5)); // Upper half only
+      
+      // Check if position is safe (not overlapping with other players)
+      safePosition = true;
+      this.players.forEach((otherPlayer, sessionId) => {
+        if (otherPlayer.state === GAME_CONSTANTS.PLAYER_STATE.ALIVE) {
+          const distance = Math.sqrt(
+            Math.pow(player.x - otherPlayer.x, 2) + 
+            Math.pow(player.y - otherPlayer.y, 2)
+          );
+          if (distance < 100) { // Too close to another player
+            safePosition = false;
+          }
+        }
+      });
+      
+      attempts++;
+    }
+    
+    // If we couldn't find a safe position, use a fallback
+    if (!safePosition) {
+      player.x = arenaOffsetX + currentArenaWidth / 2 - player.width / 2;
+      player.y = arenaOffsetY + 50; // Near top of arena
+    }
+    
+    player.state = "alive";
+    console.log(`Safe spawn: arena ${currentArenaWidth.toFixed(0)}x${currentArenaHeight.toFixed(0)}, offset (${arenaOffsetX.toFixed(0)}, ${arenaOffsetY.toFixed(0)}), attempts: ${attempts}`);
   }
   
   /**

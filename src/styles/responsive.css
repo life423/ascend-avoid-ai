@@ -1,6 +1,20 @@
 /* ============================================
-   RESPONSIVE OVERRIDES
+   RESPONSIVE OVERRIDES - Enhanced with JavaScript Coordination
    ============================================ */
+
+/* CSS Custom Properties for responsive coordination with ResponsiveManager */
+:root {
+    /* Default values - updated by JavaScript onResize */
+    --device-width: 100vw;
+    --device-height: 100vh;
+    --device-ratio: 1;
+    --canvas-width: 600px;
+    --canvas-height: 700px;
+    --scale-x: 1;
+    --scale-y: 1;
+    --vh: 1vh; /* Real viewport height for mobile browsers */
+    --ctrl-h: 120px; /* Control panel height */
+}
 
 /* Mobile Layout (up to 1199px) */
 @media (max-width: 1199px) {
@@ -96,9 +110,14 @@
     .game-canvas {
         border-width: 1px !important;
         max-width: calc(100vw - 0.625rem);
-        /* Reduce max-height further on small screens to ensure controls fit */
+        /* Enhanced responsive canvas sizing using JavaScript-updated variables */
+        max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 6rem);
+        /* Fallback for browsers without custom property support */
         max-height: calc(100dvh - var(--ctrl-h) - 6rem);
         max-height: calc(100svh - var(--ctrl-h) - 6rem);
+        
+        /* Ensure smooth transitions when resizing */
+        transition: width 0.2s ease, height 0.2s ease, max-width 0.2s ease, max-height 0.2s ease;
     }
     
     .app-header {
@@ -224,23 +243,45 @@
     }
 }
 
-/* Chrome Mobile Specific Fixes */
+/* Chrome Mobile Specific Fixes - Enhanced with JavaScript coordination */
 .chrome-mobile .app-root {
-    /* Keep 100vh for Chrome mobile - more predictable than dvh/svh */
-    height: 100vh !important;
+    /* Use JavaScript-calculated viewport height for Chrome mobile */
     height: calc(var(--vh, 1vh) * 100) !important;
+    /* Fallback for initial load */
+    height: 100vh !important;
 }
 
 .chrome-mobile .control-panel {
     /* Ensure touch controls are always visible on Chrome mobile */
-    min-height: 100px !important;
+    min-height: var(--ctrl-h, 100px) !important;
     padding-bottom: var(--space-lg) !important;
 }
 
 .chrome-mobile .game-canvas {
-    /* More conservative canvas sizing for Chrome mobile */
-    max-height: calc(100vh - 150px) !important;
-    max-height: calc(var(--vh, 1vh) * 100 - 150px) !important;
+    /* Dynamic canvas sizing based on JavaScript-calculated values */
+    max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 3rem) !important;
+    /* Ensure responsive scaling */
+    width: var(--canvas-width, auto) !important;
+    height: var(--canvas-height, auto) !important;
+}
+
+/* Enhanced device detection classes from JavaScript */
+.desktop-layout .game-canvas {
+    /* Desktop canvas gets more screen space */
+    max-width: none;
+    max-height: none;
+}
+
+.tablet-layout .game-canvas {
+    /* Tablet-specific canvas optimizations */
+    max-width: calc(100vw - 2rem);
+    max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 4rem);
+}
+
+.touch-device.landscape .game-canvas {
+    /* Landscape touch devices get optimized canvas size */
+    max-width: calc(100vw - var(--ctrl-h, 120px) - 2rem);
+    max-height: calc(var(--vh, 1vh) * 100 - 4rem);
 }
 
 /* ============================================

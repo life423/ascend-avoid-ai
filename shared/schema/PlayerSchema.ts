@@ -34,15 +34,18 @@ export class PlayerSchema extends Schema {
   resetPosition(canvasWidth: number, canvasHeight: number, playerIndex?: number, totalPlayers?: number): void {
     // If we have player index info, distribute players evenly across the bottom
     if (playerIndex !== undefined && totalPlayers !== undefined && totalPlayers > 0) {
-      // Divide the width into sections based on number of players
-      const sectionWidth = canvasWidth / (totalPlayers + 1);
-      this.x = sectionWidth * (playerIndex + 1) - (this.width / 2);
+      // Create equally spaced positions across the width
+      // For example: with 2 players, positions should be at 1/3 and 2/3 of width
+      const spacing = canvasWidth / (totalPlayers + 1);
+      this.x = spacing * (playerIndex + 1) - (this.width / 2);
       
       // Ensure x is within bounds
       this.x = Math.max(10, Math.min(this.x, canvasWidth - this.width - 10));
       
-      // Add slight randomness to prevent exact overlap if players have same index
-      this.x += (Math.random() - 0.5) * 20;
+      console.log(`Player ${playerIndex}/${totalPlayers}: spacing=${spacing.toFixed(1)}, x=${this.x.toFixed(1)}`);
+      
+      // Add slight randomness to prevent exact overlap if players have same index (reduced amount)
+      this.x += (Math.random() - 0.5) * 10;
     } else {
       // Fallback to random position
       this.x = 10 + Math.random() * (canvasWidth - this.width - 20);

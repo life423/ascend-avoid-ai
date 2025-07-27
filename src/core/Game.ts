@@ -7,11 +7,13 @@ import InputManager from '../managers/InputManager'
 import ObstacleManager from '../managers/ObstacleManager'
 import UIManager from '../managers/UIManager'
 import AssetManager from '../managers/AssetManager'
+import ResponsiveManager from '../managers/ResponsiveManager'
 import ParticleSystem from '../entities/ParticleSystem'
 import TouchControls from '../ui/TouchControls'
 import { Client, Room } from 'colyseus.js'
 import { GAME_CONFIG } from '../constants/client-constants'
 import { generateRandomName } from '../utils/utils'
+import { ResponsiveSystem } from '../systems/UnifiedResponsiveSystem'
 
 const PLAYER_COLORS = ['#FF5722', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#E91E63', '#00BCD4']
 
@@ -27,6 +29,7 @@ export default class Game {
     obstacleManager: ObstacleManager
     uiManager: UIManager
     assetManager: AssetManager
+    responsiveManager: ResponsiveManager
     particleSystem: ParticleSystem
     touchControls: TouchControls
     gameState: string
@@ -37,12 +40,14 @@ export default class Game {
     private room: Room | null = null
     private players: Map<string, NetworkPlayer> = new Map()
     private localSessionId: string = ''
+    private playerReady: boolean = false
 
     // Virtual coordinate system - fixed dimensions for consistent gameplay
     private readonly VIRTUAL_WIDTH: number = 1200
     private readonly VIRTUAL_HEIGHT: number = 800
     private serverArenaWidth: number = 1200  // Will be updated from server
     private serverArenaHeight: number = 800  // Will be updated from server
+    private lastViewportHeight: number = 0   // Track viewport height changes for mobile
 
     constructor() {
         this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
@@ -61,6 +66,18 @@ export default class Game {
             highScoreElement: document.querySelector('.score-value[data-score="high"]') as HTMLElement,
             config: this.config,
         })
+        
+        // Initialize responsive manager after UI manager
+        // ResponsiveManager works with UnifiedResponsiveSystem to handle canvas sizing
+        console.log('🖼️ Initializing ResponsiveManager for canvas sizing...')
+        this.responsiveManager = new ResponsiveManager(this)
+        this.responsiveManager.init(this.canvas)
+        this.scalingInfo = this.responsiveManager.getScalingInfo()
+        this.responsiveManager.onResize = this.onResize.bind(this)
+        
+        // Make sure UnifiedResponsiveSystem is active (singleton pattern ensures only one instance)
+        ResponsiveSystem // This triggers the singleton initialization
+        
         this.obstacleManager = new ObstacleManager({
             canvas: this.canvas,
             config: this.config,
@@ -99,6 +116,10 @@ export default class Game {
             
             this.room.onMessage('playerLeft', (data) => {
                 console.log('🔴 Player left:', data)
+            })
+            
+            this.room.onMessage('playerNotReady', (data) => {
+                console.warn('⚠️ Server says our player is not ready yet:', data)
             })
             
             // Initial state setup
@@ -157,6 +178,18 @@ export default class Game {
         state.players.onAdd((player: PlayerSchema, sessionId: string) => {
             console.log('➕ Player added via onAdd:', sessionId)
             
+            // If this is our local player, mark as ready for input
+            if (sessionId === this.localSessionId) {
+                this.playerReady = true
+                const gameState = this.room?.state?.gameState || 'unknown'
+                console.log(`🎮 Local player ready for input! Game state: ${gameState}`)
+                
+                // Extra debug for mid-game joins
+                if (gameState === 'playing') {
+                    console.log(`⚠️ Joined during active game - player should be positioned safely`)
+                }
+            }
+            
             // Create visual representation for the player - use server's playerIndex for consistent colors
             const color = PLAYER_COLORS[player.playerIndex % PLAYER_COLORS.length]
             
@@ -207,12 +240,30 @@ export default class Game {
         state.players.onRemove((player: PlayerSchema, sessionId: string) => {
             console.log('➖ Player removed via onRemove:', sessionId)
             this.players.delete(sessionId)
+            
+            // If this is our local player being removed, mark as not ready
+            if (sessionId === this.localSessionId) {
+                this.playerReady = false
+                console.log('🚫 Local player no longer ready for input')
+            }
         })
         
         // Handle any existing players (if reconnecting)
         state.players.forEach((player: PlayerSchema, sessionId: string) => {
             // Manually call the onAdd logic for existing players
             console.log('🔄 Processing existing player:', sessionId)
+            
+            // If this is our local player, mark as ready for input
+            if (sessionId === this.localSessionId) {
+                this.playerReady = true
+                const gameState = this.room?.state?.gameState || 'unknown'
+                console.log(`🎮 Local player ready for input! (existing) Game state: ${gameState}`)
+                
+                // Extra debug for mid-game reconnections
+                if (gameState === 'playing') {
+                    console.log(`⚠️ Reconnected during active game - player should be positioned safely`)
+                }
+            }
             
             const color = PLAYER_COLORS[player.playerIndex % PLAYER_COLORS.length]
             
@@ -260,6 +311,13 @@ export default class Game {
     
     private sendInput(inputState: InputState): void {
         if (!this.room) return
+        
+        // Only send input if our player exists on the server and is ready
+        // This prevents race conditions where input is sent before player is created
+        if (!this.playerReady || !this.room.state?.players?.has(this.localSessionId)) {
+            // Player not yet ready or created on server, don't send input
+            return
+        }
         
         // Send input for our own player
         if (inputState.up || inputState.down || inputState.left || inputState.right) {
@@ -446,18 +504,334 @@ export default class Game {
     }
 
     public onResize(): void {
-        // ResponsiveCanvas handles all the scaling automatically
-        // We just log the new dimensions for debugging
+        console.log('🔄 onResize triggered - comprehensive game recalculation...')
+        
+        // 1. Update scaling info from ResponsiveManager
+        if (this.responsiveManager) {
+            this.scalingInfo = this.responsiveManager.getScalingInfo()
+        }
+        
+        // 2. Update CSS responsive classes and viewport properties
+        this.updateResponsiveClasses()
+        
+        // 3. Calculate viewport scaling for debugging and game logic
         const logicalWidth = this.canvas.width / (window.devicePixelRatio || 1)
         const logicalHeight = this.canvas.height / (window.devicePixelRatio || 1)
         const scaleX = logicalWidth / this.VIRTUAL_WIDTH
         const scaleY = logicalHeight / this.VIRTUAL_HEIGHT
         
-        console.log('🖼️ Canvas resized:')
+        console.log('🖼️ Canvas resized by ResponsiveManager:')
         console.log(`  Physical: ${this.canvas.width}×${this.canvas.height}`)
         console.log(`  Logical: ${logicalWidth}×${logicalHeight}`)
         console.log(`  Virtual: ${this.VIRTUAL_WIDTH}×${this.VIRTUAL_HEIGHT}`)
         console.log(`  Scale: ${scaleX.toFixed(2)}×${scaleY.toFixed(2)}`)
+        console.log(`  ResponsiveManager scaling: ${this.scalingInfo.widthScale.toFixed(2)}×${this.scalingInfo.heightScale.toFixed(2)}`)
+        console.log(`  Device type: ${this.responsiveManager?.isDesktopDevice() ? 'Desktop' : 'Mobile'}`)
+        
+        // 4. Update game elements that depend on canvas dimensions
+        this.updateGameElementsOnResize()
+        
+        // 5. Update viewport for mobile browsers (helps with viewport height issues)
+        this.updateMobileViewport()
+        
+        // 6. Trigger custom resize event for other components
+        this.dispatchResizeEvent()
+    }
+    
+    /**
+     * Updates all game elements that need to be recalculated when canvas size changes
+     */
+    private updateGameElementsOnResize(): void {
+        console.log('⚙️ Updating game elements for new canvas size...')
+        
+        // 1. Update obstacle dimensions
+        this.recalculateObstacleDimensions()
+        
+        // 2. Update particle system bounds (if it exists and has resize capabilities)
+        this.updateParticleSystemBounds()
+        
+        // 3. Update background scaling
+        this.updateBackgroundScaling()
+        
+        // 4. Update touch controls layout
+        this.updateTouchControlsLayout()
+        
+        // 5. Validate player positions (ensure they're within bounds)
+        this.validatePlayerPositions()
+        
+        console.log('✅ Game elements updated for resize')
+    }
+    
+    /**
+     * Recalculates obstacle dimensions based on new canvas size
+     */
+    private recalculateObstacleDimensions(): void {
+        if (!this.obstacleManager) return
+        
+        console.log('🚧 Recalculating obstacle dimensions...')
+        
+        // Get obstacles from obstacle manager
+        const obstacles = this.obstacleManager.getObstacles()
+        let updatedCount = 0
+        
+        obstacles.forEach(obstacle => {
+            // Check if obstacle has calculateHeight method
+            if (typeof (obstacle as any).calculateHeight === 'function') {
+                (obstacle as any).calculateHeight()
+                updatedCount++
+            }
+        })
+        
+        console.log(`  Updated ${updatedCount} obstacles`)
+    }
+    
+    /**
+     * Updates particle system boundaries if applicable
+     */
+    private updateParticleSystemBounds(): void {
+        if (!this.particleSystem) return
+        
+        console.log('✨ Updating particle system bounds...')
+        
+        // Check if particle system has resize/bounds update methods
+        if (typeof (this.particleSystem as any).updateBounds === 'function') {
+            (this.particleSystem as any).updateBounds(this.canvas.width, this.canvas.height)
+        }
+        
+        // If particle system has setMaxParticles method, adjust based on canvas size
+        if (typeof (this.particleSystem as any).setMaxParticles === 'function') {
+            const canvasArea = this.canvas.width * this.canvas.height
+            const baseArea = 600 * 700 // Base canvas size
+            const particleRatio = Math.max(0.3, Math.min(2.0, canvasArea / baseArea))
+            const maxParticles = Math.floor(500 * particleRatio)
+            
+            (this.particleSystem as any).setMaxParticles(maxParticles)
+            console.log(`  Adjusted max particles to ${maxParticles} (ratio: ${particleRatio.toFixed(2)})`)
+        }
+    }
+    
+    /**
+     * Updates background scaling for new canvas size
+     */
+    private updateBackgroundScaling(): void {
+        if (!this.background) return
+        
+        console.log('🌌 Updating background scaling...')
+        
+        // Check if background has resize method
+        if (typeof (this.background as any).onResize === 'function') {
+            (this.background as any).onResize(this.canvas.width, this.canvas.height)
+        }
+    }
+    
+    /**
+     * Updates touch controls layout for new screen size
+     */
+    private updateTouchControlsLayout(): void {
+        if (!this.touchControls) return
+        
+        console.log('📱 Updating touch controls layout...')
+        
+        // Check if touch controls have layout update method
+        if (typeof (this.touchControls as any).updateLayout === 'function') {
+            const isDesktop = this.responsiveManager?.isDesktopDevice() || false
+            (this.touchControls as any).updateLayout(isDesktop)
+        }
+    }
+    
+    /**
+     * Validates that all player positions are within the current canvas bounds
+     * Note: In multiplayer, we mainly validate visual rendering bounds, not server positions
+     */
+    private validatePlayerPositions(): void {
+        if (!this.players || this.players.size === 0) return
+        
+        console.log('👥 Validating player visual positions...')
+        
+        let outOfBoundsCount = 0
+        
+        this.players.forEach((player, sessionId) => {
+            if (!player.isAlive) return
+            
+            // Convert virtual coordinates to canvas coordinates for validation
+            const canvasX = this.virtualToCanvasX(player.x)
+            const canvasY = this.virtualToCanvasY(player.y)
+            const canvasPlayerWidth = this.virtualToCanvasX(player.width)
+            const canvasPlayerHeight = this.virtualToCanvasY(player.height)
+            
+            // Check if player is outside visible canvas bounds
+            const isOutOfBounds = (
+                canvasX + canvasPlayerWidth < 0 || 
+                canvasX > this.canvas.width ||
+                canvasY + canvasPlayerHeight < 0 || 
+                canvasY > this.canvas.height
+            )
+            
+            if (isOutOfBounds) {
+                outOfBoundsCount++
+                console.log(`  Player ${sessionId} is outside visible bounds: canvas (${canvasX.toFixed(1)}, ${canvasY.toFixed(1)})`)
+                
+                // For multiplayer, we don't adjust server positions, but we can flag for UI feedback
+                if (sessionId === this.localSessionId) {
+                    console.log(`  ⚠️ Local player is outside visible area - this may indicate a scaling issue`)
+                }
+            }
+        })
+        
+        if (outOfBoundsCount > 0) {
+            console.log(`  ${outOfBoundsCount} players outside visible bounds (normal in multiplayer with different arena sizes)`)
+        }
+        
+        // Specific check for local player that might need UI attention
+        const localPlayer = this.players.get(this.localSessionId)
+        if (localPlayer && localPlayer.isAlive) {
+            const localCanvasX = this.virtualToCanvasX(localPlayer.x)
+            const localCanvasY = this.virtualToCanvasY(localPlayer.y)
+            
+            // If local player is way outside bounds, it might indicate a coordinate system mismatch
+            if (localCanvasX < -100 || localCanvasX > this.canvas.width + 100 ||
+                localCanvasY < -100 || localCanvasY > this.canvas.height + 100) {
+                console.warn(`⚠️ Local player significantly outside canvas bounds - coordinate system may need adjustment`)
+                console.warn(`  Virtual: (${localPlayer.x.toFixed(1)}, ${localPlayer.y.toFixed(1)}) -> Canvas: (${localCanvasX.toFixed(1)}, ${localCanvasY.toFixed(1)})`)
+            }
+        }
+    }
+    
+    /**
+     * Convert canvas coordinates to virtual coordinates
+     */
+    private canvasToVirtualX(canvasX: number): number {
+        const logicalWidth = this.canvas.width / (window.devicePixelRatio || 1)
+        return (canvasX / logicalWidth) * this.VIRTUAL_WIDTH
+    }
+    
+    private canvasToVirtualY(canvasY: number): number {
+        const logicalHeight = this.canvas.height / (window.devicePixelRatio || 1)
+        return (canvasY / logicalHeight) * this.VIRTUAL_HEIGHT
+    }
+    
+    /**
+     * Updates CSS classes and viewport properties to coordinate with responsive.css
+     */
+    private updateResponsiveClasses(): void {
+        console.log('🎨 Updating responsive CSS classes...')
+        
+        const body = document.body
+        const root = document.documentElement
+        const isDesktop = this.responsiveManager?.isDesktopDevice() || false
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+        const isLandscape = window.innerWidth > window.innerHeight
+        const deviceWidth = window.innerWidth
+        const deviceHeight = window.innerHeight
+        
+        // Remove all device type classes
+        body.classList.remove('desktop-layout', 'tablet-layout', 'mobile-layout', 
+                            'touch-device', 'landscape', 'portrait', 'chrome-mobile')
+        
+        // Add appropriate device type classes
+        if (isDesktop) {
+            body.classList.add('desktop-layout')
+        } else if (deviceWidth >= 768 && deviceWidth < 1200) {
+            body.classList.add('tablet-layout')
+        } else {
+            body.classList.add('mobile-layout')
+        }
+        
+        // Add device capability classes
+        if (isTouchDevice) body.classList.add('touch-device')
+        body.classList.add(isLandscape ? 'landscape' : 'portrait')
+        
+        // Detect Chrome mobile for specific fixes
+        const isChromeMobile = /Chrome/.test(navigator.userAgent) && /Mobile/.test(navigator.userAgent)
+        if (isChromeMobile) {
+            body.classList.add('chrome-mobile')
+        }
+        
+        // Update CSS custom properties
+        root.style.setProperty('--device-width', `${deviceWidth}px`)
+        root.style.setProperty('--device-height', `${deviceHeight}px`)
+        root.style.setProperty('--device-ratio', (window.devicePixelRatio || 1).toString())
+        root.style.setProperty('--canvas-width', `${this.canvas.width}px`)
+        root.style.setProperty('--canvas-height', `${this.canvas.height}px`)
+        root.style.setProperty('--scale-x', this.scalingInfo.widthScale.toString())
+        root.style.setProperty('--scale-y', this.scalingInfo.heightScale.toString())
+        
+        console.log(`  Device: ${isDesktop ? 'Desktop' : 'Mobile'} | Touch: ${isTouchDevice} | Orientation: ${isLandscape ? 'Landscape' : 'Portrait'}`)
+    }
+    
+    /**
+     * Updates mobile viewport handling for better mobile browser compatibility
+     */
+    private updateMobileViewport(): void {
+        if (this.responsiveManager?.isDesktopDevice()) return
+        
+        console.log('📱 Updating mobile viewport properties...')
+        
+        // Calculate real viewport height (excluding mobile browser chrome)
+        const vh = window.innerHeight * 0.01
+        document.documentElement.style.setProperty('--vh', `${vh}px`)
+        
+        // Calculate control panel height for responsive.css
+        const controlPanel = document.querySelector('.control-panel[data-section="controls"]') as HTMLElement
+        if (controlPanel) {
+            const controlHeight = controlPanel.offsetHeight
+            document.documentElement.style.setProperty('--ctrl-h', `${controlHeight}px`)
+            console.log(`  Control panel height: ${controlHeight}px`)
+        }
+        
+        // Force reflow to apply mobile viewport fixes
+        if (window.innerHeight !== this.lastViewportHeight) {
+            this.lastViewportHeight = window.innerHeight
+            console.log(`  Viewport height changed: ${window.innerHeight}px`)
+            
+            // Trigger responsive.css mobile optimizations
+            setTimeout(() => {
+                const event = new CustomEvent('viewportHeightChanged', {
+                    detail: { height: window.innerHeight, vh }
+                })
+                document.dispatchEvent(event)
+            }, 100)
+        }
+    }
+    
+    /**
+     * Dispatches custom resize event for other game components
+     */
+    private dispatchResizeEvent(): void {
+        console.log('📡 Dispatching custom resize event...')
+        
+        const resizeData = {
+            canvasSize: {
+                width: this.canvas.width,
+                height: this.canvas.height,
+                logicalWidth: this.canvas.width / (window.devicePixelRatio || 1),
+                logicalHeight: this.canvas.height / (window.devicePixelRatio || 1)
+            },
+            viewport: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                isDesktop: this.responsiveManager?.isDesktopDevice() || false,
+                isLandscape: window.innerWidth > window.innerHeight
+            },
+            scaling: {
+                widthScale: this.scalingInfo.widthScale,
+                heightScale: this.scalingInfo.heightScale,
+                pixelRatio: this.scalingInfo.pixelRatio || 1
+            },
+            virtual: {
+                width: this.VIRTUAL_WIDTH,
+                height: this.VIRTUAL_HEIGHT
+            }
+        }
+        
+        // Custom event for other components to listen to
+        const gameResizeEvent = new CustomEvent('gameResize', { detail: resizeData })
+        document.dispatchEvent(gameResizeEvent)
+        
+        // Also trigger on EventBus for internal game components
+        if (this.eventBus) {
+            this.eventBus.emit('resize', resizeData)
+        }
     }
 
     public dispose(): void {
@@ -467,6 +841,9 @@ export default class Game {
         }
         if (this.client) {
             this.client = null
+        }
+        if (this.responsiveManager) {
+            this.responsiveManager.dispose()
         }
     }
 }
