@@ -1,5 +1,4 @@
-import * as schema from "@colyseus/schema";
-const { Schema, type } = schema;
+import { Schema, type } from "@colyseus/schema";
 import { GAME_CONSTANTS } from "../constants/serverConstants";
 
 /**
@@ -13,15 +12,15 @@ interface PlayerPosition {
 /**
  * ObstacleSchema defines the synchronized properties for each obstacle
  */
-class ObstacleSchema extends Schema {
-  id: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  speed: number;
-  variant: number;
-  active: boolean;
+export class ObstacleSchema extends Schema {
+  @type("number") id: number;
+  @type("number") x: number;
+  @type("number") y: number;
+  @type("number") width: number;
+  @type("number") height: number;
+  @type("number") speed: number;
+  @type("number") variant: number;
+  @type("boolean") active: boolean;
 
   constructor(id: number) {
     super();
@@ -143,15 +142,3 @@ class ObstacleSchema extends Schema {
     return oLeft < pRight && oRight > pLeft && oTop < pBottom && oBottom > pTop;
   }
 }
-
-// Define the schema types for network synchronization
-type("number")(ObstacleSchema.prototype, "id");
-type("number")(ObstacleSchema.prototype, "x");
-type("number")(ObstacleSchema.prototype, "y");
-type("number")(ObstacleSchema.prototype, "width");
-type("number")(ObstacleSchema.prototype, "height");
-type("number")(ObstacleSchema.prototype, "speed");
-type("number")(ObstacleSchema.prototype, "variant");
-type("boolean")(ObstacleSchema.prototype, "active");
-
-export { ObstacleSchema };

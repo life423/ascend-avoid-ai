@@ -1,25 +1,24 @@
-import * as schema from "@colyseus/schema";
-const { Schema, type } = schema;
+import { Schema, type } from "@colyseus/schema";
 import { GAME_CONSTANTS } from "../constants/serverConstants";
 
 /**
  * PlayerSchema defines the synchronized properties for each player
  */
-class PlayerSchema extends Schema {
-  sessionId: string;
-  playerIndex: number;
-  name: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  state: string;
-  score: number;
-  upKey: boolean;
-  downKey: boolean;
-  leftKey: boolean;
-  rightKey: boolean;
-  lastUpdateTime: number;
+export class PlayerSchema extends Schema {
+  @type("string") sessionId: string;
+  @type("number") playerIndex: number;
+  @type("string") name: string;
+  @type("number") x: number;
+  @type("number") y: number;
+  @type("number") width: number;
+  @type("number") height: number;
+  @type("string") state: string;
+  @type("number") score: number;
+  @type("boolean") upKey: boolean;
+  @type("boolean") downKey: boolean;
+  @type("boolean") leftKey: boolean;
+  @type("boolean") rightKey: boolean;
+  @type("number") lastUpdateTime: number;
 
   constructor(sessionId: string, playerIndex: number) {
     super();
@@ -115,21 +114,3 @@ class PlayerSchema extends Schema {
     this.state = GAME_CONSTANTS.PLAYER_STATE.SPECTATING;
   }
 }
-
-// Define the schema types for network synchronization
-type("string")(PlayerSchema.prototype, "sessionId");
-type("number")(PlayerSchema.prototype, "playerIndex");
-type("string")(PlayerSchema.prototype, "name");
-type("number")(PlayerSchema.prototype, "x");
-type("number")(PlayerSchema.prototype, "y");
-type("number")(PlayerSchema.prototype, "width");
-type("number")(PlayerSchema.prototype, "height");
-type("string")(PlayerSchema.prototype, "state");
-type("number")(PlayerSchema.prototype, "score");
-type("boolean")(PlayerSchema.prototype, "upKey");
-type("boolean")(PlayerSchema.prototype, "downKey");
-type("boolean")(PlayerSchema.prototype, "leftKey");
-type("boolean")(PlayerSchema.prototype, "rightKey");
-type("number")(PlayerSchema.prototype, "lastUpdateTime");
-
-export { PlayerSchema };

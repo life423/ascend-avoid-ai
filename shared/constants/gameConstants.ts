@@ -127,5 +127,20 @@ export const GAME = GAME_CONFIG;
 export const STATE = GAME_STATE;
 export const DESKTOP_SETTINGS = DEVICE_SETTINGS.DESKTOP;
 
+// Aggregate constants object for convenient access
+export const GAME_CONSTANTS = {
+  GAME: GAME_CONFIG,
+  PLAYER,
+  OBSTACLE,
+  PROJECTILE,
+  STATE: GAME_STATE,
+  PLAYER_STATE,
+  ARENA,
+  KEYS,
+  PLAYER_COLORS,
+  DEVICE_SETTINGS,
+  CANVAS
+} as const;
+
 export type GameStateType = typeof GAME_STATE[keyof typeof GAME_STATE];
 export type PlayerStateType = typeof PLAYER_STATE[keyof typeof PLAYER_STATE];

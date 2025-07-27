@@ -7,7 +7,7 @@ import Game from '../core/Game'
 import { EventBus } from '../core/EventBus'
 import { TouchControlsAdapter } from '../adapters/TouchControlsAdapter'
 import { SmartResponsiveness, createSmartResponsiveness } from '../systems/SmartResponsiveness'
-import type { TouchInteractionData } from '../systems/SmartResponsiveness'
+// Remove unused import
 
 // Interface for control button definition
 interface ControlButton {

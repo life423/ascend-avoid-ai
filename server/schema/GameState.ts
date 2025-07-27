@@ -1,6 +1,7 @@
+import { Schema, MapSchema, ArraySchema, type } from "@colyseus/schema";
 import { GAME_CONSTANTS } from "../constants/serverConstants";
-import { GameState as SharedGameState, PlayerSchema, ObstacleSchema } from "../../shared/schema";
-import { ArraySchema } from "@colyseus/schema";
+import { PlayerSchema } from "./PlayerSchema";
+import { ObstacleSchema } from "./ObstacleSchema";
 
 /**
  * Interface for player positions used in obstacle placement
@@ -11,9 +12,23 @@ interface PlayerPosition {
 }
 
 /**
- * GameState extends the shared schema with server-side logic
+ * GameState schema for multiplayer synchronization
  */
-class GameState extends SharedGameState {
+export class GameState extends Schema {
+  @type({ map: PlayerSchema }) players = new MapSchema<PlayerSchema>();
+  @type([ObstacleSchema]) obstacles = new ArraySchema<ObstacleSchema>();
+  @type("string") gameState: string;
+  @type("number") elapsedTime: number;
+  @type("number") startTime: number;
+  @type("number") countdownTime: number;
+  @type("number") arenaWidth: number;
+  @type("number") arenaHeight: number;
+  @type("number") areaPercentage: number;
+  @type("number") nextShrinkTime: number;
+  @type("number") aliveCount: number;
+  @type("number") totalPlayers: number;
+  @type("string") winnerName: string;
+  @type("number") lastUpdateTime: number;
   constructor() {
     super();
     
@@ -72,7 +87,7 @@ class GameState extends SharedGameState {
    * @param player - The player to spawn
    * @param playerIndex - The player's index
    */
-  private spawnPlayerSafely(player: PlayerSchema, playerIndex: number): void {
+  private spawnPlayerSafely(player: PlayerSchema, _playerIndex: number): void {
     // Calculate current safe play area based on arena shrinking
     const currentArenaWidth = this.arenaWidth * this.areaPercentage / 100;
     const currentArenaHeight = this.arenaHeight * this.areaPercentage / 100;
@@ -90,7 +105,7 @@ class GameState extends SharedGameState {
       
       // Check if position is safe (not overlapping with other players)
       safePosition = true;
-      this.players.forEach((otherPlayer, sessionId) => {
+      this.players.forEach((otherPlayer, _sessionId) => {
         if (otherPlayer.state === GAME_CONSTANTS.PLAYER_STATE.ALIVE) {
           const distance = Math.sqrt(
             Math.pow(player.x - otherPlayer.x, 2) + 
@@ -376,5 +391,3 @@ class GameState extends SharedGameState {
     this.obstacles.clear();
   }
 }
-
-export { GameState };

@@ -9,8 +9,8 @@ import {
     KEYS,
     OBSTACLE,
     PLAYER,
+    GAME_STATE,
 } from '../constants/gameConstants'
-import { GAME_STATE } from '../constants/gameState'
 import { GameConfig as GameConfigInterface } from '../types'
 
 interface GameSettings {

@@ -1,5 +1,6 @@
 import { InputState, ScalingInfo, NetworkPlayer } from '../types'
-import { PlayerSchema, GameState } from '../../shared/schema'
+import { PlayerSchema } from '../../server/schema/PlayerSchema'
+import { GameState } from '../../server/schema/GameState'
 import Background from '../entities/Background'
 import { EventBus } from './EventBus'
 import GameConfig from './GameConfig'
