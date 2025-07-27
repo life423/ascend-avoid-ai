@@ -6,6 +6,7 @@
  */
 import { PerformanceStats, ScalingInfo } from '../types'
 import Background from '../entities/Background'
+import Player from '../entities/Player'
 import ResponsiveManager from '../managers/ResponsiveManager'
 import TouchControls from '../ui/TouchControls'
 import ParticleSystem from '../entities/ParticleSystem'
@@ -17,6 +18,16 @@ import GameConfig from './GameConfig'
 import MultiplayerGameMode from './MultiplayerGameMode'
 
 const BASE_CANVAS_HEIGHT = 550
+
+interface KeyMappings {
+    UP: string[]
+    DOWN: string[]
+    LEFT: string[]
+    RIGHT: string[]
+    RESTART: string[]
+    SHOOT: string[]
+    [key: string]: string[]
+}
 
 export default class Game {
     // Core game components
@@ -49,6 +60,9 @@ export default class Game {
     touchControls: TouchControls
     particleSystem: ParticleSystem | null
     
+    // Legacy compatibility - null in multiplayer mode
+    player: Player | null = null
+    
     // Performance tracking
     frameTimes: number[]
     frameTimeIndex: number
@@ -80,6 +94,9 @@ export default class Game {
             maxFrameTime: 0,
             minFrameTime: Infinity,
             frameCount: 0,
+            fps: 0,
+            renderTime: 0,
+            updateTime: 0,
         }
         
         // Device and configuration setup
@@ -114,8 +131,8 @@ export default class Game {
      */
     async init(): Promise<void> {
         // Set up UI manager first for loading screen
-        const scoreElement = document.querySelector('.score-value[data-score="current"]')
-        const highScoreElement = document.querySelector('.score-value[data-score="high"]')
+        const scoreElement = document.querySelector('.score-value[data-score="current"]') as HTMLElement
+        const highScoreElement = document.querySelector('.score-value[data-score="high"]') as HTMLElement
         
         this.uiManager = new UIManager({
             scoreElement: scoreElement || document.createElement('div'),
@@ -150,9 +167,9 @@ export default class Game {
         })
         this.obstacleManager.initialize()
 
-        // Set up input handling
+        // Set up input handling - cast to expected type
         this.inputManager = new InputManager({
-            keyMappings: this.config.getKeys(),
+            keyMappings: this.config.getKeys() as KeyMappings,
         })
 
         // Event listeners

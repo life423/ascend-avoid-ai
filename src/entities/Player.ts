@@ -40,15 +40,28 @@ export default class Player implements GameObject {
   
   /**
    * Creates a new Player instance
-   * @param config - Player configuration with canvas dimensions and scaling
+   * @param configOrCanvas - Player configuration object OR HTMLCanvasElement (for backward compatibility)
    */
-  constructor(config: PlayerConfig) {
-    this.config = {
-      baseCanvasWidth: 560,
-      baseCanvasHeight: 550,
-      scaleFactor: 1,
-      ...config
-    };
+  constructor(configOrCanvas: PlayerConfig | HTMLCanvasElement) {
+    // Handle backward compatibility with old HTMLCanvasElement constructor
+    if (configOrCanvas instanceof HTMLCanvasElement) {
+      const canvas = configOrCanvas;
+      this.config = {
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+        baseCanvasWidth: 560,
+        baseCanvasHeight: 550,
+        scaleFactor: 1,
+      };
+    } else {
+      // New PlayerConfig interface
+      this.config = {
+        baseCanvasWidth: 560,
+        baseCanvasHeight: 550,
+        scaleFactor: 1,
+        ...configOrCanvas
+      };
+    }
     
     // Base size that will be scaled
     this.baseWidth = PLAYER.BASE_WIDTH;
@@ -158,34 +171,36 @@ export default class Player implements GameObject {
   }
   
   /**
-   * Move the player based on current input state
+   * Move the player based on current input state (for local/single-player only)
+   * In multiplayer, position should be set via setPosition() from server
    */
   move(): void {
     // IMPORTANT: Store previous position BEFORE any movement
     this.lastY = this.y;
     
+    const scaleFactor = this.config.scaleFactor || 1;
+    const baseCanvasWidth = this.config.baseCanvasWidth || 560;
+    const baseCanvasHeight = this.config.baseCanvasHeight || 550;
+    
     // Update dimensions first - before any movement calculations
     const playerSize = Math.max(
-      this.baseWidth * SCALE_FACTOR,
+      this.baseWidth * scaleFactor,
       15
     );
     this.width = playerSize;
     this.height = playerSize;
     
     // Calculate movement step size based on scale factor
-    const baseStepX = BASE_CANVAS_WIDTH * 0.07;
-    const baseStepY = BASE_CANVAS_HEIGHT * 0.07;
+    const baseStepX = baseCanvasWidth * 0.07;
+    const baseStepY = baseCanvasHeight * 0.07;
     
     // Scale the movement speed
-    const moveX = Math.max(baseStepX * SCALE_FACTOR, PLAYER.MIN_STEP * SCALE_FACTOR);
-    const moveY = Math.max(baseStepY * SCALE_FACTOR, PLAYER.MIN_STEP * SCALE_FACTOR);
+    const moveX = Math.max(baseStepX * scaleFactor, PLAYER.MIN_STEP * scaleFactor);
+    const moveY = Math.max(baseStepY * scaleFactor, PLAYER.MIN_STEP * scaleFactor);
     
     // Calculate scaled winning line position
-    const scaledWinningLine = GAME.WINNING_LINE * (this.canvas.height / BASE_CANVAS_HEIGHT);
-    
-    // Store previous position for velocity calculation (currently unused but may be needed for collision detection)
-    // const prevX = this.x;
-    // const prevY = this.y;
+    const winningLineRatio = 40 / baseCanvasHeight; // GAME.WINNING_LINE / BASE_CANVAS_HEIGHT
+    const scaledWinningLine = winningLineRatio * this.config.canvasHeight;
     
     // Reset velocity
     this.vx = 0;
@@ -202,7 +217,7 @@ export default class Player implements GameObject {
     }
     
     // Move down
-    if (this.movementKeys.down && this.canMove.down && this.y + this.height <= this.canvas.height - (10 * SCALE_FACTOR)) {
+    if (this.movementKeys.down && this.canMove.down && this.y + this.height <= this.config.canvasHeight - (10 * scaleFactor)) {
       this.y += moveY;
       this.vy = moveY;
       this.canMove.down = false;
@@ -212,7 +227,7 @@ export default class Player implements GameObject {
     }
     
     // Move right
-    if (this.movementKeys.right && this.canMove.right && this.x < this.canvas.width - this.width - (5 * SCALE_FACTOR)) {
+    if (this.movementKeys.right && this.canMove.right && this.x < this.config.canvasWidth - this.width - (5 * scaleFactor)) {
       this.x += moveX;
       this.vx = moveX;
       this.canMove.right = false;
@@ -222,7 +237,7 @@ export default class Player implements GameObject {
     }
     
     // Move left
-    if (this.movementKeys.left && this.canMove.left && this.x > (5 * SCALE_FACTOR)) {
+    if (this.movementKeys.left && this.canMove.left && this.x > (5 * scaleFactor)) {
       this.x -= moveX;
       this.vx = -moveX;
       this.canMove.left = false;
@@ -232,8 +247,8 @@ export default class Player implements GameObject {
     }
     
     // Clamp player position to stay fully within canvas bounds
-    this.x = Math.max(0, Math.min(this.x, this.canvas.width - this.width));
-    this.y = Math.max(scaledWinningLine, Math.min(this.y, this.canvas.height - this.height));
+    this.x = Math.max(0, Math.min(this.x, this.config.canvasWidth - this.width));
+    this.y = Math.max(scaledWinningLine, Math.min(this.y, this.config.canvasHeight - this.height));
   }
   
   /**
@@ -241,8 +256,8 @@ export default class Player implements GameObject {
    * @param ctx - Canvas rendering context
    * @param timestamp - Current animation timestamp
    */
-  render(_ctx: CanvasRenderingContext2D, timestamp?: number): void {
-    this.draw(timestamp);
+  render(ctx: CanvasRenderingContext2D, timestamp?: number): void {
+    this.draw(ctx, timestamp);
   }
   
   /**

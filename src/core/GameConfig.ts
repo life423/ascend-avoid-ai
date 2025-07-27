@@ -33,7 +33,6 @@ interface DebugSettings {
 export default class GameConfig implements GameConfigInterface {
     private settings: GameSettings
     private debug: DebugSettings
-    // private isDesktop: boolean; // Unused for now
 
     // Game state constants - use the standardized ones from constants
     public readonly STATE = GAME_STATE
@@ -42,16 +41,11 @@ export default class GameConfig implements GameConfigInterface {
     deviceTier?: string
     targetFPS?: number
 
-    /**
-     * Creates a new GameConfig instance
-     * @param options - Configuration options
-     */
     constructor({ isDesktop = false }: { isDesktop?: boolean } = {}) {
         const params = new URLSearchParams(window.location.search)
         const debugFlag = params.get('debug') === 'true'
 
         this.settings = this.buildBaseSettings(isDesktop)
-        // this.isDesktop = isDesktop; // Stored in settings instead
         this.debug = {
             enabled: debugFlag,
             showCollisions: debugFlag,
@@ -72,25 +66,14 @@ export default class GameConfig implements GameConfigInterface {
         }
         return isDesktop ? { ...base, ...DESKTOP_SETTINGS } : base
     }
-    /**
-     * Update desktop mode setting
-     * @param isDesktop - Whether the game is running on desktop
-     */
+
     setDesktopMode(isDesktop: boolean): void {
-        // this.isDesktop = isDesktop; // No longer needed as property
         this.settings = this.buildBaseSettings(isDesktop)
     }
 
-    /**
-     * Get the winning line position, scaled by the canvas height ratio if needed
-     * @param canvasHeight - Current canvas height (optional)
-     * @param baseCanvasHeight - Base canvas height (optional)
-     * @returns The winning line position
-     */
     getWinningLine(canvasHeight?: number, baseCanvasHeight?: number): number {
         const winningLine = this.settings.WINNING_LINE
 
-        // If canvas dimensions are provided, scale the winning line
         if (canvasHeight && baseCanvasHeight) {
             return winningLine * (canvasHeight / baseCanvasHeight)
         }
@@ -98,108 +81,64 @@ export default class GameConfig implements GameConfigInterface {
         return winningLine
     }
 
-    /**
-     * Get the base movement speed for obstacles
-     * @returns The base movement speed
-     */
     getBaseSpeed(): number {
         return this.settings.BASE_SPEED
     }
 
-    /**
-     * Get the minimum step size for player movement
-     * @returns The minimum step size
-     */
     getMinStep(): number {
         return this.settings.MIN_STEP
     }
 
-    /**
-     * Get the player size ratio relative to canvas
-     * @returns The player size ratio
-     */
     getPlayerSizeRatio(): number {
         return this.settings.PLAYER_SIZE_RATIO
     }
 
-    /**
-     * Get the minimum obstacle width ratio
-     * @returns The minimum obstacle width ratio
-     */
     getObstacleMinWidthRatio(): number {
         return this.settings.OBSTACLE_MIN_WIDTH_RATIO
     }
 
-    /**
-     * Get the maximum obstacle width ratio
-     * @returns The maximum obstacle width ratio
-     */
     getObstacleMaxWidthRatio(): number {
         return this.settings.OBSTACLE_MAX_WIDTH_RATIO
     }
 
-    /**
-     * Get the maximum number of obstacles/cars
-     * @returns The maximum number of cars
-     */
     getMaxCars(): number {
         return this.settings.MAX_CARS
     }
 
-    /**
-     * Get minimum number of obstacles that should be maintained
-     * Added for obstacle pooling optimization
-     * @returns The minimum number of obstacles
-     */
     getMinObstacles(): number {
         return Math.floor(this.settings.MAX_CARS / 2)
     }
 
-    /**
-     * Get the difficulty increase rate
-     * @returns The difficulty increase rate
-     */
     getDifficultyIncreaseRate(): number {
         return this.settings.DIFFICULTY_INCREASE_RATE
     }
 
-    /**
-     * Get the device tier (when implemented)
-     * @returns The device tier
-     */
     getDeviceTier(): string | undefined {
         return this.deviceTier
     }
 
-    /**
-     * Get the target FPS (when implemented)
-     * @returns The target FPS
-     */
     getTargetFPS(): number | undefined {
         return this.targetFPS
     }
 
-    /**
-     * Check if debug mode is enabled
-     * @returns Whether debug mode is enabled
-     */
     isDebugEnabled(): boolean {
         return this.debug.enabled
     }
 
-    /**
-     * Check if collision debugging is enabled
-     * @returns Whether collision debugging is enabled
-     */
     showCollisions(): boolean {
         return this.debug.showCollisions
     }
 
-    /**
-     * Get the key mappings
-     * @returns The key mappings
-     */
-    getKeys(): Record<string, readonly string[]> {
-        return KEYS
+    // FIXED: Return mutable string arrays instead of readonly
+    getKeys(): Record<string, string[]> {
+        const keys = KEYS as any
+        return {
+            UP: [...keys.UP],
+            DOWN: [...keys.DOWN],
+            LEFT: [...keys.LEFT],
+            RIGHT: [...keys.RIGHT],
+            RESTART: [...keys.RESTART],
+            SHOOT: [...keys.SHOOT]
+        }
     }
 }

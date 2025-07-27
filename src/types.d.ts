@@ -3,7 +3,26 @@
  * Contains all interfaces and types used throughout the application.
  */
 
-// ===== CORE GAME TYPES =====
+// ===========================
+// CORE TYPES
+// ===========================
+
+export interface Point2D {
+    x: number
+    y: number
+}
+
+export interface Dimensions {
+    width: number
+    height: number
+}
+
+export interface Bounds {
+    x: number
+    y: number
+    width: number
+    height: number
+}
 
 export interface Entity {
     x: number
@@ -11,13 +30,7 @@ export interface Entity {
     width: number
     height: number
     update(deltaTime: number): void
-    render(ctx: CanvasRenderingContext2D, scalingInfo?: ScalingInfo | number): void
-    destroy?(): void
-}
-
-export interface System {
-    init?(): void
-    update?(deltaTime: number): void
+    render(ctx: CanvasRenderingContext2D, scalingInfo?: ScalingInfo): void
     destroy?(): void
 }
 
@@ -27,7 +40,7 @@ export interface GameObject {
     width: number
     height: number
     update(deltaTime: number, ...args: any[]): void
-    render(ctx: CanvasRenderingContext2D, scalingInfo?: ScalingInfo | number): void
+    render(ctx: CanvasRenderingContext2D, scalingInfoOrTimestamp?: ScalingInfo | number): void
 }
 
 export interface InputState {
@@ -35,12 +48,16 @@ export interface InputState {
     down: boolean
     left: boolean
     right: boolean
-    restart?: boolean  // Made optional since many places don't provide it
+    restart?: boolean
     shoot?: boolean
     [key: string]: boolean | undefined
 }
 
 export interface ScalingInfo {
+    widthScale: number
+    heightScale: number
+    pixelRatio: number
+    reducedResolution?: boolean
     scaleX?: number
     scaleY?: number
     offsetX?: number
@@ -53,103 +70,62 @@ export interface ScalingInfo {
     isDesktop?: boolean
     isMobile?: boolean
     isTablet?: boolean
-    // Legacy support for existing code
-    widthScale: number
-    heightScale: number
-    pixelRatio: number
-    reducedResolution?: boolean
 }
 
 export interface PerformanceStats {
-    fps?: number
-    frameTime?: number
-    averageFrameTime?: number
-    memoryUsage?: number
-    renderTime?: number
-    updateTime?: number
-    // Legacy support for existing code
     avgFrameTime: number
     maxFrameTime: number
     minFrameTime: number
     frameCount: number
+    fps: number
+    frameTime?: number
+    averageFrameTime?: number
+    memoryUsage?: number
+    renderTime: number
+    updateTime: number
 }
 
-// ===== SERVICE LOCATOR AND EVENT BUS =====
-
-export type EventCallback<T = any> = (data: T) => void
-
-// Augment the imported ServiceLocator class to add missing methods
-declare module '../core/ServiceLocator' {
-    export interface ServiceLocator {
-        register<T>(name: string, instance: T, singleton?: boolean): void
-        get<T>(name: string): T
-        has(name: string): boolean
-        unregister(name: string): void
-        remove(name: string): void // Alias for unregister
-        clear(): void
-    }
+export interface DeviceInfo {
+    isTouchDevice: boolean
+    isMobile: boolean
+    isTablet: boolean
+    isDesktop: boolean
+    isLandscape: boolean
+    devicePixelRatio: number
+    screenWidth: number
+    screenHeight: number
 }
 
-// Augment the imported EventBus class to add missing methods  
-declare module '../core/EventBus' {
-    export interface EventBus {
-        listeners: Map<string, Set<EventCallback>>
-        onceListeners: Map<string, Set<EventCallback>>
-        debugMode: boolean
-        on<T>(event: string, callback: EventCallback<T>): () => void
-        off(event: string, callback: EventCallback): void
-        once<T>(event: string, callback: EventCallback<T>): () => void
-        emit<T>(event: string, data?: T): void
-        clear(event: string): void
-        dispose(): void
-        getEvents(): string[]
-        getListenerCount(event: string): number
-        setDebugMode(enabled: boolean): void
-    }
+export interface ResponsiveConfig {
+    baseWidth: number
+    baseHeight: number
+    minWidth?: number
+    maxWidth?: number
+    minHeight?: number
+    maxHeight?: number
+    aspectRatio?: number
+    maintainAspectRatio?: boolean
+    scaleMode?: 'fit' | 'fill' | 'stretch'
+    devicePixelRatio?: number
 }
 
-// ===== GAME CONFIGURATION =====
-
-export interface GameConfig {
-    STATE?: {
-        READY: string
-        WAITING: string
-        STARTING: string
-        PLAYING: string
-        PAUSED: string
-        GAME_OVER: string
-    }
-    WINNING_LINE?: number
-    DEBUG_MODE?: boolean
-    DESKTOP_MODE?: boolean
-    OBSTACLE_MIN_WIDTH_RATIO?: number
-    OBSTACLE_MAX_WIDTH_RATIO?: number
-    MAX_CARS?: number
-    KEYS?: {
-        UP: string[]
-        DOWN: string[]
-        LEFT: string[]
-        RIGHT: string[]
-        RESTART: string[]
-        SHOOT?: string[]
-    }
-}
-
-// ===== MULTIPLAYER TYPES =====
+// ===========================
+// MULTIPLAYER TYPES
+// ===========================
 
 export interface NetworkPlayer {
     id: string
     sessionId: string
     x: number
     y: number
+    width: number
+    height: number
     color: string
     name: string
     isAlive: boolean
     score: number
-    velocity?: {
-        x: number
-        y: number
-    }
+    playerIndex: number
+    velocity?: Point2D
     lastUpdate?: number
     interpolationData?: {
         startX: number
@@ -159,9 +135,7 @@ export interface NetworkPlayer {
         startTime: number
         duration: number
     }
-    // Legacy support for existing code
     index?: number
-    playerIndex?: number
 }
 
 export interface GameState {
@@ -178,76 +152,115 @@ export interface GameState {
     winnerName?: string
 }
 
-export interface ArenaStats {
-    width: number
-    height: number
-    areaPercentage: number
-    elapsedTime: number
-    countdownTime?: number
-    shrinkStart?: number
-    shrinkEnd?: number
+// ===========================
+// GAME CONFIGURATION
+// ===========================
+
+export interface GameConfig {
+    STATE: {
+        READY: string
+        WAITING: string
+        STARTING: string
+        PLAYING: string
+        PAUSED: string
+        GAME_OVER: string
+    }
+    
+    // Methods
+    getWinningLine(canvasHeight?: number, baseCanvasHeight?: number): number
+    getBaseSpeed(): number
+    getMinStep(): number
+    getPlayerSizeRatio(): number
+    getObstacleMinWidthRatio(): number
+    getObstacleMaxWidthRatio(): number
+    getMaxCars(): number
+    getMinObstacles(): number
+    getDifficultyIncreaseRate(): number
+    getDeviceTier(): string | undefined
+    getTargetFPS(): number | undefined
+    isDebugEnabled(): boolean
+    showCollisions(): boolean
+    getKeys(): Record<string, readonly string[]>
+    setDesktopMode(isDesktop: boolean): void
+    
+    // Optional properties
+    deviceTier?: string
+    targetFPS?: number
 }
 
-// ===== UI AND RESPONSIVE TYPES =====
+// ===========================
+// UI AND INTERACTION
+// ===========================
 
 export interface TouchControlsConfig {
     enabled: boolean
     opacity: number
-    size: number
-    position: {
-        dpad: { bottom: number; left: number }
-        buttons: { bottom: number; right: number }
+    size: 'small' | 'medium' | 'large'
+    layout: 'fixed' | 'floating' | 'adaptive'
+    
+    positions: {
+        movement: {
+            anchor: 'bottom-left' | 'bottom-right' | 'custom'
+            offset?: Point2D
+        }
+        actions: {
+            anchor: 'bottom-right' | 'bottom-left' | 'custom'
+            offset?: Point2D
+        }
     }
+    
+    hapticFeedback: boolean
 }
 
-export interface ResponsiveConfig {
-    maintainAspectRatio: boolean
-    minWidth: number
-    minHeight: number
-    maxWidth: number
-    maxHeight: number
-    devicePixelRatio: boolean
+export interface NotificationConfig {
+    message: string
+    type: 'info' | 'success' | 'warning' | 'error'
+    duration?: number
+    position?: 'top' | 'bottom' | 'center'
+    actions?: Array<{
+        label: string
+        callback: () => void
+    }>
 }
 
-export interface DeviceInfo {
-    isTouchDevice: boolean
-    isMobile: boolean
-    isTablet: boolean
-    isDesktop: boolean
-    isLandscape: boolean
-    devicePixelRatio: number
-    screenWidth: number
-    screenHeight: number
-}
-
-// ===== ASSET MANAGEMENT =====
-
-export interface AssetDefinition {
-    key: string
-    src: string
-    type?: 'image' | 'audio' | 'font'
-}
-
-export interface LoadProgress {
-    loaded: number
-    total: number
-    percentage: number
-    currentAsset?: string
-}
-
-// ===== PARTICLE SYSTEM =====
+// ===========================
+// PARTICLE SYSTEM
+// ===========================
 
 export interface ParticleConfig {
-    x: number
-    y: number
-    velocityX: number
-    velocityY: number
-    life: number
-    maxLife: number
-    size: number
-    color: string
+    position: Point2D
+    emissionRate: number
+    maxParticles: number
+    
+    particleLife: {
+        min: number
+        max: number
+    }
+    
+    size: {
+        start: number
+        end: number
+        variance: number
+    }
+    
+    speed: {
+        min: number
+        max: number
+        direction?: number
+        spread?: number
+    }
+    
+    color: {
+        start: string
+        end?: string
+        variance?: number
+    }
+    
     gravity?: number
-    fade?: boolean
+    friction?: number
+    bounce?: number
+    blendMode?: GlobalCompositeOperation
+    texture?: string
 }
 
 export interface ParticleStats {
@@ -257,118 +270,222 @@ export interface ParticleStats {
     createdThisFrame: number
 }
 
-// ===== COLLISION DETECTION =====
-
-export interface CollisionBox {
-    x: number
-    y: number
-    width: number
-    height: number
-}
+// ===========================
+// COLLISION SYSTEM
+// ===========================
 
 export interface CollisionResult {
-    collided: boolean
-    side?: 'top' | 'bottom' | 'left' | 'right'
-    overlap?: {
-        x: number
-        y: number
-    }
+    occurred: boolean
+    entities: [Entity, Entity]
+    point?: Point2D
+    normal?: Point2D
+    depth?: number
+    shouldBounce?: boolean
+    shouldDestroy?: boolean
+    damage?: number
 }
 
-// ===== AUDIO SYSTEM =====
+export interface SpatialCell {
+    bounds: Bounds
+    entities: Set<string>
+}
+
+// ===========================
+// AUDIO SYSTEM
+// ===========================
 
 export interface SoundConfig {
     volume: number
     loop: boolean
     pitch?: number
+    position?: Point2D
+    falloffDistance?: number
+    reverb?: number
+    distortion?: number
+    delay?: number
     fadeIn?: number
     fadeOut?: number
 }
 
-// ===== GAME ENGINE =====
-
-export interface GameEngineInterface {
-    canvas: HTMLCanvasElement
-    getCanvas(): HTMLCanvasElement
-    addSystem(system: System): void
-    removeSystem(system: System): void
-    init(): Promise<void>
-    start(): void
-    stop(): void
-    pause(): void
-    resume(): void
-    destroy(): void
+export interface AudioState {
+    masterVolume: number
+    sfxVolume: number
+    musicVolume: number
+    muted: boolean
+    
+    activeSounds: Map<string, {
+        source: AudioBufferSourceNode
+        startTime: number
+        config: SoundConfig
+    }>
 }
 
-// Allow GameEngine constructor to accept different parameter types
-export declare class GameEngine {
-    constructor(canvasOrEventBus: HTMLCanvasElement | any)
-    canvas: HTMLCanvasElement
-    getCanvas(): HTMLCanvasElement
-    addSystem(system: System): void
-    removeSystem(system: System): void
-    init(): Promise<void>
-    start(): void
-    stop(): void
-    pause(): void
-    resume(): void
-    destroy(): void
+// ===========================
+// ASSET MANAGEMENT
+// ===========================
+
+export interface AssetDefinition {
+    key: string
+    src: string
+    type: 'image' | 'audio' | 'font' | 'json' | 'binary'
+    preload?: boolean
+    priority?: 'low' | 'normal' | 'high'
+    processAfterLoad?: (data: any) => any
+    size?: number
+    dependencies?: string[]
 }
 
-// ===== GLOBAL WINDOW EXTENSIONS =====
+export interface LoadProgress {
+    loaded: number
+    total: number
+    percentage: number
+    
+    currentAsset?: {
+        key: string
+        type: string
+        progress: number
+    }
+    
+    bytesLoaded?: number
+    bytesTotal?: number
+    timeElapsed?: number
+}
+
+// ===========================
+// EVENT SYSTEM
+// ===========================
+
+export type EventCallback<T = any> = (data: T) => void
+
+export const GameEvents = {
+    // Game lifecycle
+    GAME_INIT: 'game:init',
+    GAME_START: 'game:start',
+    GAME_PAUSE: 'game:pause',
+    GAME_RESUME: 'game:resume',
+    GAME_END: 'game:end',
+    
+    // Player events
+    PLAYER_JOIN: 'player:join',
+    PLAYER_LEAVE: 'player:leave',
+    PLAYER_MOVE: 'player:move',
+    PLAYER_DEATH: 'player:death',
+    PLAYER_RESPAWN: 'player:respawn',
+    PLAYER_SCORE: 'player:score',
+    
+    // Multiplayer events
+    MULTIPLAYER_CONNECTED: 'multiplayer:connected',
+    MULTIPLAYER_DISCONNECTED: 'multiplayer:disconnected',
+    MULTIPLAYER_STATE_UPDATE: 'multiplayer:state_update',
+    NETWORK_CONNECT: 'network:connect',
+    NETWORK_DISCONNECT: 'network:disconnect',
+    NETWORK_RECONNECT: 'network:reconnect',
+    NETWORK_ERROR: 'network:error',
+    
+    // Game state events
+    STATE_UPDATE: 'state:update',
+    ARENA_SHRINK: 'arena:shrink',
+    MATCH_START: 'match:start',
+    MATCH_END: 'match:end',
+    
+    // UI events
+    UI_RESIZE: 'ui:resize',
+    UI_NOTIFICATION: 'ui:notification',
+    UI_MENU_TOGGLE: 'ui:menu_toggle',
+    
+    // Input events
+    INPUT_START: 'input:start',
+    INPUT_END: 'input:end',
+    INPUT_MOVE: 'input:move',
+} as const
+
+export type GameEventType = typeof GameEvents[keyof typeof GameEvents]
+
+export interface GameEventPayloads {
+    [GameEvents.GAME_INIT]: { timestamp: number }
+    [GameEvents.GAME_START]: { matchId: string }
+    [GameEvents.GAME_PAUSE]: { reason?: string }
+    [GameEvents.GAME_RESUME]: { pauseDuration: number }
+    [GameEvents.GAME_END]: { winner?: NetworkPlayer; duration: number }
+    
+    [GameEvents.PLAYER_JOIN]: { player: NetworkPlayer }
+    [GameEvents.PLAYER_LEAVE]: { playerId: string; reason?: string }
+    [GameEvents.PLAYER_MOVE]: { playerId: string; position: Point2D; velocity?: Point2D }
+    [GameEvents.PLAYER_DEATH]: { playerId: string; killerId?: string }
+    [GameEvents.PLAYER_RESPAWN]: { playerId: string; position: Point2D }
+    [GameEvents.PLAYER_SCORE]: { playerId: string; score: number; total: number }
+    
+    [GameEvents.MULTIPLAYER_CONNECTED]: { sessionId: string }
+    [GameEvents.MULTIPLAYER_DISCONNECTED]: { reason: string }
+    [GameEvents.MULTIPLAYER_STATE_UPDATE]: { state: GameState }
+    [GameEvents.NETWORK_CONNECT]: { sessionId: string; ping: number }
+    [GameEvents.NETWORK_DISCONNECT]: { reason: string; wasClean: boolean }
+    [GameEvents.NETWORK_RECONNECT]: { attempts: number; success: boolean }
+    [GameEvents.NETWORK_ERROR]: { error: Error; recoverable: boolean }
+    
+    [GameEvents.STATE_UPDATE]: { state: Partial<GameState>; timestamp: number }
+    [GameEvents.ARENA_SHRINK]: { percentage: number; duration: number }
+    [GameEvents.MATCH_START]: { playerCount: number; countdown: number }
+    [GameEvents.MATCH_END]: { results: Array<{player: NetworkPlayer; rank: number}> }
+    
+    [GameEvents.UI_RESIZE]: { dimensions: Dimensions; deviceInfo: DeviceInfo }
+    [GameEvents.UI_NOTIFICATION]: NotificationConfig
+    [GameEvents.UI_MENU_TOGGLE]: { open: boolean; menu: string }
+    
+    [GameEvents.INPUT_START]: { type: 'keyboard' | 'touch' | 'gamepad'; data: any }
+    [GameEvents.INPUT_END]: { type: 'keyboard' | 'touch' | 'gamepad'; data: any }
+    [GameEvents.INPUT_MOVE]: { type: 'mouse' | 'touch'; position: Point2D }
+}
+
+// ===========================
+// GLOBAL AUGMENTATIONS
+// ===========================
 
 declare global {
     interface Window {
         game?: {
-            onResize?: (
-                widthScale: number,
-                heightScale: number,
-                isDesktop: boolean
-            ) => void
-            pause?: () => void
-            resume?: () => void
-            restart?: () => void
-            toggleMultiplayer?: () => void
-            getStats?: () => PerformanceStats
-            [key: string]: any
+            pause(): void
+            resume(): void
+            getStats(): PerformanceStats
+            getState(): {
+                gameState: string
+                isConnected: boolean
+                playerCount: number
+            }
+            reconnect(): Promise<boolean>
         }
-        devicePixelRatio: number
+        
+        __ASCEND_AVOID_DEBUG__?: {
+            showCollisions: boolean
+            showNetworkStats: boolean
+            simulateLatency: number
+            forceDisconnect(): void
+        }
     }
 }
 
-// ===== UTILITY TYPES =====
+// ===========================
+// MODULE AUGMENTATIONS
+// ===========================
 
-export type GameModeType = 'single' | 'multiplayer'
-
-export type GameDifficulty = 'easy' | 'normal' | 'hard' | 'expert'
-
-export interface EventEmitter {
-    on(event: string, callback: EventCallback): void
-    off(event: string, callback: EventCallback): void
-    emit(event: string, data?: any): void
+declare module './core/EventBus' {
+    interface EventBus {
+        on<K extends GameEventType>(
+            event: K,
+            callback: EventCallback<GameEventPayloads[K]>
+        ): () => void
+        
+        emit<K extends GameEventType>(
+            event: K,
+            data: GameEventPayloads[K]
+        ): void
+        
+        once<K extends GameEventType>(
+            event: K,
+            callback: EventCallback<GameEventPayloads[K]>
+        ): () => void
+    }
 }
 
-// ===== CONSTANTS AS TYPES =====
-
-export const GAME_EVENTS = {
-    GAME_START: 'game:start',
-    GAME_PAUSE: 'game:pause',
-    GAME_RESUME: 'game:resume',
-    GAME_OVER: 'game:over',
-    PLAYER_DEATH: 'player:death',
-    SCORE_UPDATE: 'score:update',
-    MULTIPLAYER_CONNECT: 'multiplayer:connect',
-    MULTIPLAYER_DISCONNECT: 'multiplayer:disconnect',
-    WINDOW_RESIZE: 'window:resize',
-    INPUT_KEY_DOWN: 'input:key_down',
-    INPUT_KEY_UP: 'input:key_up',
-    INPUT_TOUCH_START: 'input:touch_start',
-    INPUT_TOUCH_END: 'input:touch_end',
-    PLAYER_COLLISION: 'player:collision',
-} as const
-
-export type GameEvent = (typeof GAME_EVENTS)[keyof typeof GAME_EVENTS]
-
-// ===== GAME EVENTS CONSTANT FOR IMPORT =====
-
-export declare const GameEvents: typeof GAME_EVENTS
+// Export empty object to make this a module
+export {}

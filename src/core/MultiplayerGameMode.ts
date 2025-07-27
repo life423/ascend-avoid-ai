@@ -130,10 +130,13 @@ export default class MultiplayerGameMode {
             sessionId: sessionId,
             x: x,
             y: y,
+            width: 30,
+            height: 30,
             name: playerData.name || `Player ${playerIndex + 1}`,
             color: PLAYER_COLORS[playerIndex % PLAYER_COLORS.length],
             isAlive: true,
             score: 0,
+            playerIndex: playerIndex,
             lastUpdate: Date.now()
         }
         

@@ -1,77 +1,73 @@
-// Codex test commit
+// src/main.ts
+
 /**
- * Modern main entry point for Ascend Avoid game.
- * Handles initialization, polyfills, and responsive behavior.
- * Fully typed with comprehensive error handling.
+ * Main entry point for Ascend Avoid - Multiplayer Game
+ * Handles initialization, responsive behavior, and device optimization
  */
 
-import './styles/index.css';
+import './styles/index.css'
 
-// Import core game components
-import Game from './core/Game';
-import { ResponsiveCanvas } from './utils/responsiveCanvas';
-import { DeviceInfo } from './types';
+// Core game imports
+import Game from './core/Game'
+import { ResponsiveCanvas } from './utils/responsiveCanvas'
+import { DeviceInfo } from './types'
 
-// Import utility functions
-import { setupPolyfills } from './utils/polyfills';
-import { setupPerformanceMonitoring } from './utils/performance';
-import { initMobileViewportFix, applyChromeMobileFixes } from './utils/mobileViewportFix';
+// Utility imports
+import { setupPolyfills } from './utils/polyfills'
+import { setupPerformanceMonitoring } from './utils/performance'
+import { initMobileViewportFix, applyChromeMobileFixes } from './utils/mobileViewportFix'
 
 // Global game instance
-let gameInstance: Game | null = null;
-let responsiveCanvas: ResponsiveCanvas | null = null;
+let gameInstance: Game | null = null
+let responsiveCanvas: ResponsiveCanvas | null = null
 
 /**
- * Application initialization and startup
+ * Device detection and classification helper
  */
-class GameApplication {
-  private initialized = false;
-  private canvas: HTMLCanvasElement | null = null;
-  private loader: HTMLElement | null = null;
-
-  constructor() {
-    this.setupGlobalErrorHandling();
-    this.setupPerformanceMonitoring();
-    this.initMobileFixes();
-  }
-
-  /**
-   * Initialize mobile-specific fixes
-   */
-  private initMobileFixes(): void {
-    initMobileViewportFix();
-    applyChromeMobileFixes();
-  }
-
-  /**
-   * Sets up global error handling and reporting
-   */
-  private setupGlobalErrorHandling(): void {
-    window.addEventListener('error', (event) => {
-      console.error('Global error:', event.error);
-      this.showErrorMessage('An unexpected error occurred. Please refresh the page.');
-    });
-
-    window.addEventListener('unhandledrejection', (event) => {
-      console.error('Unhandled promise rejection:', event.reason);
-      this.showErrorMessage('A network or loading error occurred. Please check your connection.');
-    });
-  }
-
-  /**
-   * Sets up performance monitoring for debugging
-   */
-  private setupPerformanceMonitoring(): void {
-    if (process.env.NODE_ENV === 'development') {
-      setupPerformanceMonitoring();
+class DeviceDetector {
+  static getInfo(): DeviceInfo {
+    return {
+      isTouchDevice: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+      isMobile: window.innerWidth < 768,
+      isTablet: window.innerWidth >= 768 && window.innerWidth < 1200,
+      isDesktop: window.innerWidth >= 1200,
+      isLandscape: window.innerWidth > window.innerHeight,
+      devicePixelRatio: window.devicePixelRatio || 1,
+      screenWidth: window.innerWidth,
+      screenHeight: window.innerHeight
     }
   }
 
-  /**
-   * Shows error message to user
-   */
-  private showErrorMessage(message: string): void {
-    const errorDiv = document.createElement('div');
+  static applyOptimizations(deviceInfo: DeviceInfo): void {
+    const body = document.body
+    
+    // Clear existing device classes
+    body.classList.remove('desktop-layout', 'tablet-layout', 'mobile-layout', 
+                         'touch-device', 'landscape', 'portrait')
+    
+    // Add appropriate device classes
+    if (deviceInfo.isDesktop) body.classList.add('desktop-layout')
+    else if (deviceInfo.isTablet) body.classList.add('tablet-layout')
+    else if (deviceInfo.isMobile) body.classList.add('mobile-layout')
+    
+    if (deviceInfo.isTouchDevice) body.classList.add('touch-device')
+    body.classList.add(deviceInfo.isLandscape ? 'landscape' : 'portrait')
+    
+    // Set CSS custom properties for responsive design
+    const root = document.documentElement
+    root.style.setProperty('--device-width', `${deviceInfo.screenWidth}px`)
+    root.style.setProperty('--device-height', `${deviceInfo.screenHeight}px`)
+    root.style.setProperty('--device-ratio', deviceInfo.devicePixelRatio.toString())
+  }
+}
+
+/**
+ * Error handling and user feedback system
+ */
+class ErrorHandler {
+  private static showError(message: string, duration: number = 5000): void {
+    const errorDiv = document.createElement('div')
+    errorDiv.className = 'game-error-notification'
     errorDiv.style.cssText = `
       position: fixed;
       top: 20px;
@@ -85,326 +81,304 @@ class GameApplication {
       z-index: 10000;
       max-width: 300px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    `;
-    errorDiv.textContent = message;
-    document.body.appendChild(errorDiv);
+      animation: slideIn 0.3s ease-out;
+    `
+    errorDiv.textContent = message
+    document.body.appendChild(errorDiv)
 
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      if (errorDiv.parentNode) {
-        errorDiv.parentNode.removeChild(errorDiv);
+    // Auto-remove after duration
+    setTimeout(() => errorDiv.remove(), duration)
+  }
+
+  static setupGlobalHandlers(): void {
+    window.addEventListener('error', (event) => {
+      console.error('Global error:', event.error)
+      this.showError('An unexpected error occurred. Please refresh the page.')
+    })
+
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled promise rejection:', event.reason)
+      
+      // More specific error messages for common multiplayer issues
+      const reason = event.reason?.toString() || ''
+      if (reason.includes('WebSocket') || reason.includes('connection')) {
+        this.showError('Unable to connect to game server. Please check your connection.')
+      } else {
+        this.showError('Connection error. Please check your network and refresh.')
       }
-    }, 5000);
+    })
   }
+}
 
-  /**
-   * Detects device capabilities and preferences
-   */
-  private getDeviceInfo(): DeviceInfo {
-    return {
-      isTouchDevice: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
-      isMobile: window.innerWidth < 768,
-      isTablet: window.innerWidth >= 768 && window.innerWidth < 1200,
-      isDesktop: window.innerWidth >= 1200,
-      isLandscape: window.innerWidth > window.innerHeight,
-      devicePixelRatio: window.devicePixelRatio || 1,
-      screenWidth: window.innerWidth,
-      screenHeight: window.innerHeight
-    };
-  }
-
-  /**
-   * Sets up polyfills for older browsers
-   */
-  private setupPolyfills(): void {
-    setupPolyfills();
-  }
-
-  /**
-   * Applies initial device-specific optimizations
-   */
-  private applyDeviceOptimizations(deviceInfo: DeviceInfo): void {
-    const body = document.body;
+/**
+ * Debug statistics display for development
+ */
+class DebugStats {
+  private static updateInterval: number | null = null
+  
+  static initialize(): void {
+    const debugElement = document.getElementById('debug-stats')
+    if (!debugElement) return
     
-    // Add device-specific classes
-    if (deviceInfo.isDesktop) {
-      body.classList.add('desktop-layout');
-    } else if (deviceInfo.isTablet) {
-      body.classList.add('tablet-layout');
-    } else if (deviceInfo.isMobile) {
-      body.classList.add('mobile-layout');
+    const isDevelopment = process.env.NODE_ENV === 'development'
+    const hasDebugFlag = new URLSearchParams(window.location.search).has('debug')
+    
+    if (isDevelopment || hasDebugFlag) {
+      debugElement.style.display = 'block'
+      this.startUpdating()
     }
-
-    if (deviceInfo.isTouchDevice) {
-      body.classList.add('touch-device');
+  }
+  
+  static startUpdating(): void {
+    const elements = {
+      fps: document.getElementById('fps-counter'),
+      frameTime: document.getElementById('frame-time'),
+      canvasSize: document.getElementById('canvas-size'),
+      deviceInfo: document.getElementById('device-info'),
+      playerCount: document.getElementById('player-count'), // Add multiplayer-specific stat
+      connectionStatus: document.getElementById('connection-status') // Add connection status
     }
-
-    if (deviceInfo.isLandscape) {
-      body.classList.add('landscape');
-    } else {
-      body.classList.add('portrait');
+    
+    if (!elements.fps || !elements.frameTime) return
+    
+    let frameCount = 0
+    let lastFpsUpdate = performance.now()
+    let lastFrameTime = performance.now()
+    
+    const update = () => {
+      const now = performance.now()
+      const delta = now - lastFrameTime
+      lastFrameTime = now
+      frameCount++
+      
+      // Update FPS every second
+      if (now - lastFpsUpdate >= 1000) {
+        const fps = Math.round((frameCount * 1000) / (now - lastFpsUpdate))
+        elements.fps!.textContent = `FPS: ${fps}`
+        frameCount = 0
+        lastFpsUpdate = now
+        
+        // Update multiplayer stats once per second
+        if (gameInstance) {
+          // Player count
+          if (elements.playerCount) {
+            const count = (gameInstance as any).multiplayerMode?.getPlayerCount() || 0
+            elements.playerCount.textContent = `Players: ${count}`
+          }
+          
+          // Connection status
+          if (elements.connectionStatus) {
+            const isConnected = (gameInstance as any).multiplayerMode?.isConnected() || false
+            elements.connectionStatus.textContent = `Server: ${isConnected ? '🟢 Connected' : '🔴 Disconnected'}`
+          }
+        }
+      }
+      
+      // Update frame time
+      elements.frameTime!.textContent = `Frame: ${delta.toFixed(1)}ms`
+      
+      // Update canvas size
+      const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
+      if (canvas && elements.canvasSize) {
+        elements.canvasSize.textContent = `Canvas: ${canvas.width}x${canvas.height}`
+      }
+      
+      // Update device info
+      if (elements.deviceInfo) {
+        const device = DeviceDetector.getInfo()
+        const type = device.isDesktop ? 'Desktop' : device.isTablet ? 'Tablet' : 'Mobile'
+        elements.deviceInfo.textContent = `Device: ${type} (${device.screenWidth}x${device.screenHeight})`
+      }
+      
+      this.updateInterval = requestAnimationFrame(update)
     }
+    
+    this.updateInterval = requestAnimationFrame(update)
+  }
+  
+  static stop(): void {
+    if (this.updateInterval !== null) {
+      cancelAnimationFrame(this.updateInterval)
+      this.updateInterval = null
+    }
+  }
+}
 
-    // Set CSS custom properties for responsive scaling
-    document.documentElement.style.setProperty('--device-width', `${deviceInfo.screenWidth}px`);
-    document.documentElement.style.setProperty('--device-height', `${deviceInfo.screenHeight}px`);
-    document.documentElement.style.setProperty('--device-ratio', deviceInfo.devicePixelRatio.toString());
+/**
+ * Main application controller for the multiplayer game
+ */
+class GameApplication {
+  private initialized = false
+  private canvas: HTMLCanvasElement | null = null
+  private loadingScreen: HTMLElement | null = null
+  private connectionRetries = 0
+  private readonly maxRetries = 3
+
+  constructor() {
+    this.setupEnvironment()
   }
 
   /**
-   * Sets up the responsive canvas system
+   * Set up the game environment and prerequisites
    */
-  private setupCanvas(): void {
-    this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+  private setupEnvironment(): void {
+    // Mobile-specific fixes
+    initMobileViewportFix()
+    applyChromeMobileFixes()
+    
+    // Error handling
+    ErrorHandler.setupGlobalHandlers()
+    
+    // Performance monitoring (development only)
+    if (process.env.NODE_ENV === 'development') {
+      setupPerformanceMonitoring()
+    }
+    
+    // Browser compatibility
+    setupPolyfills()
+  }
+
+  /**
+   * Initialize the canvas and responsive system
+   */
+  private async initializeCanvas(): Promise<void> {
+    this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
     
     if (!this.canvas) {
-      throw new Error('Game canvas not found! Make sure the HTML includes an element with id="gameCanvas"');
+      throw new Error('Game canvas element not found')
     }
 
-    // Remove any hardcoded dimensions from HTML
-    this.canvas.removeAttribute('width');
-    this.canvas.removeAttribute('height');
+    // Remove any hardcoded dimensions
+    this.canvas.removeAttribute('width')
+    this.canvas.removeAttribute('height')
 
     // Create responsive canvas manager
     responsiveCanvas = new ResponsiveCanvas(this.canvas, {
-      maintainAspectRatio: false, // Allow full screen usage for better mobile experience
+      maintainAspectRatio: false, // Full screen for better mobile experience
       minWidth: 320,
       minHeight: 240,
       maxWidth: 2560,
       maxHeight: 1440,
       devicePixelRatio: true
-    });
+    })
 
-    // Set up resize callback for game updates
+    // Handle resize events
     responsiveCanvas.onResize((widthScale: number, heightScale: number, deviceInfo: DeviceInfo) => {
-      console.log(`Canvas resized: ${deviceInfo.screenWidth}x${deviceInfo.screenHeight}, Scale: ${widthScale.toFixed(2)}x${heightScale.toFixed(2)}`);
+      console.log(`Canvas resized: ${deviceInfo.screenWidth}x${deviceInfo.screenHeight}`)
+      DeviceDetector.applyOptimizations(deviceInfo)
       
-      // Update device classes
-      this.applyDeviceOptimizations(deviceInfo);
+      // Notify game of resize if it has a handler
+      if (gameInstance && typeof (gameInstance as any).onResize === 'function') {
+        (gameInstance as any).onResize()
+      }
+    })
+  }
+
+  /**
+   * Initialize the multiplayer game with retry logic
+   */
+  private async initializeGame(): Promise<void> {
+    try {
+      // Create game instance
+      gameInstance = new Game()
       
-      // Notify game instance if it exists (defensive call)
-      if (gameInstance && (gameInstance as any).handleResize) {
-        try {
-          (gameInstance as any).handleResize(widthScale, heightScale, deviceInfo);
-        } catch (error) {
-          console.warn('Game resize handler failed:', error);
+      // The Game constructor handles its own initialization now
+      console.log('Multiplayer game instance created')
+      
+      // Reset retry counter on success
+      this.connectionRetries = 0
+      
+    } catch (error) {
+      console.error('Failed to initialize game:', error)
+      
+      // Retry logic for connection failures
+      if (this.connectionRetries < this.maxRetries) {
+        this.connectionRetries++
+        console.log(`Retrying connection... (${this.connectionRetries}/${this.maxRetries})`)
+        
+        // Update loading screen message
+        const loadingMessage = this.loadingScreen?.querySelector('.loading-message')
+        if (loadingMessage) {
+          loadingMessage.textContent = `Reconnecting... (${this.connectionRetries}/${this.maxRetries})`
         }
+        
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, this.connectionRetries)))
+        
+        // Retry
+        return this.initializeGame()
       }
-    });
-  }
-
-  /**
-   * Creates the multiplayer toggle button with proper styling
-   */
-  private setupMultiplayerButton(): void {
-    const multiplayerButton = document.getElementById('multiplayerToggle');
-    
-    if (!multiplayerButton) {
-      console.warn('Multiplayer button not found in HTML');
-      return;
-    }
-
-    // Set initial text
-    const statusSpan = multiplayerButton.querySelector('.button-status');
-    if (statusSpan) {
-      statusSpan.textContent = 'OFF';
-    }
-
-    // Add click handler
-    multiplayerButton.addEventListener('click', () => {
-      if (gameInstance && (gameInstance as any).toggleMultiplayer) {
-        try {
-          (gameInstance as any).toggleMultiplayer();
-        } catch (error) {
-          console.warn('Multiplayer toggle failed:', error);
-        }
-      }
-    });
-
-    // Add keyboard support
-    multiplayerButton.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        multiplayerButton.click();
-      }
-    });
-  }
-
-  /**
-   * Sets up debug stats display
-   */
-  private setupDebugStats(): void {
-    const debugStats = document.getElementById('debug-stats');
-    
-    if (!debugStats) {
-      console.warn('Debug stats element not found');
-      return;
-    }
-
-    // Show debug stats in development mode or when debug flag is set
-    const showDebug = process.env.NODE_ENV === 'development' || 
-                     new URLSearchParams(window.location.search).has('debug');
-    
-    if (showDebug) {
-      debugStats.style.display = 'block';
-      this.startStatsUpdater();
+      
+      throw error
     }
   }
 
   /**
-   * Starts the debug stats updater
+   * Set up the global game API for external control
    */
-  private startStatsUpdater(): void {
-    const fpsCounter = document.getElementById('fps-counter');
-    const frameTime = document.getElementById('frame-time');
-    const canvasSize = document.getElementById('canvas-size');
-    const deviceInfo = document.getElementById('device-info');
-
-    if (!fpsCounter || !frameTime || !canvasSize || !deviceInfo) {
-      return;
-    }
-
-    let lastTime = performance.now();
-    let frameCount = 0;
-    let lastFpsUpdate = lastTime;
-
-    const updateStats = () => {
-      const now = performance.now();
-      const delta = now - lastTime;
-      lastTime = now;
-      frameCount++;
-
-      // Update FPS every second
-      if (now - lastFpsUpdate >= 1000) {
-        const fps = Math.round((frameCount * 1000) / (now - lastFpsUpdate));
-        fpsCounter.textContent = `FPS: ${fps}`;
-        frameCount = 0;
-        lastFpsUpdate = now;
-      }
-
-      // Update frame time
-      frameTime.textContent = `Frame: ${delta.toFixed(1)}ms`;
-
-      // Update canvas size
-      if (this.canvas) {
-        canvasSize.textContent = `Canvas: ${this.canvas.width}x${this.canvas.height}`;
-      }
-
-      // Update device info
-      const device = this.getDeviceInfo();
-      const deviceType = device.isDesktop ? 'Desktop' : device.isTablet ? 'Tablet' : 'Mobile';
-      deviceInfo.textContent = `Device: ${deviceType} (${device.screenWidth}x${device.screenHeight})`;
-
-      requestAnimationFrame(updateStats);
-    };
-
-    requestAnimationFrame(updateStats);
-  }
-
-  /**
-   * Hides the loading screen
-   */
-  private hideLoader(): void {
-    if (this.loader) {
-      this.loader.classList.add('hidden');
-      setTimeout(() => {
-        if (this.loader && this.loader.parentNode) {
-          this.loader.parentNode.removeChild(this.loader);
-        }
-        this.loader = null;
-      }, 500);
-    }
-  }
-
-  /**
-   * Sets up global game interface for debugging and external control
-   */
-  private setupGlobalInterface(): void {
+  private setupGlobalAPI(): void {
+    // Simplified API for multiplayer-only game
     window.game = {
-      onResize: (widthScale: number, heightScale: number, _isDesktop: boolean) => {
-        // This will be called by the ResponsiveCanvas system
-        if (gameInstance && (gameInstance as any).handleResize) {
-          try {
-            const deviceInfo = this.getDeviceInfo();
-            (gameInstance as any).handleResize(widthScale, heightScale, deviceInfo);
-          } catch (error) {
-            console.warn('Game resize handler failed:', error);
-          }
-        }
-      },
+      // Pause/resume functionality
       pause: () => {
-        if (gameInstance && (gameInstance as any).pause) {
-          try {
-            (gameInstance as any).pause();
-          } catch (error) {
-            console.warn('Game pause failed:', error);
-          }
+        if (gameInstance && typeof (gameInstance as any).pause === 'function') {
+          (gameInstance as any).pause()
         }
       },
+      
       resume: () => {
-        if (gameInstance && (gameInstance as any).resume) {
-          try {
-            (gameInstance as any).resume();
-          } catch (error) {
-            console.warn('Game resume failed:', error);
-          }
+        if (gameInstance && typeof (gameInstance as any).resume === 'function') {
+          (gameInstance as any).resume()
         }
       },
-      restart: () => {
-        if (gameInstance && (gameInstance as any).restart) {
-          try {
-            (gameInstance as any).restart();
-          } catch (error) {
-            console.warn('Game restart failed:', error);
-          }
-        }
-      },
-      toggleMultiplayer: () => {
-        if (gameInstance && (gameInstance as any).switchGameMode) {
-          try {
-            const newMode = (gameInstance as any).isMultiplayerMode ? 'singlePlayer' : 'multiplayer';
-            (gameInstance as any).switchGameMode(newMode);
-          } catch (error) {
-            console.warn('Multiplayer toggle failed:', error);
-          }
-        }
-      },
-      switchGameMode: (mode: 'singlePlayer' | 'multiplayer') => {
-        if (gameInstance && (gameInstance as any).switchGameMode) {
-          try {
-            return (gameInstance as any).switchGameMode(mode);
-          } catch (error) {
-            console.warn('Game mode switch failed:', error);
-            return Promise.reject(error);
-          }
-        }
-        return Promise.reject(new Error('Game instance not available'));
-      },
-      // Expose current multiplayer state
-      get isMultiplayerMode() {
-        return gameInstance ? (gameInstance as any).isMultiplayerMode : false;
-      },
+      
+      // Get performance statistics
       getStats: () => {
+        if (gameInstance && (gameInstance as any).performanceStats) {
+          return (gameInstance as any).performanceStats
+        }
+        return null
+      },
+      
+      // Get current game state
+      getState: () => {
         if (gameInstance) {
-          // Try multiple possible method names
-          if ((gameInstance as any).getPerformanceStats) {
-            try {
-              return (gameInstance as any).getPerformanceStats();
-            } catch (error) {
-              console.warn('getPerformanceStats failed:', error);
-            }
-          }
-          if ((gameInstance as any).performanceStats) {
-            try {
-              return (gameInstance as any).performanceStats;
-            } catch (error) {
-              console.warn('performanceStats access failed:', error);
-            }
+          return {
+            gameState: (gameInstance as any).gameState,
+            isConnected: (gameInstance as any).multiplayerMode?.isConnected() || false,
+            playerCount: (gameInstance as any).multiplayerMode?.getPlayerCount() || 0
           }
         }
-        return null;
+        return null
+      },
+      
+      // Reconnect to server
+      reconnect: async () => {
+        if (gameInstance && (gameInstance as any).multiplayerMode) {
+          try {
+            await (gameInstance as any).multiplayerMode.reconnect()
+            return true
+          } catch (error) {
+            console.error('Reconnection failed:', error)
+            return false
+          }
+        }
+        return false
       }
-    };
+    }
+  }
+
+  /**
+   * Hide the loading screen with animation
+   */
+  private hideLoadingScreen(): void {
+    if (this.loadingScreen) {
+      this.loadingScreen.classList.add('fade-out')
+      setTimeout(() => {
+        this.loadingScreen?.remove()
+        this.loadingScreen = null
+      }, 500)
+    }
   }
 
   /**
@@ -412,151 +386,120 @@ class GameApplication {
    */
   public async initialize(): Promise<void> {
     if (this.initialized) {
-      console.warn('Game already initialized');
-      return;
+      console.warn('Game already initialized')
+      return
     }
 
     try {
-      console.log('Initializing Ascend Avoid game...');
+      console.log('🎮 Initializing Ascend Avoid Multiplayer...')
       
-      // Get loader element
-      this.loader = document.getElementById('loader');
+      // Get loading screen element
+      this.loadingScreen = document.getElementById('loader')
       
-      // Detect device capabilities
-      const deviceInfo = this.getDeviceInfo();
-      console.log(`Device detected: ${deviceInfo.isDesktop ? 'Desktop' : deviceInfo.isTablet ? 'Tablet' : 'Mobile'}`);
-      console.log(`Touch support: ${deviceInfo.isTouchDevice ? 'Yes' : 'No'}`);
-      console.log(`Screen: ${deviceInfo.screenWidth}x${deviceInfo.screenHeight} (${deviceInfo.devicePixelRatio}x DPR)`);
+      // Device detection and optimization
+      const deviceInfo = DeviceDetector.getInfo()
+      DeviceDetector.applyOptimizations(deviceInfo)
+      console.log(`📱 Device: ${deviceInfo.isDesktop ? 'Desktop' : deviceInfo.isTablet ? 'Tablet' : 'Mobile'}`)
+      console.log(`🖱️ Touch support: ${deviceInfo.isTouchDevice ? 'Yes' : 'No'}`)
+      console.log(`📐 Resolution: ${deviceInfo.screenWidth}x${deviceInfo.screenHeight} (${deviceInfo.devicePixelRatio}x DPR)`)
       
-      // Apply initial optimizations
-      this.applyDeviceOptimizations(deviceInfo);
+      // Initialize canvas system
+      await this.initializeCanvas()
       
-      // Set up polyfills for older browsers
-      this.setupPolyfills();
+      // Initialize debug stats
+      DebugStats.initialize()
       
-      // Set up canvas and responsive system
-      this.setupCanvas();
+      // Set up global API
+      this.setupGlobalAPI()
       
-      // Set up UI components
-      this.setupMultiplayerButton();
-      this.setupDebugStats();
+      // Allow canvas to stabilize
+      await new Promise(resolve => setTimeout(resolve, 100))
       
-      // Set up global interface
-      this.setupGlobalInterface();
-      
-      // Give the canvas a moment to initialize
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Initialize the game (no parameters based on current Game constructor)
-      gameInstance = new Game();
-      
-      // Set the canvas if the game has a method to do so
-      if (this.canvas && (gameInstance as any).setCanvas) {
-        try {
-          (gameInstance as any).setCanvas(this.canvas);
-        } catch (error) {
-          console.warn('Failed to set canvas on game instance:', error);
-        }
-      }
-      
-      // CRITICAL: Initialize the game (this was missing!)
-      if ((gameInstance as any).init) {
-        try {
-          await (gameInstance as any).init();
-          console.log('Game initialization completed');
-        } catch (error) {
-          console.error('Game initialization failed:', error);
-          throw error;
-        }
-      }
-      
-      // Start the game loop if not already started
-      if ((gameInstance as any).gameState !== (gameInstance as any).config?.STATE?.PLAYING) {
-        (gameInstance as any).gameState = (gameInstance as any).config?.STATE?.PLAYING || 'playing';
-      }
+      // Initialize the game (with retry logic)
+      await this.initializeGame()
       
       // Hide loading screen
-      this.hideLoader();
+      this.hideLoadingScreen()
       
-      this.initialized = true;
-      console.log('Game initialized successfully');
+      this.initialized = true
+      console.log('✅ Game initialized successfully')
       
     } catch (error) {
-      console.error('Failed to initialize game:', error);
-      this.showErrorMessage('Failed to initialize game. Please refresh the page and try again.');
-      throw error;
+      console.error('Failed to initialize game:', error)
+      
+      // Show appropriate error message
+      if ((error as any)?.message?.includes('multiplayer')) {
+        ErrorHandler.showError('Unable to connect to game server. Please check your connection and refresh.')
+      } else {
+        ErrorHandler.showError('Failed to start game. Please refresh and try again.')
+      }
+      
+      // Hide loading screen even on error
+      this.hideLoadingScreen()
+      
+      throw error
     }
   }
 
   /**
-   * Clean up resources when page unloads
+   * Clean up resources
    */
   public cleanup(): void {
+    DebugStats.stop()
+    
     if (responsiveCanvas) {
-      responsiveCanvas.destroy();
-      responsiveCanvas = null;
+      responsiveCanvas.destroy()
+      responsiveCanvas = null
     }
     
-    if (gameInstance && (gameInstance as any).destroy) {
-      try {
-        (gameInstance as any).destroy();
-      } catch (error) {
-        console.warn('Game cleanup failed:', error);
-      }
-      gameInstance = null;
+    if (gameInstance && typeof (gameInstance as any).dispose === 'function') {
+      (gameInstance as any).dispose()
+      gameInstance = null
     }
     
-    this.initialized = false;
+    this.initialized = false
   }
 }
 
-// Application instance
-const app = new GameApplication();
+// Create and initialize application
+const app = new GameApplication()
 
-// Wait for DOM to be ready, then initialize
+// Initialize when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    app.initialize().catch(console.error);
-  });
+    app.initialize().catch(console.error)
+  })
 } else {
-  // DOM is already ready
-  app.initialize().catch(console.error);
+  app.initialize().catch(console.error)
 }
 
-// Clean up on page unload
-window.addEventListener('beforeunload', () => {
-  app.cleanup();
-});
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => app.cleanup())
 
-// Handle visibility changes (mobile optimization)
+// Handle page visibility changes (mobile optimization)
 document.addEventListener('visibilitychange', () => {
-  if (gameInstance) {
-    if (document.hidden) {
-      // Page hidden - pause game to save battery
-      if ((gameInstance as any).pause) {
-        try {
-          (gameInstance as any).pause();
-        } catch (error) {
-          console.warn('Auto-pause failed:', error);
-        }
-      }
-    } else {
-      // Page visible - resume game
-      if ((gameInstance as any).resume) {
-        try {
-          (gameInstance as any).resume();
-        } catch (error) {
-          console.warn('Auto-resume failed:', error);
-        }
-      }
-    }
+  if (document.hidden) {
+    window.game?.pause()
+  } else {
+    window.game?.resume()
   }
-});
+})
 
-// Export for debugging
+// Handle online/offline events for multiplayer
+window.addEventListener('online', () => {
+  console.log('🌐 Connection restored')
+  // Attempt to reconnect if we were disconnected
+  window.game?.reconnect()
+})
+
+window.addEventListener('offline', () => {
+  console.log('📵 Connection lost')
+  ErrorHandler.showError('Connection lost. The game will reconnect when your connection is restored.')
+})
+
+// Development exports
 if (process.env.NODE_ENV === 'development') {
-  (window as any).gameApp = app;
-  (window as any).getGameInstance = () => gameInstance;
-  (window as any).getResponsiveCanvas = () => responsiveCanvas;
+  (window as any).gameApp = app
+  (window as any).getGameInstance = () => gameInstance
+  (window as any).getResponsiveCanvas = () => responsiveCanvas
 }
-
