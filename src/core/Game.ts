@@ -90,8 +90,35 @@ export default class Game {
         this.touchControls = new TouchControls(this, this.eventBus)
         this.background = new Background(this.canvas)
 
+        // Set up touch controls for InputManager
+        this.inputManager.setupTouchControls(this.canvas)
+        
+        // Register touch buttons with InputManager
+        this.setupTouchControls()
+
         this.connectToServer()
         this.gameLoop()
+    }
+
+    /**
+     * Set up touch controls and register buttons with InputManager
+     */
+    private setupTouchControls(): void {
+        if (this.inputManager && this.touchControls && this.touchControls.buttonElements) {
+            console.log('🎮 Registering touch buttons with InputManager...')
+            
+            // Register directional buttons
+            for (const [direction, button] of Object.entries(this.touchControls.buttonElements)) {
+                if (button && ['up', 'down', 'left', 'right'].includes(direction)) {
+                    console.log(`  Registering ${direction} button`)
+                    this.inputManager.registerTouchButton(button as HTMLElement, direction)
+                }
+            }
+            
+            console.log('✅ Touch controls setup complete')
+        } else {
+            console.log('⚠️ Cannot setup touch controls - missing dependencies')
+        }
     }
 
     private async connectToServer(): Promise<void> {

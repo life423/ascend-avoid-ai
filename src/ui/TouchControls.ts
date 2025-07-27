@@ -135,7 +135,7 @@ export default class TouchControls {
             this.container.style.display = 'flex'
             this.container.style.justifyContent = 'space-between'
             this.container.style.alignItems = 'center'
-            this.container.style.padding = '10px 10px 30px 10px'
+            this.container.style.padding = 'var(--space-md) var(--space-lg) var(--space-xl) var(--space-lg)'
             this.container.style.pointerEvents = 'none'
             this.container.style.background =
                 'linear-gradient(to top, rgba(10, 25, 47, 0.8), transparent)'
@@ -153,6 +153,7 @@ export default class TouchControls {
         leftControls.style.alignItems = 'center'
         leftControls.style.flex = '1'
         leftControls.style.pointerEvents = 'auto'
+        leftControls.style.padding = 'var(--space-sm)' // Add breathing room around D-pad
 
         // Create d-pad container with grid layout
         this.directionControls = document.createElement('div')
@@ -160,7 +161,7 @@ export default class TouchControls {
         this.directionControls.style.display = 'grid'
         this.directionControls.style.gridTemplateAreas =
             '". up ." "left . right" ". down ."'
-        this.directionControls.style.gap = '5px'
+        this.directionControls.style.gap = 'var(--space-sm)' // Consistent spacing between arrow buttons
 
         // Create directional buttons
         for (const direction of ['up', 'down', 'left', 'right']) {
@@ -171,7 +172,7 @@ export default class TouchControls {
             button.textContent = this.buttons[direction].symbol
 
             button.style.backgroundColor = 'rgba(0, 188, 212, 0.3)'
-            button.style.border = '3px solid var(--accent-primary, #00bcd4)'
+            button.style.border = 'var(--space-xs) solid var(--accent-primary, #00bcd4)'
             button.style.borderRadius = '50%'
             button.style.display = 'flex'
             button.style.justifyContent = 'center'
@@ -179,8 +180,14 @@ export default class TouchControls {
             button.style.color = 'white'
             button.style.userSelect = 'none'
             button.style.touchAction = 'none'
-            button.style.boxShadow = '0 3px 5px rgba(0,0,0,0.3)'
+            button.style.boxShadow = '0 var(--space-xs) var(--space-sm) rgba(0,0,0,0.3)'
             button.style.gridArea = direction
+            // Responsive D-pad button sizing - consistent with action buttons
+            button.style.width = 'clamp(44px, 12vw, 80px)'
+            button.style.height = 'clamp(44px, 12vw, 80px)'
+            button.style.fontSize = 'clamp(1.2rem, 4vw, 2rem)' // Arrows need to be slightly larger
+            button.style.minWidth = '44px' // Accessibility minimum
+            button.style.minHeight = '44px' // Accessibility minimum
 
             this.directionControls.appendChild(button)
         }
@@ -195,12 +202,13 @@ export default class TouchControls {
         rightControls.style.alignItems = 'center'
         rightControls.style.flex = '1'
         rightControls.style.pointerEvents = 'auto'
+        rightControls.style.padding = 'var(--space-sm)' // Add breathing room around action buttons
 
         const actionButtons = document.createElement('div')
         actionButtons.className = 'action-buttons'
         actionButtons.style.display = 'flex'
         actionButtons.style.flexDirection = 'row'
-        actionButtons.style.gap = '25px'
+        actionButtons.style.gap = 'var(--space-lg)'
 
         // Create action buttons
         for (const action of ['boost', 'missile']) {
@@ -210,7 +218,7 @@ export default class TouchControls {
             button.textContent = action === 'boost' ? 'B' : 'A'
             
             button.style.backgroundColor = 'rgba(0, 188, 212, 0.3)'
-            button.style.border = '3px solid var(--accent-primary, #00bcd4)'
+            button.style.border = 'var(--space-xs) solid var(--accent-primary, #00bcd4)'
             button.style.borderRadius = '50%'
             button.style.display = 'flex'
             button.style.justifyContent = 'center'
@@ -219,7 +227,13 @@ export default class TouchControls {
             button.style.fontWeight = 'bold'
             button.style.userSelect = 'none'
             button.style.touchAction = 'none'
-            button.style.boxShadow = '0 3px 5px rgba(0,0,0,0.3)'
+            button.style.boxShadow = '0 var(--space-xs) var(--space-sm) rgba(0,0,0,0.3)'
+            // Responsive button sizing - minimum 44px touch target, scales with viewport
+            button.style.width = 'clamp(44px, 12vw, 80px)'
+            button.style.height = 'clamp(44px, 12vw, 80px)'
+            button.style.fontSize = 'clamp(1rem, 3vw, 1.5rem)'
+            button.style.minWidth = '44px' // Accessibility minimum
+            button.style.minHeight = '44px' // Accessibility minimum
 
             actionButtons.appendChild(button)
         }
@@ -241,6 +255,8 @@ export default class TouchControls {
             restart: null as unknown as HTMLElement,
             shield: null as unknown as HTMLElement,
         }
+
+        // Note: Buttons will be registered with InputManager by Game class
     }
 
     private setupTouchListeners(): void {

@@ -29,9 +29,9 @@
     }
     
     .app-header {
-        padding: var(--space-sm) var(--space-md);
-        padding-top: max(var(--space-sm), env(safe-area-inset-top, 8px));
-        min-height: 50px;
+        padding: var(--space-md) var(--space-lg);
+        padding-top: max(var(--space-lg), env(safe-area-inset-top, 8px));
+        min-height: 60px; /* A bit more height for better proportion */
     }
     
     .app-header h1 {
@@ -53,7 +53,7 @@
     }
     
     .game-main {
-        padding: var(--space-xs);
+        padding: var(--space-md); /* More breathing room */
         flex: 1; /* Take remaining space */
         display: flex;
         flex-direction: column;
@@ -74,13 +74,16 @@
     .canvas-viewport {
         width: 100%;
         height: 100%;
-        max-width: calc(100vw - 2rem);
-        max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 6rem);
+        max-width: calc(100vw - var(--space-xl) * 2); /* Proper spacing from left AND right edges */
+        max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 10rem); /* More breathing room */
         /* Fallback for browsers without custom property support */
-        max-height: calc(100vh - 120px - 6rem);
+        max-height: calc(100vh - 120px - 10rem);
         min-width: 280px; /* Ensure minimum container size */
         min-height: 200px; /* Ensure minimum container size */
         flex: 1; /* Take available space in flex container */
+        margin: var(--space-lg); /* Generous spacing on all four sides */
+        border-radius: var(--border-radius); /* Soften the edges */
+        box-shadow: 0 var(--space-sm) var(--space-lg) rgba(0, 0, 0, 0.3); /* Add depth */
     }
     
     .game-canvas {
@@ -88,10 +91,8 @@
         height: 100%;
         max-width: 100%;
         max-height: 100%;
-        min-width: 300px; /* Ensure minimum canvas size */
-        min-height: 300px; /* Ensure minimum canvas size */
-        border: 4px solid #ff0000 !important; /* Debug: bright red border */
-        background: #001122 !important; /* Debug: dark blue background */
+        min-width: 280px; /* Ensure minimum canvas size */
+        min-height: 200px; /* Ensure minimum canvas size */
     }
     
     /* Updated mobile control-panel - adaptive sizing based on content */
@@ -99,23 +100,24 @@
         flex: 0 0 auto; /* Don't grow/shrink - but let content determine size */
         /* Remove rigid min-height - let content and viewport constraints determine size */
         max-height: 25vh; /* Still cap maximum to prevent taking over screen */
-        padding: var(--space-xs) var(--space-sm);
-        padding-bottom: env(safe-area-inset-bottom, 0); /* iOS home indicator clearance */
+        padding: var(--space-md) var(--space-lg); /* More generous padding */
+        padding-bottom: calc(env(safe-area-inset-bottom, 0) + var(--space-md)); /* iOS safe area + padding */
         position: relative;
         z-index: var(--z-ui);
         background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);
+        margin-top: var(--space-sm); /* Separation from game area */
     }
     
-    /* Updated mobile touch-controller - responsive sizing */
+    /* Updated mobile touch-controller - responsive sizing with proper spacing scale */
     .touch-controller {
         display: flex !important;
-        justify-content: center;
+        justify-content: space-between; /* Better distribution of controls */
+        align-items: center;
         height: auto;
         /* Responsive sizing based on viewport height - adapts to device constraints */
-        min-height: clamp(60px, 12vh, 100px); /* Scale with viewport, never too small or huge */
-        padding: var(--control-gap) 0; /* Use shared responsive padding */
-        background: #ff00ff !important; /* Debug: bright magenta background */
-        border: 2px solid #00ff00 !important; /* Debug: bright green border */
+        min-height: clamp(80px, 15vh, 120px); /* Taller for better touch targets */
+        padding: var(--space-md) var(--space-lg); /* Consistent with our spacing scale */
+        gap: var(--space-lg); /* Proper spacing between left and right controls */
     }
     
     .info-panel {
