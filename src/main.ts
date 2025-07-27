@@ -360,13 +360,29 @@ class GameApplication {
         }
       },
       toggleMultiplayer: () => {
-        if (gameInstance && (gameInstance as any).toggleMultiplayer) {
+        if (gameInstance && (gameInstance as any).switchGameMode) {
           try {
-            (gameInstance as any).toggleMultiplayer();
+            const newMode = (gameInstance as any).isMultiplayerMode ? 'singlePlayer' : 'multiplayer';
+            (gameInstance as any).switchGameMode(newMode);
           } catch (error) {
             console.warn('Multiplayer toggle failed:', error);
           }
         }
+      },
+      switchGameMode: (mode: 'singlePlayer' | 'multiplayer') => {
+        if (gameInstance && (gameInstance as any).switchGameMode) {
+          try {
+            return (gameInstance as any).switchGameMode(mode);
+          } catch (error) {
+            console.warn('Game mode switch failed:', error);
+            return Promise.reject(error);
+          }
+        }
+        return Promise.reject(new Error('Game instance not available'));
+      },
+      // Expose current multiplayer state
+      get isMultiplayerMode() {
+        return gameInstance ? (gameInstance as any).isMultiplayerMode : false;
       },
       getStats: () => {
         if (gameInstance) {
@@ -440,6 +456,17 @@ class GameApplication {
           (gameInstance as any).setCanvas(this.canvas);
         } catch (error) {
           console.warn('Failed to set canvas on game instance:', error);
+        }
+      }
+      
+      // CRITICAL: Initialize the game (this was missing!)
+      if ((gameInstance as any).init) {
+        try {
+          await (gameInstance as any).init();
+          console.log('Game initialization completed');
+        } catch (error) {
+          console.error('Game initialization failed:', error);
+          throw error;
         }
       }
       

@@ -5,6 +5,7 @@
  */
 import GameMode from './GameMode';
 import { InputState, NetworkPlayer } from '../types';
+import { GameEvents } from '../constants/client-constants';
 
 interface GameState {
   gameState: string;
@@ -21,6 +22,7 @@ interface ArenaStats {
 
 export default class MultiplayerMode extends GameMode {
   private multiplayerManager: any | null;
+  private eventBus: any | null;
   private remotePlayers: Record<string, NetworkPlayer>;
   private lastSentInput?: InputState;
   private lastInputSendTime: number;
@@ -35,6 +37,7 @@ export default class MultiplayerMode extends GameMode {
     
     // Initialize multiplayer-specific state
     this.multiplayerManager = null;
+    this.eventBus = null;
     this.remotePlayers = {};
     this.lastInputSendTime = 0;
     
@@ -61,10 +64,10 @@ export default class MultiplayerMode extends GameMode {
       const EventBus = (await import('../core/EventBus')).EventBus;
       const AssetManager = (await import('../managers/AssetManager')).default;
       
-      const eventBus = new EventBus();
+      this.eventBus = new EventBus();
       const assetManager = new AssetManager();
       
-      this.multiplayerManager = new MultiplayerManager(eventBus, assetManager);
+      this.multiplayerManager = new MultiplayerManager(this.eventBus, assetManager);
       await this.multiplayerManager.connect();
       
       // Set up multiplayer event handlers
@@ -83,47 +86,82 @@ export default class MultiplayerMode extends GameMode {
    * Set up event handlers for multiplayer events
    */
   private setupEventHandlers(): void {
-    if (!this.multiplayerManager) return;
+    if (!this.multiplayerManager || !this.eventBus) return;
     
-    // Handle game state changes from server
-    this.multiplayerManager.onGameStateChange = this.handleNetworkUpdate;
+    // Subscribe to EventBus events (this was the missing piece!)
+    // Listen for server state updates
+    this.eventBus.on(GameEvents.MULTIPLAYER_STATE_UPDATE, (state: any) => {
+      console.log('🔄 Received state update:', state);
+      this.handleNetworkUpdate(state);
+      // Update remote players from the manager's synchronized state
+      this.remotePlayers = this.multiplayerManager.getRemotePlayers();
+    });
     
-    // Handle player joining
-    this.multiplayerManager.onPlayerJoin = (player: NetworkPlayer) => {
-      console.log(`Player joined: ${player.name}`);
-      // Update UI or show notification
+    // Listen for player join events  
+    this.eventBus.on(GameEvents.PLAYER_JOINED, (playerData: any) => {
+      console.log(`✅ Player joined: ${playerData.name || playerData.id}`);
+      // Update remote players list
+      this.remotePlayers = this.multiplayerManager.getRemotePlayers();
+      // Show UI notification
       if (this.game.uiManager) {
-        this.game.uiManager.showNotification(`${player.name} joined the game`);
+        this.game.uiManager.showNotification(`${playerData.name || 'A player'} joined the game`);
       }
-    };
+    });
     
-    // Handle player leaving
-    this.multiplayerManager.onPlayerLeave = (player: NetworkPlayer) => {
-      console.log(`Player left: ${player.id}`);
-      // Update UI or show notification
+    // Listen for player leave events
+    this.eventBus.on(GameEvents.PLAYER_LEFT, (playerData: any) => {
+      console.log(`❌ Player left: ${playerData.id}`);
+      // Update remote players list
+      this.remotePlayers = this.multiplayerManager.getRemotePlayers();
+      // Show UI notification
       if (this.game.uiManager) {
-        this.game.uiManager.showNotification(`${player.name || 'A player'} left the game`);
+        this.game.uiManager.showNotification(`${playerData.name || 'A player'} left the game`);
       }
-    };
+    });
     
-    // Handle connection errors
-    this.multiplayerManager.onConnectionError = (error: string) => {
-      console.error(`Multiplayer connection error: ${error}`);
+    // Listen for connection events
+    this.eventBus.on(GameEvents.MULTIPLAYER_CONNECTED, (data: any) => {
+      console.log('🔗 Connected to multiplayer server:', data);
       if (this.game.uiManager) {
-        this.game.uiManager.showError(`Connection error: ${error}`);
+        this.game.uiManager.showNotification('Connected to multiplayer server');
       }
-    };
+    });
     
-    // Handle game over from server
-    this.multiplayerManager.onGameOver = (winnerName: string) => {
+    // Listen for connection errors
+    this.eventBus.on(GameEvents.MULTIPLAYER_ERROR, (errorData: any) => {
+      console.error(`🚨 Multiplayer error: ${errorData.message}`);
+      if (this.game.uiManager) {
+        this.game.uiManager.showError(`Multiplayer error: ${errorData.message}`);
+      }
+    });
+    
+    // Listen for game over events
+    this.eventBus.on(GameEvents.GAME_OVER, (gameOverData: any) => {
+      console.log('🏁 Game over:', gameOverData);
       if (this.game.uiManager) {
         this.game.uiManager.showGameOver(
           this.game.score,
           this.game.highScore,
           this.completeReset.bind(this),
-          winnerName
+          gameOverData.winnerName
         );
       }
+    });
+    
+    // Keep the legacy callback handlers for backward compatibility
+    // (These may not be called anymore since we're using EventBus)
+    this.multiplayerManager.onGameStateChange = this.handleNetworkUpdate;
+    this.multiplayerManager.onPlayerJoin = (player: NetworkPlayer) => {
+      console.log(`[Legacy] Player joined: ${player.name}`);
+    };
+    this.multiplayerManager.onPlayerLeave = (player: NetworkPlayer) => {
+      console.log(`[Legacy] Player left: ${player.id}`);
+    };
+    this.multiplayerManager.onConnectionError = (error: string) => {
+      console.error(`[Legacy] Connection error: ${error}`);
+    };
+    this.multiplayerManager.onGameOver = (winnerName: string) => {
+      console.log(`[Legacy] Game over: ${winnerName}`);
     };
   }
   
@@ -431,6 +469,17 @@ export default class MultiplayerMode extends GameMode {
    * Clean up resources
    */
   dispose(): void {
+    // Clean up EventBus subscriptions to prevent memory leaks
+    if (this.eventBus) {
+      this.eventBus.off(GameEvents.MULTIPLAYER_STATE_UPDATE);
+      this.eventBus.off(GameEvents.PLAYER_JOINED);
+      this.eventBus.off(GameEvents.PLAYER_LEFT);
+      this.eventBus.off(GameEvents.MULTIPLAYER_CONNECTED);
+      this.eventBus.off(GameEvents.MULTIPLAYER_ERROR);
+      this.eventBus.off(GameEvents.GAME_OVER);
+      this.eventBus = null;
+    }
+    
     // Disconnect from server
     if (this.multiplayerManager) {
       this.multiplayerManager.disconnect();
