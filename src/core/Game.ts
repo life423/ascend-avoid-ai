@@ -84,15 +84,20 @@ export default class Game {
                 
                 // Simple: just get the first player from server state
                 if (state.players && state.players.size > 0) {
-                    const firstPlayer = Array.from(state.players.values())[0]
-                    console.log('📦 Shared rectangle at:', firstPlayer.x, firstPlayer.y)
+                    const firstPlayer = Array.from(state.players.values())[0] as any
+                    
+                    // Ensure position is within canvas bounds
+                    const x = Math.max(0, Math.min(firstPlayer.x || this.canvas.width/2, this.canvas.width - 50))
+                    const y = Math.max(0, Math.min(firstPlayer.y || this.canvas.height/2, this.canvas.height - 50))
+                    
+                    console.log('📦 Shared rectangle at:', x, y, 'Canvas:', this.canvas.width, 'x', this.canvas.height)
                     
                     this.players.clear()
                     this.players.set('shared', {
                         id: 'shared',
                         sessionId: 'shared',
-                        x: firstPlayer.x,
-                        y: firstPlayer.y,
+                        x: x,
+                        y: y,
                         width: 50,
                         height: 50,
                         name: 'Shared Box',
