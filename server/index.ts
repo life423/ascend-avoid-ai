@@ -1,6 +1,7 @@
 // server/index.ts
 import { Server } from "colyseus";
 import { WebSocketTransport } from "@colyseus/ws-transport";
+import { monitor } from "@colyseus/monitor";
 import { createServer } from "http";
 import express from "express";
 import cors from "cors";
@@ -37,6 +38,9 @@ const gameServer = new Server({
 // Register your game room
 gameServer.define("game_room", GameRoom);
 
+// Add Colyseus monitor interface
+app.use(config.monitorPath, monitor());
+
 // Add a simple health check endpoint
 app.get("/health", (_req, res) => {
   res.json({
@@ -52,6 +56,7 @@ gameServer.listen(PORT);
 
 logger.info(`🎮 Ascend & Avoid Game Server is running on port ${PORT}`);
 logger.info(`🌐 Health check available at http://localhost:${PORT}/health`);
+logger.info(`📊 Colyseus Monitor available at http://localhost:${PORT}${config.monitorPath}`);
 
 // Log environment mode
 if (process.env.NODE_ENV === "production") {
