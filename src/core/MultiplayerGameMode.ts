@@ -176,9 +176,14 @@ export default class MultiplayerGameMode extends GameMode {
   /**
    * Update game state for multiplayer mode
    */
-  update(inputState: InputState, _deltaTime: number, timestamp: number): void {
+  update(inputState: InputState, deltaTime: number, timestamp: number): void {
     // Handle common updates ourselves since parent update is abstract
     // We'll handle obstacles, collisions, etc. directly
+    
+    // Update obstacles
+    if (this.game.obstacleManager) {
+      this.game.obstacleManager.update(timestamp, this.game.score, this.game.scalingInfo);
+    }
     
     // Update local player movement based on input
     this.updateLocalPlayerMovement(inputState);
@@ -266,10 +271,13 @@ export default class MultiplayerGameMode extends GameMode {
   render(ctx: CanvasRenderingContext2D, timestamp: number): void {
     if (!ctx) return;
     
-    // Render all remote players FIRST (behind local player)
+    // FIRST: Render shared scene (background, obstacles, etc.)
+    (this.game as any).renderSharedScene(ctx, timestamp);
+    
+    // THEN: Render all remote players FIRST (behind local player)
     this.renderRemotePlayers(ctx, timestamp);
     
-    // Render local player on top
+    // FINALLY: Render local player on top
     if (this.game.player) {
       this.game.player.draw(timestamp);
     }

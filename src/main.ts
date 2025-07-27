@@ -470,6 +470,11 @@ class GameApplication {
         }
       }
       
+      // Start the game loop if not already started
+      if ((gameInstance as any).gameState !== (gameInstance as any).config?.STATE?.PLAYING) {
+        (gameInstance as any).gameState = (gameInstance as any).config?.STATE?.PLAYING || 'playing';
+      }
+      
       // Hide loading screen
       this.hideLoader();
       
