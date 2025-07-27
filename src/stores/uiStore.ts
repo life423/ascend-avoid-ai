@@ -62,19 +62,26 @@ export const useUIStore = create<UIState>()(
       const game = (window as any).game;
       if (game && typeof game.switchGameMode === 'function') {
         const newMode = game.isMultiplayerMode ? 'singlePlayer' : 'multiplayer';
+        
+        console.log(`🎮 Zustand: Attempting to switch to ${newMode} mode...`);
+        
+        // Close menus immediately for better UX
+        set(() => ({ 
+          isFloatMenuOpen: false,
+          isDrawerOpen: false,
+        }));
+        
+        // Switch game mode with proper error handling
         game.switchGameMode(newMode)
           .then(() => {
-            console.log(`🎮 Zustand: Switched to ${newMode} mode`);
-            set(() => ({ 
-              isFloatMenuOpen: false,
-              isDrawerOpen: false, // Close drawer after action
-            }));
+            console.log(`✅ Zustand: Successfully switched to ${newMode} mode`);
           })
           .catch((err: any) => {
-            console.error('Zustand: Failed to switch game mode:', err);
+            console.error('❌ Zustand: Failed to switch game mode:', err);
+            // Game.ts already handles UI error display, so we just log here
           });
       } else {
-        console.warn('Zustand: Game instance not available for multiplayer toggle');
+        console.warn('⚠️ Zustand: Game instance not available for multiplayer toggle');
       }
     },
     

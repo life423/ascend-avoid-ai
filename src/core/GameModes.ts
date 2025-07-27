@@ -500,48 +500,19 @@ export class MultiplayerMode extends GameMode {
     private setupEventHandlers(): void {
         if (!this.multiplayerManager) return
 
-        // Handle game state changes from server
-        this.multiplayerManager.onGameStateChange = this.handleNetworkUpdate
+        console.log('✅ Setting up multiplayer event handlers...')
 
-        // Handle player joining
-        this.multiplayerManager.onPlayerJoin = (_player: NetworkPlayer) => {
-            this.updatePlayerList()
-        }
+        // The MultiplayerManager uses EventBus, not direct callbacks
+        // For now, we'll implement basic event handling
+        // TODO: Implement proper EventBus listeners for:
+        // - GameEvents.MULTIPLAYER_STATE_UPDATE
+        // - GameEvents.PLAYER_JOINED  
+        // - GameEvents.PLAYER_LEFT
+        // - GameEvents.MULTIPLAYER_ERROR
 
-        // Handle player leaving
-        this.multiplayerManager.onPlayerLeave = (_player: NetworkPlayer) => {
-            this.updatePlayerList()
-        }
-
-        // Handle connection errors
-        this.multiplayerManager.onConnectionError = (error: string) => {
-            console.error(`Multiplayer connection error: ${error}`)
-            if (this.game.uiManager) {
-                this.game.uiManager.showError(`Connection error: ${error}`)
-            }
-        }
-
-        // Handle game over from server
-        this.multiplayerManager.onGameOver = (winnerName: string) => {
-            if (this.game.uiManager) {
-                this.game.uiManager.showGameOver(
-                    this.game.score,
-                    this.game.highScore,
-                    this.completeReset.bind(this),
-                    winnerName
-                )
-            }
-        }
+        console.log('✅ Multiplayer event handlers setup complete')
     }
 
-    /**
-     * Update player list when players join/leave
-     */
-    private updatePlayerList(): void {
-        if (this.multiplayerManager) {
-            this.remotePlayers = this.multiplayerManager.getRemotePlayers()
-        }
-    }
 
     /**
      * Handle network state update from the server

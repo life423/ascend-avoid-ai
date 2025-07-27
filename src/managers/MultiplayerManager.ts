@@ -40,7 +40,41 @@ export class MultiplayerManager {
     }
 
     /**
-     * Connect to the game server
+     * Create a promise that rejects after a timeout
+     */
+    private createTimeoutPromise(timeoutMs: number): Promise<never> {
+        return new Promise((_, reject) => {
+            setTimeout(() => reject(new Error(`Connection timeout after ${timeoutMs}ms`)), timeoutMs);
+        });
+    }
+
+    /**
+     * Attempt connection to the server
+     */
+    private async attemptConnection(wsUrl: string): Promise<void> {
+        // Create Colyseus client
+        this.client = new Client(wsUrl);
+        
+        // Get available rooms (optional, for debugging)
+        try {
+            const rooms = await this.client.getAvailableRooms(GAME_CONFIG.ROOM_NAME);
+            console.log('📋 Available rooms:', rooms);
+        } catch (e) {
+            console.log('⚠️ Could not fetch available rooms (this is okay):', e);
+        }
+        
+        // Join or create room
+        this.room = await this.client.joinOrCreate(GAME_CONFIG.ROOM_NAME, {
+            playerName: this.getPlayerName(),
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
+        
+        console.log('✅ Successfully joined room:', this.room.id);
+    }
+
+    /**
+     * Connect to the game server with timeout
      */
     async connect(): Promise<boolean> {
         if (this.isConnecting || this.room) {
@@ -49,38 +83,32 @@ export class MultiplayerManager {
         }
 
         this.isConnecting = true;
+        const CONNECTION_TIMEOUT = 10000; // 10 seconds timeout
         
         try {
             const wsUrl = this.getWebSocketUrl();
-            console.log('Connecting to server:', wsUrl);
+            console.log('🔌 Connecting to server:', wsUrl);
             
-            // Create Colyseus client
-            this.client = new Client(wsUrl);
+            // Create connection promise with timeout
+            const connectionPromise = this.attemptConnection(wsUrl);
+            const timeoutPromise = this.createTimeoutPromise(CONNECTION_TIMEOUT);
             
-            // Get available rooms (optional, for debugging)
-            try {
-                const rooms = await this.client.getAvailableRooms(GAME_CONFIG.ROOM_NAME);
-                console.log('Available rooms:', rooms);
-            } catch (e) {
-                console.log('Could not fetch available rooms (this is okay):', e);
+            // Race connection against timeout
+            await Promise.race([connectionPromise, timeoutPromise]);
+            
+            // Verify room was created successfully
+            if (!this.room) {
+                throw new Error('Room connection failed - no room instance created');
             }
-            
-            // Join or create room
-            this.room = await this.client.joinOrCreate(GAME_CONFIG.ROOM_NAME, {
-                playerName: this.getPlayerName(),
-                width: window.innerWidth,
-                height: window.innerHeight
-            });
-            
-            console.log('Successfully joined room:', this.room.id);
             
             // Set up room event handlers
             this.setupRoomHandlers();
             
             // Emit connection success
+            const room = this.room as any; // Type assertion for Colyseus room
             this.eventBus.emit(GameEvents.MULTIPLAYER_CONNECTED, {
-                roomId: this.room.id,
-                sessionId: this.room.sessionId
+                roomId: room.id,
+                sessionId: room.sessionId
             });
             
             this.isConnecting = false;
@@ -88,13 +116,29 @@ export class MultiplayerManager {
             return true;
             
         } catch (error) {
-            console.error('Failed to connect:', error);
+            console.error('🚨 Connection failed:', error);
             this.isConnecting = false;
             
-            // Emit connection error
+            // Determine error type and message
+            let errorMessage = 'Connection failed';
+            let errorType = 'connection';
+            
+            if (error instanceof Error) {
+                if (error.message.includes('timeout')) {
+                    errorType = 'timeout';
+                    errorMessage = 'Connection timed out. Make sure the game server is running.';
+                } else if (error.message.includes('ECONNREFUSED')) {
+                    errorType = 'refused';
+                    errorMessage = 'Could not connect to game server. Please check if server is running on port 3000.';
+                } else {
+                    errorMessage = error.message;
+                }
+            }
+            
+            // Emit connection error with detailed info
             this.eventBus.emit(GameEvents.MULTIPLAYER_ERROR, {
-                type: 'connection',
-                message: error instanceof Error ? error.message : 'Connection failed'
+                type: errorType,
+                message: errorMessage
             });
             
             // Try to reconnect if not at max attempts
@@ -112,10 +156,16 @@ export class MultiplayerManager {
      * Set up room event handlers
      */
     private setupRoomHandlers(): void {
-        if (!this.room) return;
+        if (!this.room) {
+            console.error('❌ Cannot setup room handlers - no room instance');
+            return;
+        }
+
+        console.log('🔧 Setting up room event handlers...');
 
         // Handle state changes
         this.room.onStateChange((state) => {
+            console.log('📡 Room state changed:', state);
             this.eventBus.emit(GameEvents.MULTIPLAYER_STATE_UPDATE, state);
         });
 
@@ -181,6 +231,46 @@ export class MultiplayerManager {
         }
 
         this.room.send(type, data);
+    }
+
+    /**
+     * Get local player data
+     */
+    getLocalPlayer(): any {
+        if (!this.room || !this.room.state) {
+            return null;
+        }
+        
+        // Return the player with our session ID
+        const players = this.room.state.players;
+        if (players && this.room.sessionId) {
+            return players.get(this.room.sessionId);
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get remote players (all players except local)
+     */
+    getRemotePlayers(): Record<string, any> {
+        const remotePlayers: Record<string, any> = {};
+        
+        if (!this.room || !this.room.state) {
+            return remotePlayers;
+        }
+        
+        const players = this.room.state.players;
+        if (players) {
+            players.forEach((player: any, sessionId: string) => {
+                // Exclude our own player
+                if (sessionId !== this.room?.sessionId) {
+                    remotePlayers[sessionId] = player;
+                }
+            });
+        }
+        
+        return remotePlayers;
     }
 
     /**
