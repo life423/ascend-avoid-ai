@@ -24,21 +24,16 @@ export class MultiplayerManager {
      * Get WebSocket URL based on environment
      */
     private getWebSocketUrl(): string {
-        // Check if we're in production (built version)
-        // Use a more reliable way to detect production
-        const isProd = process.env.NODE_ENV === 'production' || 
-                      (typeof import.meta !== 'undefined' && (import.meta as any).env?.PROD);
-        
-        if (isProd) {
+        // In development, try server on port 3000
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('Development WebSocket URL: ws://localhost:3000');
+            return 'ws://localhost:3000';
+        } else {
             // In production, use same origin as the page
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = window.location.host;
             console.log(`Production WebSocket URL: ${protocol}//${host}`);
             return `${protocol}//${host}`;
-        } else {
-            // In development, use localhost:3000
-            console.log('Development WebSocket URL: ws://localhost:3000');
-            return 'ws://localhost:3000';
         }
     }
 

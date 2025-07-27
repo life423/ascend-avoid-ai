@@ -30,6 +30,7 @@ export default class MultiplayerGameMode extends GameMode {
   private lastInputSent: number = 0;
   private inputSendRate: number = 50; // Send input every 50ms max
 
+
   constructor(game: any) {
     super(game);
     
@@ -85,7 +86,9 @@ export default class MultiplayerGameMode extends GameMode {
       const connected = await this.multiplayerManager.connect();
       
       if (!connected) {
-        throw new Error('Failed to connect to game server');
+        console.log('⚠️ Server not available, falling back to single player');
+        await (this.game as any).switchGameMode('singlePlayer');
+        return;
       }
       
       // Set game to multiplayer mode
@@ -94,7 +97,8 @@ export default class MultiplayerGameMode extends GameMode {
       console.log('✅ Multiplayer mode initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize multiplayer:', error);
-      throw error;
+      console.log('⚠️ Falling back to single player mode');
+      await (this.game as any).switchGameMode('singlePlayer');
     }
   }
 
@@ -104,8 +108,12 @@ export default class MultiplayerGameMode extends GameMode {
   private handleStateUpdate(state: any): void {
     if (!state || !state.players) return;
 
+    console.log(`📡 State update: ${state.players.size || 0} total players`);
+
     // Update remote players from state
     state.players.forEach((playerData: any, sessionId: string) => {
+      console.log(`🔍 Processing player ${sessionId} (local: ${this.localSessionId})`);
+      
       if (sessionId === this.localSessionId) {
         // snap local sprite to server‑authoritative spawn once (lobby phase)
         if (this.game.player && state.gameState !== this.game.config.STATE.PLAYING) {
@@ -114,9 +122,12 @@ export default class MultiplayerGameMode extends GameMode {
         }
       } else {
         // This is a remote player - update or create
+        console.log(`➕ Adding/updating remote player: ${sessionId}`);
         this.updateRemotePlayer(sessionId, playerData);
       }
     });
+
+    console.log(`🎮 Remote players count: ${this.remotePlayers.size}`);
 
     // Remove players that are no longer in the state
     const statePlayerIds = new Set(state.players.keys());
@@ -176,7 +187,7 @@ export default class MultiplayerGameMode extends GameMode {
   /**
    * Update game state for multiplayer mode
    */
-  update(inputState: InputState, deltaTime: number, timestamp: number): void {
+  update(inputState: InputState, _deltaTime: number, timestamp: number): void {
     // Handle common updates ourselves since parent update is abstract
     // We'll handle obstacles, collisions, etc. directly
     
@@ -295,7 +306,25 @@ export default class MultiplayerGameMode extends GameMode {
   private renderRemotePlayers(ctx: CanvasRenderingContext2D, _timestamp: number): void {
     let drawnCount = 0;
     
-    this.remotePlayers.forEach(player => {
+    // TEST: Draw fake remote players to verify rendering works
+    if (this.remotePlayers.size === 0) {
+      // Draw 2 test players
+      ctx.save();
+      ctx.fillStyle = '#FF5252'; // Red
+      ctx.fillRect(100, 200, 30, 30);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(100, 200, 30, 30);
+      
+      ctx.fillStyle = '#4CAF50'; // Green
+      ctx.fillRect(200, 300, 30, 30);
+      ctx.strokeRect(200, 300, 30, 30);
+      ctx.restore();
+      
+      console.log('🧪 Drawing test remote players');
+    }
+    
+    this.remotePlayers.forEach((player, _sessionId) => {
       if (!player.isAlive) return;
       
       // Save context state
@@ -325,11 +354,6 @@ export default class MultiplayerGameMode extends GameMode {
       // Restore context state
       ctx.restore();
     });
-    
-    // Log how many players we drew (throttled)
-    if (drawnCount > 0 && Date.now() % 1000 < 50) {
-      console.log(`🎨 Drew ${drawnCount} remote players`);
-    }
   }
 
   /**
