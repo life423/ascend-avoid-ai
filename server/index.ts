@@ -37,6 +37,7 @@ const gameServer = new Server({
 
 // Register your game room
 gameServer.define("game_room", GameRoom);
+console.log("🎯 Registered 'game_room' handler on Colyseus server");
 
 // Add Colyseus monitor interface
 app.use(config.monitorPath, monitor());
@@ -57,6 +58,7 @@ gameServer.listen(PORT);
 logger.info(`🎮 Ascend & Avoid Game Server is running on port ${PORT}`);
 logger.info(`🌐 Health check available at http://localhost:${PORT}/health`);
 logger.info(`📊 Colyseus Monitor available at http://localhost:${PORT}${config.monitorPath}`);
+logger.info(`📡 WebSocket endpoint: ws://localhost:${PORT}`);
 
 // Log environment mode
 if (process.env.NODE_ENV === "production") {

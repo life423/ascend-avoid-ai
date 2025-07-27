@@ -51,6 +51,7 @@ export class GameRoom extends Room<GameState> {
    */
   onCreate(options: JoinOptions = {}): void {
     logger.info("Creating Last Player Standing Game Room");
+    console.log(`🏠 ROOM CREATED - ID: ${this.roomId}`);
 
     // Initialize the state schema
     this.setState(new GameState());
@@ -74,6 +75,10 @@ export class GameRoom extends Room<GameState> {
     logger.info(
       `Room ready - Arena: ${this.state.arenaWidth}×${this.state.arenaHeight}`
     );
+    console.log(`🏴 Room configuration:`);
+    console.log(`   - Max clients: ${this.maxClients}`);
+    console.log(`   - Auto-dispose: ${this.autoDispose}`);
+    console.log(`   - Patch rate: 50ms`);
   }
 
   /**
@@ -114,27 +119,32 @@ export class GameRoom extends Room<GameState> {
   onJoin(client: Client, options: JoinOptions = {}): void {
     try {
       logger.info(`Player ${client.sessionId} joined`);
-      console.log(`🔗 SERVER: Player ${client.sessionId} joining...`);
-      console.log(`🔗 SERVER: Join options:`, options);
+      console.log(`\n🔗 PLAYER JOINING ROOM ${this.roomId}`);
+      console.log(`   Session ID: ${client.sessionId}`);
+      console.log(`   Join options:`, options);
 
       const player = this.state.createPlayer(client.sessionId);
-      console.log(`✅ SERVER: Created player at (${player.x}, ${player.y})`);
+      console.log(`✅ Created player at (${player.x}, ${player.y})`);
       
       if (options.playerName) {
         player.name = options.playerName.substring(0, 20);
-        console.log(`📝 SERVER: Set player name to: ${player.name}`);
+        console.log(`📝 Set player name to: ${player.name}`);
       }
 
       this.broadcast("playerJoined", {
         id: client.sessionId,
         name: player.name,
+        roomId: this.roomId,
+        totalPlayers: this.state.totalPlayers
       });
 
-      console.log(`📊 SERVER: Total players now: ${this.state.totalPlayers}`);
-      console.log(`📊 SERVER: Players in state:`, this.state.players.size);
+      console.log(`📊 Room ${this.roomId} status:`);
+      console.log(`   - Total players: ${this.state.totalPlayers}`);
+      console.log(`   - Players in state: ${this.state.players.size}`);
+      console.log(`   - All player IDs:`, Array.from(this.state.players.keys()));
       logger.info(`Current players: ${this.state.totalPlayers}`);
     } catch (error) {
-      console.error(`❌ SERVER: Error in onJoin:`, error);
+      console.error(`❌ ERROR in onJoin for room ${this.roomId}:`, error);
       throw error;
     }
   }

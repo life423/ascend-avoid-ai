@@ -55,10 +55,28 @@ class PlayerSchema extends Schema {
    * Reset player position for a new game
    * @param canvasWidth - Width of the game canvas
    * @param canvasHeight - Height of the game canvas
+   * @param playerIndex - Optional: player index for spawn distribution
+   * @param totalPlayers - Optional: total players for spawn distribution
    */
-  resetPosition(canvasWidth: number, canvasHeight: number): void {
-    this.x = Math.random() * (canvasWidth - this.width);
-    this.y = canvasHeight - this.height - 10;
+  resetPosition(canvasWidth: number, canvasHeight: number, playerIndex?: number, totalPlayers?: number): void {
+    // If we have player index info, distribute players evenly across the bottom
+    if (playerIndex !== undefined && totalPlayers !== undefined && totalPlayers > 0) {
+      // Divide the width into sections based on number of players
+      const sectionWidth = canvasWidth / (totalPlayers + 1);
+      this.x = sectionWidth * (playerIndex + 1) - (this.width / 2);
+      
+      // Ensure x is within bounds
+      this.x = Math.max(10, Math.min(this.x, canvasWidth - this.width - 10));
+      
+      // Add slight randomness to prevent exact overlap if players have same index
+      this.x += (Math.random() - 0.5) * 20;
+    } else {
+      // Fallback to random position
+      this.x = 10 + Math.random() * (canvasWidth - this.width - 20);
+    }
+    
+    // Keep Y at bottom but add slight variation to make overlaps visible
+    this.y = canvasHeight - this.height - 10 - (Math.random() * 30);
     this.state = GAME_CONSTANTS.PLAYER_STATE.ALIVE;
   }
   

@@ -77,12 +77,14 @@ class GameState extends Schema {
     const playerIndex = this.totalPlayers;
     const player = new PlayerSchema(sessionId, playerIndex);
     
-    // Position player at bottom of screen
-    player.resetPosition(this.arenaWidth, this.arenaHeight);
+    // Position player at bottom of screen with distributed spawn points
+    player.resetPosition(this.arenaWidth, this.arenaHeight, playerIndex, this.totalPlayers + 1);
     
     this.players.set(sessionId, player);
     this.aliveCount++;
     this.totalPlayers++;
+    
+    console.log(`Player ${playerIndex} spawned at (${player.x.toFixed(1)}, ${player.y.toFixed(1)})`);
     
     return player;
   }
@@ -182,13 +184,21 @@ class GameState extends Schema {
         });
         
         // Check if enough players to start
-        if (this.totalPlayers >= 2) { // Minimum of 2 players for testing (can be increased later)
+        if (this.totalPlayers >= GAME_CONSTANTS.GAME.MIN_PLAYERS_TO_START) {
           this.gameState = GAME_CONSTANTS.STATE.STARTING;
           this.startTime = Date.now() + (this.countdownTime * 1000);
+          console.log(`Starting game with ${this.totalPlayers} players (min: ${GAME_CONSTANTS.GAME.MIN_PLAYERS_TO_START})`);
         }
         break;
         
       case GAME_CONSTANTS.STATE.STARTING:
+        // Allow player movement during countdown
+        this.players.forEach((player, _sessionId) => {
+          if (player.state === GAME_CONSTANTS.PLAYER_STATE.ALIVE) {
+            player.updateMovement(deltaTime, this.arenaWidth, this.arenaHeight);
+          }
+        });
+        
         // Update countdown
         const currentTime = Date.now();
         const remainingTime = Math.max(0, this.startTime - currentTime);
@@ -325,12 +335,15 @@ class GameState extends Schema {
     // Reset alive count
     this.aliveCount = 0;
     
-    // Reset players
+    // Reset players with distributed spawn positions
+    let index = 0;
+    const totalActivePlayers = this.players.size;
     this.players.forEach((player, _sessionId) => {
-      player.resetPosition(this.arenaWidth, this.arenaHeight);
+      player.resetPosition(this.arenaWidth, this.arenaHeight, index, totalActivePlayers);
       player.score = 0;
       player.state = GAME_CONSTANTS.PLAYER_STATE.ALIVE;
       this.aliveCount++;
+      index++;
     });
     
     // Clear obstacles

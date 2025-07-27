@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spawn Position Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .arena {
+            width: 800px;
+            height: 600px;
+            border: 2px solid #444;
+            position: relative;
+            background: #2a2a2a;
+            margin: 20px auto;
+        }
+        .player {
+            position: absolute;
+            border: 2px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .info {
+            text-align: center;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Player Spawn Position Distribution Test</h1>
+    
+    <div class="controls">
+        <button onclick="addPlayer()">Add Player</button>
+        <button onclick="resetPlayers()">Reset All</button>
+        <button onclick="testOverlap()">Test Old Method (Overlap)</button>
+    </div>
+    
+    <div class="info">
+        <p>Players: <span id="playerCount">0</span> / 30</p>
+        <p id="status">Click "Add Player" to spawn players with distributed positions</p>
+    </div>
+    
+    <div class="arena" id="arena"></div>
+
+    <script>
+        const ARENA_WIDTH = 800;
+        const ARENA_HEIGHT = 600;
+        const PLAYER_WIDTH = 30;
+        const PLAYER_HEIGHT = 30;
+        const PLAYER_COLORS = ['#FF5252', '#FF9800', '#FFEB3B', '#4CAF50', '#00BCD4', '#E91E63', '#3F51B5'];
+        
+        let players = [];
+        let totalPlayers = 0;
+
+        function resetPosition(playerIndex, totalPlayersCount, useOldMethod = false) {
+            let x, y;
+            
+            if (useOldMethod) {
+                // Old method - all players at same position
+                x = Math.random() * (ARENA_WIDTH - PLAYER_WIDTH);
+                y = ARENA_HEIGHT - PLAYER_HEIGHT - 10;
+            } else {
+                // New method - distributed spawn points
+                if (playerIndex !== undefined && totalPlayersCount > 0) {
+                    const sectionWidth = ARENA_WIDTH / (totalPlayersCount + 1);
+                    x = sectionWidth * (playerIndex + 1) - (PLAYER_WIDTH / 2);
+                    x = Math.max(10, Math.min(x, ARENA_WIDTH - PLAYER_WIDTH - 10));
+                    x += (Math.random() - 0.5) * 20;
+                } else {
+                    x = 10 + Math.random() * (ARENA_WIDTH - PLAYER_WIDTH - 20);
+                }
+                y = ARENA_HEIGHT - PLAYER_HEIGHT - 10 - (Math.random() * 30);
+            }
+            
+            return { x, y };
+        }
+
+        function addPlayer() {
+            if (players.length >= 30) {
+                document.getElementById('status').textContent = 'Maximum players reached!';
+                return;
+            }
+            
+            const playerIndex = totalPlayers;
+            const position = resetPosition(playerIndex, totalPlayers + 1);
+            
+            const player = {
+                id: playerIndex,
+                x: position.x,
+                y: position.y,
+                color: PLAYER_COLORS[playerIndex % PLAYER_COLORS.length]
+            };
+            
+            players.push(player);
+            totalPlayers++;
+            
+            renderPlayers();
+            updateStatus(`Player ${playerIndex} spawned at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+        }
+
+        function testOverlap() {
+            resetPlayers();
+            
+            // Add 5 players using old method
+            for (let i = 0; i < 5; i++) {
+                const playerIndex = totalPlayers;
+                const position = resetPosition(playerIndex, totalPlayers + 1, true); // Use old method
+                
+                const player = {
+                    id: playerIndex,
+                    x: position.x,
+                    y: position.y,
+                    color: PLAYER_COLORS[playerIndex % PLAYER_COLORS.length]
+                };
+                
+                players.push(player);
+                totalPlayers++;
+            }
+            
+            renderPlayers();
+            updateStatus('Added 5 players with OLD spawn method - notice the overlap!');
+        }
+
+        function resetPlayers() {
+            players = [];
+            totalPlayers = 0;
+            renderPlayers();
+            updateStatus('All players removed');
+        }
+
+        function renderPlayers() {
+            const arena = document.getElementById('arena');
+            arena.innerHTML = '';
+            
+            players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player';
+                playerDiv.style.left = player.x + 'px';
+                playerDiv.style.top = player.y + 'px';
+                playerDiv.style.width = PLAYER_WIDTH + 'px';
+                playerDiv.style.height = PLAYER_HEIGHT + 'px';
+                playerDiv.style.backgroundColor = player.color;
+                playerDiv.textContent = player.id;
+                playerDiv.title = `Player ${player.id} at (${player.x.toFixed(1)}, ${player.y.toFixed(1)})`;
+                arena.appendChild(playerDiv);
+            });
+            
+            document.getElementById('playerCount').textContent = players.length;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        // Add some players on load to demonstrate
+        setTimeout(() => {
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => addPlayer(), i * 500);
+            }
+        }, 500);
+    </script>
+</body>
+</html>

@@ -47,6 +47,7 @@ export const PROJECTILE = {
 export const GAME = {
   WINNING_LINE: 40,
   MAX_PLAYERS: 30,
+  MIN_PLAYERS_TO_START: process.env.NODE_ENV === 'development' ? 1 : 2, // 1 for dev, 2 for production
   STATE_UPDATE_RATE: 1000 / 30, // 30 updates per second
   ROOM_NAME: "last_player_standing",
   MAX_OBSTACLES: 12,

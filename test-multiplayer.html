@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiplayer Room Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .client {
+            border: 2px solid #444;
+            padding: 10px;
+            margin: 10px 0;
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+        .connected { border-color: #4CAF50; }
+        .disconnected { border-color: #f44336; }
+        .log {
+            background: #111;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .info {
+            background: #333;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Colyseus Room Synchronization Test</h1>
+    
+    <div class="info">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Make sure your server is running on port 3000</li>
+            <li>Click "Connect Client 1" and "Connect Client 2"</li>
+            <li>Watch the console logs to verify they join the same room</li>
+            <li>Check the Colyseus Monitor at <a href="http://localhost:3000/colyseus" target="_blank">http://localhost:3000/colyseus</a></li>
+        </ol>
+    </div>
+
+    <div id="client1" class="client disconnected">
+        <h3>Client 1</h3>
+        <button onclick="connectClient(1)">Connect Client 1</button>
+        <button onclick="disconnectClient(1)">Disconnect Client 1</button>
+        <button onclick="sendInput(1)">Send Test Input</button>
+        <div class="log" id="log1"></div>
+    </div>
+
+    <div id="client2" class="client disconnected">
+        <h3>Client 2</h3>
+        <button onclick="connectClient(2)">Connect Client 2</button>
+        <button onclick="disconnectClient(2)">Disconnect Client 2</button>
+        <button onclick="sendInput(2)">Send Test Input</button>
+        <div class="log" id="log2"></div>
+    </div>
+
+    <script src="https://unpkg.com/colyseus.js@0.15.7/dist/colyseus.js"></script>
+    <script>
+        const clients = {};
+        const rooms = {};
+
+        function log(clientId, message) {
+            const logEl = document.getElementById(`log${clientId}`);
+            const time = new Date().toLocaleTimeString();
+            logEl.innerHTML += `[${time}] ${message}<br>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        async function connectClient(clientId) {
+            try {
+                log(clientId, '🔌 Connecting to server...');
+                
+                // Create Colyseus client
+                clients[clientId] = new Colyseus.Client('ws://localhost:3000');
+                
+                // Join or create room
+                rooms[clientId] = await clients[clientId].joinOrCreate('game_room', {
+                    playerName: `TestPlayer${clientId}`
+                });
+                
+                const room = rooms[clientId];
+                log(clientId, `✅ Connected!`);
+                log(clientId, `📍 Room ID: ${room.id}`);
+                log(clientId, `🆔 Session ID: ${room.sessionId}`);
+                
+                // Update UI
+                document.getElementById(`client${clientId}`).classList.add('connected');
+                document.getElementById(`client${clientId}`).classList.remove('disconnected');
+                
+                // Set up fine-grained state synchronization
+                room.onStateChange.once((state) => {
+                    log(clientId, `📡 Initial state received - ${state.players?.size || 0} players`);
+                    
+                    // Define colors matching the server
+                    const PLAYER_COLORS = ['#FF5252', '#FF9800', '#FFEB3B', '#4CAF50', '#00BCD4', '#E91E63', '#3F51B5'];
+                    
+                    // Set up player callbacks
+                    if (state.players) {
+                        state.players.onAdd = (player, sessionId) => {
+                            const color = PLAYER_COLORS[player.playerIndex % PLAYER_COLORS.length];
+                            log(clientId, `➕ Player added: ${sessionId} - ${player.name} (index: ${player.playerIndex}, color: ${color})`);
+                            
+                            // Listen to individual property changes
+                            player.onChange = (changes) => {
+                                changes.forEach(change => {
+                                    if (change.field === 'x' || change.field === 'y') {
+                                        log(clientId, `  📍 ${sessionId} moved to (${Math.round(player.x)}, ${Math.round(player.y)})`);
+                                    }
+                                });
+                            };
+                        };
+                        
+                        state.players.onRemove = (player, sessionId) => {
+                            log(clientId, `➖ Player removed: ${sessionId}`);
+                        };
+                        
+                        // Process existing players
+                        state.players.forEach((player, sessionId) => {
+                            state.players.onAdd(player, sessionId);
+                        });
+                    }
+                });
+                
+                // Listen for messages
+                room.onMessage('playerJoined', (data) => {
+                    log(clientId, `🟢 Player joined: ${data.name} (Room: ${data.roomId}, Total: ${data.totalPlayers})`);
+                });
+                
+                room.onMessage('playerLeft', (data) => {
+                    log(clientId, `🔴 Player left: ${data.id}`);
+                });
+                
+                // Listen for errors
+                room.onError((code, message) => {
+                    log(clientId, `❌ Error: ${code} - ${message}`);
+                });
+                
+            } catch (error) {
+                log(clientId, `❌ Connection failed: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        function disconnectClient(clientId) {
+            if (rooms[clientId]) {
+                rooms[clientId].leave();
+                delete rooms[clientId];
+                delete clients[clientId];
+                
+                log(clientId, '🔌 Disconnected');
+                document.getElementById(`client${clientId}`).classList.remove('connected');
+                document.getElementById(`client${clientId}`).classList.add('disconnected');
+            }
+        }
+
+        function sendInput(clientId) {
+            if (rooms[clientId]) {
+                const input = {
+                    up: Math.random() > 0.5,
+                    down: Math.random() > 0.5,
+                    left: Math.random() > 0.5,
+                    right: Math.random() > 0.5
+                };
+                rooms[clientId].send('input', input);
+                log(clientId, `🎮 Sent input: ${JSON.stringify(input)}`);
+            } else {
+                log(clientId, '⚠️ Not connected');
+            }
+        }
+
+        // Auto-clear logs after 100 entries
+        setInterval(() => {
+            [1, 2].forEach(id => {
+                const logEl = document.getElementById(`log${id}`);
+                const lines = logEl.innerHTML.split('<br>');
+                if (lines.length > 100) {
+                    logEl.innerHTML = lines.slice(-50).join('<br>');
+                }
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
