@@ -1,362 +1,273 @@
 /* ============================================
-   RESPONSIVE OVERRIDES - Enhanced with JavaScript Coordination
+   FLUID RESPONSIVE - No Breakpoints, Pure Fluid Scaling
    ============================================ */
 
-/* CSS Custom Properties for responsive coordination with ResponsiveManager */
+/* CSS Custom Properties updated by FluidResponsiveSystem */
 :root {
-    /* Default values - updated by JavaScript onResize */
-    --device-width: 100vw;
-    --device-height: 100vh;
-    --device-ratio: 1;
+    /* Core fluid properties - updated in real-time */
+    --fluid-scale: 1;
     --canvas-width: 600px;
     --canvas-height: 700px;
-    --scale-x: 1;
-    --scale-y: 1;
+    --viewport-width: 100vw;
+    --viewport-height: 100vh;
+    --device-pixel-ratio: 1;
+    --aspect-ratio: 1;
+    
+    /* Neural net ready properties */
+    --responsive-score: 1;
+    --adaptation-level: 0;
+    --diagonal-inches: 5;
+    
+    /* Mobile viewport fixes */
     --vh: 1vh; /* Real viewport height for mobile browsers */
     --ctrl-h: 120px; /* Control panel height */
 }
 
-/* Mobile Layout (up to 1199px) */
-@media (max-width: 1199px) {
-    .app-root {
-        /* Use modern viewport units with 100vh as fallback */
-        height: 100vh;
-        height: 100dvh; /* Dynamic viewport height - accounts for mobile browser chrome */
-        height: 100svh; /* Small viewport height - most conservative */
-        height: calc(var(--vh, 1vh) * 100); /* JS-calculated custom property fallback */
-        max-height: 100dvh;
-        max-height: 100svh;
-    }
+/* Device-specific classes (no breakpoints) - Applied by FluidResponsiveSystem */
+.touch-device .app-root {
+    height: calc(var(--vh, 1vh) * 100);
+    max-height: calc(var(--vh, 1vh) * 100);
+}
+
+/* Fluid header - scales with viewport */
+.app-header {
+    padding: calc(var(--fluid-scale) * var(--space-md)) calc(var(--fluid-scale) * var(--space-lg));
+    padding-top: max(calc(var(--fluid-scale) * var(--space-lg)), env(safe-area-inset-top, 8px));
+    min-height: calc(40px + var(--fluid-scale) * 20px); /* Scales from 40px to 60px */
+}
+
+.app-header h1 {
+    font-size: calc(1.2rem + var(--fluid-scale) * 0.3rem); /* Scales from 1.2rem to 1.5rem */
+    margin: 0 0 calc(var(--fluid-scale) * var(--space-xs)) 0;
+}
+
+/* Score panel scales with screen size and responsiveness score */
+.score-panel {
+    gap: calc(var(--space-xs) + var(--fluid-scale) * var(--space-xs));
+    padding: calc(var(--fluid-scale) * var(--space-xs)) 0;
+    opacity: calc(0.7 + var(--responsive-score) * 0.3); /* More visible when responsive score is high */
+}
+
+.score-panel h4 {
+    font-size: calc(0.6rem + var(--fluid-scale) * 0.1rem);
+    opacity: calc(0.6 + var(--responsive-score) * 0.2);
+    letter-spacing: 0.025em;
+}
+
+/* Game area uses fluid scaling */
+.game-main {
+    padding: calc(var(--space-sm) + var(--fluid-scale) * var(--space-md));
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.game-area {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+}
+
+/* Canvas viewport - completely fluid, no breakpoints */
+.canvas-viewport {
+    width: 100%;
+    height: 100%;
+    max-width: calc(var(--viewport-width) - var(--space-xl) * 2);
+    max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 6rem);
+    min-width: calc(200px + var(--fluid-scale) * 80px); /* Scales minimum size */
+    min-height: calc(150px + var(--fluid-scale) * 50px);
+    flex: 1;
+    margin: calc(var(--space-md) + var(--fluid-scale) * var(--space-lg));
+    border-radius: calc(var(--border-radius) * var(--fluid-scale));
+    box-shadow: 0 calc(var(--space-xs) * var(--fluid-scale)) calc(var(--space-lg) * var(--fluid-scale)) rgba(0, 0, 0, 0.3);
+}
+
+/* Canvas scales perfectly with FluidResponsiveSystem */
+.game-canvas {
+    width: var(--canvas-width);
+    height: var(--canvas-height);
+    max-width: 100%;
+    max-height: 100%;
+    transition: width 0.15s ease, height 0.15s ease;
+}
     
-    .app-header {
-        padding: var(--space-md) var(--space-lg);
-        padding-top: max(var(--space-lg), env(safe-area-inset-top, 8px));
-        min-height: 60px; /* A bit more height for better proportion */
-    }
+/* Touch device control panel - fluid scaling */
+.touch-device .control-panel {
+    flex: 0 0 auto;
+    max-height: calc(20vh + var(--fluid-scale) * 5vh); /* Scales from 20vh to 25vh */
+    padding: calc(var(--space-md) * var(--fluid-scale)) calc(var(--space-lg) * var(--fluid-scale));
+    padding-bottom: calc(env(safe-area-inset-bottom, 0) + var(--space-md) * var(--fluid-scale));
+    position: relative;
+    z-index: var(--z-ui);
+    background: linear-gradient(to top, rgba(10, 25, 47, calc(0.8 + var(--responsive-score) * 0.1)), transparent);
+    margin-top: calc(var(--space-sm) * var(--fluid-scale));
+}
+
+/* Touch controller - completely fluid sizing */
+.touch-device .touch-controller {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    height: auto;
+    min-height: calc(60px + var(--fluid-scale) * 40px + var(--diagonal-inches) * 5px); /* Scales with screen size AND device */
+    padding: calc(var(--space-md) * var(--fluid-scale)) calc(var(--space-lg) * var(--fluid-scale));
+    gap: calc(var(--space-lg) * var(--fluid-scale));
+    opacity: calc(0.8 + var(--responsive-score) * 0.2); /* More opaque when responsive score is high */
+}
     
-    .app-header h1 {
-        font-size: 1.5rem;
-        margin: 0 0 var(--space-xs) 0;
-    }
-    
+/* Device visibility classes - applied by FluidResponsiveSystem */
+.touch-device .info-panel {
+    display: none;
+}
+
+.touch-device .desktop-only {
+    display: none;
+}
+
+.touch-device .mobile-only {
+    display: block;
+}
+
+.mouse-device .mobile-only {
+    display: none;
+}
+
+.mouse-device .desktop-only {
+    display: block;
+}
+
+/* Small screen adaptations - high adaptation level indicates smaller screens */
+.screen-phone .game-main {
+    padding: calc(var(--space-xs) * var(--fluid-scale));
+}
+
+.screen-phone .game-canvas {
+    border-width: calc(1px * var(--fluid-scale)) !important;
+    transition: width 0.15s ease, height 0.15s ease;
+}
+
+.screen-phone .app-header {
+    padding: calc(var(--space-sm) * var(--fluid-scale));
+    padding-top: max(calc(var(--space-sm) * var(--fluid-scale)), env(safe-area-inset-top, 8px));
+    min-height: calc(3rem + var(--fluid-scale) * 0.5rem);
+}
+
+.screen-phone .control-panel {
+    padding: calc(var(--space-xs) * var(--fluid-scale));
+    max-height: calc(var(--vh, 1vh) * 100 - 150px - var(--adaptation-level) * 50px);
+}
+
+/* Touch controls scale with device characteristics */
+.screen-phone .touch-controls {
+    max-width: calc(90vw + var(--fluid-scale) * 5vw);
+    gap: calc(var(--space-xs) + var(--fluid-scale) * var(--space-sm));
+}
+
+.screen-phone .dpad-container {
+    width: calc(80px + var(--diagonal-inches) * 4px + var(--fluid-scale) * 20px);
+    height: calc(80px + var(--diagonal-inches) * 4px + var(--fluid-scale) * 20px);
+}
+
+.screen-phone .action-btn {
+    width: calc(var(--touch-min, 44px) + var(--fluid-scale) * 6px);
+    height: calc(var(--touch-min, 44px) + var(--fluid-scale) * 6px);
+    font-size: calc(10px + var(--fluid-scale) * 6px);
+}
+
+/* Extremely constrained screens - high adaptation level + small diagonal */
+.landscape[style*="--adaptation-level"][style*="--diagonal-inches"] .app-header h1 {
+    font-size: calc(1rem + var(--fluid-scale) * 0.25rem);
+    margin: 0 0 calc(var(--fluid-scale) * var(--space-xs)) 0;
+}
+
+/* Hide score panel when space is very constrained */
+.portrait[style*="--adaptation-level: 0.7"], 
+.portrait[style*="--adaptation-level: 0.8"],
+.portrait[style*="--adaptation-level: 0.9"] {
     .score-panel {
-        gap: var(--space-sm);
-        padding: var(--space-xs) 0;
-        margin: 0;
-    }
-    
-    .score-panel h4 {
-        font-size: 0.6875rem; /* 11px equivalent - clearly metadata */
-        margin: 0;
-        opacity: 0.75; /* Muted appearance */
-        letter-spacing: 0.025em; /* Subtle distinction */
-    }
-    
-    .game-main {
-        padding: var(--space-md); /* More breathing room */
-        flex: 1; /* Take remaining space */
-        display: flex;
-        flex-direction: column;
-        min-height: 0; /* Allow shrinking */
-    }
-    
-    .game-area {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 0;
-    }
-    
-    /* Ensure canvas viewport and canvas are visible and properly sized on mobile */
-    .canvas-viewport {
-        width: 100%;
-        height: 100%;
-        max-width: calc(100vw - var(--space-xl) * 2); /* Proper spacing from left AND right edges */
-        max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 10rem); /* More breathing room */
-        /* Fallback for browsers without custom property support */
-        max-height: calc(100vh - 120px - 10rem);
-        min-width: 280px; /* Ensure minimum container size */
-        min-height: 200px; /* Ensure minimum container size */
-        flex: 1; /* Take available space in flex container */
-        margin: var(--space-lg); /* Generous spacing on all four sides */
-        border-radius: var(--border-radius); /* Soften the edges */
-        box-shadow: 0 var(--space-sm) var(--space-lg) rgba(0, 0, 0, 0.3); /* Add depth */
-    }
-    
-    .game-canvas {
-        width: 100%;
-        height: 100%;
-        max-width: 100%;
-        max-height: 100%;
-        min-width: 280px; /* Ensure minimum canvas size */
-        min-height: 200px; /* Ensure minimum canvas size */
-    }
-    
-    /* Updated mobile control-panel - adaptive sizing based on content */
-    .control-panel {
-        flex: 0 0 auto; /* Don't grow/shrink - but let content determine size */
-        /* Remove rigid min-height - let content and viewport constraints determine size */
-        max-height: 25vh; /* Still cap maximum to prevent taking over screen */
-        padding: var(--space-md) var(--space-lg); /* More generous padding */
-        padding-bottom: calc(env(safe-area-inset-bottom, 0) + var(--space-md)); /* iOS safe area + padding */
-        position: relative;
-        z-index: var(--z-ui);
-        background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);
-        margin-top: var(--space-sm); /* Separation from game area */
-    }
-    
-    /* Updated mobile touch-controller - responsive sizing with proper spacing scale */
-    .touch-controller {
-        display: flex !important;
-        justify-content: space-between; /* Better distribution of controls */
-        align-items: center;
-        height: auto;
-        /* Responsive sizing based on viewport height - adapts to device constraints */
-        min-height: clamp(80px, 15vh, 120px); /* Taller for better touch targets */
-        padding: var(--space-md) var(--space-lg); /* Consistent with our spacing scale */
-        gap: var(--space-lg); /* Proper spacing between left and right controls */
-    }
-    
-    .info-panel {
-        display: none;
-    }
-    
-    .desktop-only {
-        display: none;
-    }
-    
-    .mobile-only {
-        display: block;
-    }
-}
-
-/* Very Small Screens - Progressive space negotiation */
-@media (max-width: 400px) {
-    .game-main {
-        padding: var(--space-xs);
-    }
-    
-    .game-canvas {
-        border-width: 1px !important;
-        max-width: calc(100vw - 0.625rem);
-        /* Enhanced responsive canvas sizing using JavaScript-updated variables */
-        max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 6rem);
-        /* Fallback for browsers without custom property support */
-        max-height: calc(100dvh - var(--ctrl-h) - 6rem);
-        max-height: calc(100svh - var(--ctrl-h) - 6rem);
-        
-        /* Ensure smooth transitions when resizing */
-        transition: width 0.2s ease, height 0.2s ease, max-width 0.2s ease, max-height 0.2s ease;
-    }
-    
-    .app-header {
-        padding: var(--space-sm);
-        padding-top: max(var(--space-sm), env(safe-area-inset-top, 8px));
-        min-height: 3.5rem; /* Slightly smaller header on tiny screens */
-    }
-    
-    .score-panel {
-        gap: var(--space-xs); /* Reduce gap on small screens */
-        padding: var(--space-xs) 0;
-        margin: var(--space-xs) 0 0;
-    }
-    
-    .score-panel h4 {
-        font-size: 0.6875rem; /* 11px equivalent - metadata level */
-        margin: 0;
-        opacity: 0.7; /* Even more muted on small screens */
-        letter-spacing: 0.025em;
-    }
-    
-    .control-panel {
-        padding: var(--space-xs);
-        /* Ensure controls don't exceed remaining space */
-        max-height: calc(100dvh - 200px);
-        max-height: calc(100svh - 200px);
-    }
-    
-    /* Compact controls on very small screens */
-    .touch-controls {
-        max-width: 95vw;
-        gap: var(--control-gap);
-    }
-    
-    .dpad-container {
-        /* Use shared D-pad size with small screen override */
-        width: clamp(90px, 18vw, 100px);
-        height: clamp(90px, 18vw, 100px);
-    }
-    
-    .action-btn {
-        /* Maintain minimum touch targets */
-        width: var(--touch-min);
-        height: var(--touch-min);
-        font-size: clamp(12px, 3vw, 16px);
-    }
-}
-
-/* Extremely small screens - emergency space negotiation */
-@media (max-height: 500px) {
-    .app-header h1 {
-        font-size: 1.25rem; /* Smaller but still prominent title */
-        margin: 0 0 var(--space-xs) 0;
-    }
-    
-    .score-panel {
-        display: none; /* Hide score on extremely short screens to save space */
-    }
-    
-    .control-panel {
-        padding: 4px;
-        max-height: 25vh;
-    }
-    
-    .touch-controls {
-        gap: 8px;
-    }
-    
-    .dpad-container {
-        /* Even on extremely short screens, maintain minimum touch target size */
-        width: 90px;
-        height: 90px;
-        gap: 1px;
-    }
-    
-    .action-btn {
-        /* Use minimum touch targets */
-        width: var(--touch-min);
-        height: var(--touch-min);
-        font-size: 10px;
-    }
-}
-
-/* Desktop Layout (from 1200px up) */
-@media (min-width: 1200px) {
-    .app-root {
-        height: 100vh;
-        width: 100vw;
-        max-width: none;
-    }
-    
-    /* Hide control-panel and float-menu on desktop */
-    .control-panel,
-    .float-menu {
-        display: none;
-    }
-    
-    /* Enhanced desktop touch-controller hide */
-    .touch-controller {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        position: absolute !important;
-        left: -9999px !important;
-    }
-    
-    /* .info-panel styles moved to game-layout.css to avoid cascade conflicts */
-    
-    .game-area {
-        display: grid;
-        grid-template-columns: 1fr 280px;
-        gap: var(--space-lg);
-        height: 100%;
-    }
-    
-    .desktop-only {
-        display: block;
-    }
-    
-    .mobile-only {
         display: none;
     }
 }
 
-/* Chrome Mobile Specific Fixes - Enhanced with JavaScript coordination */
+/* Desktop layout - applied by screen-desktop class */
+.screen-desktop .app-root {
+    height: 100vh;
+    width: 100vw;
+    max-width: none;
+}
+
+.screen-desktop .control-panel,
+.screen-desktop .float-menu {
+    display: none;
+}
+
+.screen-desktop .touch-controller {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+.screen-desktop .game-area {
+    display: grid;
+    grid-template-columns: 1fr calc(200px + var(--fluid-scale) * 80px);
+    gap: calc(var(--space-lg) * var(--fluid-scale));
+    height: 100%;
+}
+
+/* TV/Large display optimizations */
+.screen-tv .game-area {
+    grid-template-columns: 1fr calc(300px + var(--fluid-scale) * 100px);
+    gap: calc(var(--space-xl) * var(--fluid-scale));
+}
+
+/* Browser-specific fixes - applied by FluidResponsiveSystem */
 .chrome-mobile .app-root {
-    /* Use JavaScript-calculated viewport height for Chrome mobile */
     height: calc(var(--vh, 1vh) * 100) !important;
-    /* Fallback for initial load */
-    height: 100vh !important;
 }
 
 .chrome-mobile .control-panel {
-    /* Ensure touch controls are always visible on Chrome mobile */
-    min-height: var(--ctrl-h, 100px) !important;
-    padding-bottom: var(--space-lg) !important;
+    min-height: calc(var(--ctrl-h, 100px) * var(--fluid-scale)) !important;
+    padding-bottom: calc(var(--space-lg) * var(--fluid-scale)) !important;
 }
 
 .chrome-mobile .game-canvas {
-    /* Dynamic canvas sizing based on JavaScript-calculated values */
     max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 3rem) !important;
-    /* Ensure responsive scaling */
-    width: var(--canvas-width, auto) !important;
-    height: var(--canvas-height, auto) !important;
+    width: var(--canvas-width) !important;
+    height: var(--canvas-height) !important;
 }
 
-/* Enhanced device detection classes from JavaScript */
-.desktop-layout .game-canvas {
-    /* Desktop canvas gets more screen space */
-    max-width: none;
-    max-height: none;
-}
-
-.tablet-layout .game-canvas {
-    /* Tablet-specific canvas optimizations */
-    max-width: calc(100vw - 2rem);
+/* Tablet-specific optimizations */
+.screen-tablet .game-canvas {
+    max-width: calc(var(--viewport-width) - calc(var(--space-lg) * 2));
     max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 4rem);
 }
 
-.touch-device.landscape .game-canvas {
-    /* Landscape touch devices get optimized canvas size */
-    max-width: calc(100vw - var(--ctrl-h, 120px) - 2rem);
-    max-height: calc(var(--vh, 1vh) * 100 - 4rem);
+/* Landscape optimizations for touch devices */
+.touch-device.landscape .app-header {
+    padding: calc(var(--space-sm) * var(--fluid-scale)) calc(var(--space-md) * var(--fluid-scale));
+    min-height: calc(40px + var(--fluid-scale) * 10px);
 }
 
-/* Enhanced landscape layout for better horizontal device experience */
-@media (orientation: landscape) and (max-width: 1199px) {
-    .app-header {
-        padding: var(--space-sm) var(--space-md);
-        min-height: 50px;
-    }
-    
-    .app-header h1 {
-        font-size: 1.25rem;
-        margin: 0 0 var(--space-xs) 0;
-    }
-    
-    .score-panel {
-        gap: var(--space-md);
-        padding: var(--space-xs) 0;
-        margin: var(--space-xs) 0 0;
-    }
-    
-    .score-panel h4 {
-        font-size: 0.75rem;
-        margin: 0;
-    }
-    
-    .game-main {
-        padding: var(--space-sm);
-    }
-    
-    .control-panel {
-        padding: var(--space-xs) var(--space-sm);
-        max-height: 20vh; /* Reduce control panel height in landscape */
-    }
-    
-    .touch-controller {
-        min-height: clamp(50px, 10vh, 80px); /* Smaller controls in landscape */
-    }
-    
-    /* Optimize canvas for landscape - use more of the horizontal space */
-    .game-canvas {
-        max-width: calc(100vw - 1rem);
-        max-height: calc(var(--vh, 1vh) * 100 - 8rem); /* Account for header and controls */
-    }
+.touch-device.landscape .control-panel {
+    padding: calc(var(--space-xs) * var(--fluid-scale)) calc(var(--space-sm) * var(--fluid-scale));
+    max-height: calc(15vh + var(--fluid-scale) * 5vh);
+}
+
+.touch-device.landscape .touch-controller {
+    min-height: calc(40px + var(--diagonal-inches) * 8px + var(--fluid-scale) * 20px);
+}
+
+.touch-device.landscape .game-canvas {
+    max-width: calc(var(--viewport-width) - 1rem);
+    max-height: calc(var(--vh, 1vh) * 100 - 6rem);
 }
 
 /* ============================================

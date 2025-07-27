@@ -29,7 +29,6 @@ interface ButtonElements {
 }
 
 export default class TouchControls {
-    private game: Game
     private eventBus: EventBus
     private controlsAdapter: TouchControlsAdapter | null = null
 
@@ -45,8 +44,7 @@ export default class TouchControls {
     // Device detection
     private isTouchDevice: boolean
 
-    constructor(game: Game, eventBus: EventBus) {
-        this.game = game
+    constructor(_game: Game, eventBus: EventBus) {
         this.eventBus = eventBus
 
         // Control button properties with symbols

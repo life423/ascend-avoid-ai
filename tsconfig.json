@@ -1,66 +1,78 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "useDefineForClassFields": false,
+    /* Language and Output */
+    "target": "ES2022",
     "module": "ESNext",
-    "lib": ["ES2017", "DOM", "DOM.Iterable"],
-    "skipLibCheck": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+    "useDefineForClassFields": true,
     
-    /* Legacy decorators for Colyseus schema */
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    
-    /* Bundler mode */
+    /* Module Resolution */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     
-    /* For mixed JS/TS projects */
+    /* Legacy decorators for Colyseus schema */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    
+    /* Type Checking - Progressive strictness */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
+    
+    /* Code Quality */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    
+    /* Mixed JS/TS Support */
     "allowJs": true,
     "checkJs": false,
     
-    /* Type Checking - Relaxed for faster development */
-    "strict": false,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "noImplicitThis": false,
-    "alwaysStrict": true,
-    "strictFunctionTypes": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "forceConsistentCasingInFileNames": true,
-    
-    /* Path aliases */
+    /* Path Mapping */
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
       "@core/*": ["src/core/*"],
       "@entities/*": ["src/entities/*"],
       "@managers/*": ["src/managers/*"],
+      "@systems/*": ["src/systems/*"],
       "@ui/*": ["src/ui/*"],
       "@utils/*": ["src/utils/*"],
       "@constants/*": ["src/constants/*"],
-      "@server/*": ["server/*"]
+      "@styles/*": ["src/styles/*"],
+      "@adapters/*": ["src/adapters/*"],
+      "@stores/*": ["src/stores/*"],
+      "@shared/*": ["shared/*"],
+      "@server/*": ["server/*"],
+      "@tests/*": ["tests/*"]
     }
   },
+  
   "include": [
-    "src/main.ts",
-    "src/core/**/*.ts",
-    "src/managers/**/*.ts", 
-    "src/entities/**/*.ts",
-    "src/ui/**/*.ts",
-    "src/utils/**/*.ts",
-    "src/constants/**/*.ts",
-    "src/types.d.ts",
-    "src/styles/**/*.ts",
-    "shared/**/*.ts"
+    "src/**/*",
+    "shared/**/*",
+    "tests/**/*",
+    "*.config.{js,ts}",
+    "vite.config.js"
   ],
+  
   "exclude": [
-    "node_modules", 
+    "node_modules",
     "dist",
-    "src/systems/**/*.ts",
-    "server/**/*.ts"
+    "build",
+    "server/**/*",
+    "coverage",
+    "**/*.js.map",
+    ".claude"
   ]
 }

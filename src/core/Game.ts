@@ -13,7 +13,7 @@ import TouchControls from '../ui/TouchControls'
 import { Client, Room } from 'colyseus.js'
 import { GAME_CONFIG } from '../constants/client-constants'
 import { generateRandomName } from '../utils/utils'
-import { ResponsiveSystem } from '../systems/UnifiedResponsiveSystem'
+// ResponsiveManager now handles responsive system integration
 
 const PLAYER_COLORS = ['#FF5722', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#E91E63', '#00BCD4']
 
@@ -75,8 +75,7 @@ export default class Game {
         this.scalingInfo = this.responsiveManager.getScalingInfo()
         this.responsiveManager.onResize = this.onResize.bind(this)
         
-        // Make sure UnifiedResponsiveSystem is active (singleton pattern ensures only one instance)
-        ResponsiveSystem // This triggers the singleton initialization
+        // ResponsiveManager now uses FluidResponsiveSystem internally
         
         this.obstacleManager = new ObstacleManager({
             canvas: this.canvas,
@@ -264,7 +263,7 @@ export default class Game {
         })
         
         // Handle players being removed
-        state.players.onRemove((player: PlayerSchema, sessionId: string) => {
+        state.players.onRemove((_player: PlayerSchema, sessionId: string) => {
             console.log('➖ Player removed via onRemove:', sessionId)
             this.players.delete(sessionId)
             
@@ -325,7 +324,6 @@ export default class Game {
     }
 
     gameLoop(timestamp: number = 0): void {
-        const deltaTime = (timestamp - this.lastFrameTime) / 1000
         this.lastFrameTime = timestamp
 
         const inputState = this.inputManager.getInputState()
@@ -724,18 +722,6 @@ export default class Game {
         }
     }
     
-    /**
-     * Convert canvas coordinates to virtual coordinates
-     */
-    private canvasToVirtualX(canvasX: number): number {
-        const logicalWidth = this.canvas.width / (window.devicePixelRatio || 1)
-        return (canvasX / logicalWidth) * this.VIRTUAL_WIDTH
-    }
-    
-    private canvasToVirtualY(canvasY: number): number {
-        const logicalHeight = this.canvas.height / (window.devicePixelRatio || 1)
-        return (canvasY / logicalHeight) * this.VIRTUAL_HEIGHT
-    }
     
     /**
      * Updates CSS classes and viewport properties to coordinate with responsive.css

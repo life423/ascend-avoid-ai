@@ -1,5 +1,5 @@
-import { ResponsiveSystem } from '../systems/UnifiedResponsiveSystem';
-import type { ViewportConfig, ViewportInfo } from '../systems/UnifiedResponsiveSystem';
+import { FluidResponsiveSystem } from '../systems/FluidResponsiveSystem';
+import type { FluidScaling } from '../systems/FluidResponsiveSystem';
 
 export class TouchControlsAdapter {
   private container: HTMLElement;
@@ -14,14 +14,18 @@ export class TouchControlsAdapter {
     this.actionButtonsContainer = container.querySelector('.action-buttons') as HTMLElement | null;
     this.dpadContainer = container.querySelector('.dpad-controls') as HTMLElement | null;
     
-    // Subscribe to the unified responsive system
-    this.disposeFn = ResponsiveSystem.subscribe(this.handleConfigChange.bind(this));
-    
-    // Initial setup
-    const config = ResponsiveSystem.getCurrentConfig();
-    const viewport = ResponsiveSystem.getViewportInfo();
-    if (config && viewport) {
-      this.applyLayout(viewport);
+    // Subscribe to the fluid responsive system
+    const fluidSystem = FluidResponsiveSystem.getInstance();
+    if (fluidSystem) {
+      this.disposeFn = fluidSystem.subscribe(this.handleScalingChange.bind(this));
+      
+      // Initial setup
+      const scaling = fluidSystem.getScaling();
+      if (scaling) {
+        this.applyLayout(scaling.viewport);
+      }
+    } else {
+      this.disposeFn = () => {}; // No-op if system not available
     }
     
     // Remove the three-dot menu
@@ -31,11 +35,11 @@ export class TouchControlsAdapter {
     }
   }
   
-  private handleConfigChange(_config: ViewportConfig, viewport: ViewportInfo): void {
-    this.applyLayout(viewport);
+  private handleScalingChange(scaling: FluidScaling): void {
+    this.applyLayout(scaling.viewport);
   }
   
-  private applyLayout(viewport: ViewportInfo): void {
+  private applyLayout(viewport: { width: number; height: number; screenType: string; orientation: string; isTouch: boolean }): void {
     // Calculate sizes based on viewport dimensions and device type
     const buttonSize = this.calculateButtonSize(viewport);
     const buttonGap = this.calculateButtonGap(viewport);
@@ -110,7 +114,7 @@ export class TouchControlsAdapter {
     this.container.style.background = 'linear-gradient(to top, rgba(10, 25, 47, 0.8), transparent)';
   }
   
-  private calculateButtonSize(viewport: ViewportInfo): number {
+  private calculateButtonSize(viewport: { width: number; height: number; screenType: string; orientation: string }): number {
     // Calculate button size based on device type and orientation
     switch (viewport.screenType) {
       case 'phone':
@@ -124,7 +128,7 @@ export class TouchControlsAdapter {
     }
   }
   
-  private calculateButtonGap(viewport: ViewportInfo): number {
+  private calculateButtonGap(viewport: { width: number; height: number; screenType: string; orientation: string }): number {
     // Calculate gap between buttons based on device type
     switch (viewport.screenType) {
       case 'phone':
@@ -138,7 +142,7 @@ export class TouchControlsAdapter {
     }
   }
   
-  private calculateButtonOffset(viewport: ViewportInfo): number {
+  private calculateButtonOffset(viewport: { width: number; height: number; screenType: string; orientation: string }): number {
     // Calculate offset based on device type and orientation
     switch (viewport.screenType) {
       case 'phone':
@@ -152,7 +156,7 @@ export class TouchControlsAdapter {
     }
   }
   
-  private calculateFontSize(buttonSize: number, viewport: ViewportInfo): number {
+  private calculateFontSize(buttonSize: number, viewport: { screenType: string }): number {
     // Base font size on button size with min/max constraints
     const baseFontSize = buttonSize * 0.5; // 50% of button size
     

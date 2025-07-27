@@ -145,7 +145,7 @@ export default class Background {
     this.update(timestamp);
   }
 
-  render(ctx: CanvasRenderingContext2D, timestamp?: number): void {
+  render(_ctx: CanvasRenderingContext2D, timestamp?: number): void {
     this.draw(timestamp || 0);
   }
 

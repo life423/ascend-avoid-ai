@@ -27,14 +27,37 @@ export class ObstacleSchema extends Schema {
     this.width = 30 + Math.random() * 30; // 30-60px
     this.height = 20 + Math.random() * 10; // 20-30px
     
-    // Start from the top
+    // Start from above the canvas
     this.y = -this.height;
     
-    // Random x position
-    this.x = Math.random() * (canvasWidth - this.width);
+    // Random x position, avoiding player positions if provided
+    let attempts = 0;
+    let validPosition = false;
     
-    // Random speed
-    this.speed = 2 + Math.random() * 3; // 2-5 speed
+    while (!validPosition && attempts < 10) {
+      this.x = Math.random() * (canvasWidth - this.width);
+      
+      // Check if position conflicts with any player
+      validPosition = true;
+      for (const player of playerPositions) {
+        const distance = Math.abs(this.x - player.x);
+        if (distance < 100) { // Keep 100px away from players
+          validPosition = false;
+          break;
+        }
+      }
+      
+      attempts++;
+    }
+    
+    // If we couldn't find a valid position, just use random
+    if (!validPosition) {
+      this.x = Math.random() * (canvasWidth - this.width);
+    }
+    
+    // Random speed, scale with canvas height for consistency
+    const speedMultiplier = Math.min(1.5, canvasHeight / 700); // Normalize to 700px height
+    this.speed = (2 + Math.random() * 3) * speedMultiplier; // 2-5 speed, scaled
     
     this.isActive = true;
   }
@@ -48,11 +71,15 @@ export class ObstacleSchema extends Schema {
   update(deltaTime: number, canvasWidth: number): boolean {
     if (!this.isActive) return false;
     
-    // Move down
-    this.y += this.speed;
+    // Move down (deltaTime could be used for frame-rate independent movement)
+    // For now, assuming 60fps, but deltaTime is available for future enhancement
+    this.y += this.speed * (deltaTime || 1);
     
-    // Check if off screen (need reset)
-    return this.y > 1000; // Reset when far off screen
+    // Check if off screen (use canvasWidth for boundary detection)
+    // Reset when obstacle is completely off screen or far below canvas
+    const isOffScreen = this.y > canvasWidth + 200; // Use canvasWidth as reference for "far off screen"
+    
+    return isOffScreen;
   }
 
   /**

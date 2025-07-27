@@ -44,7 +44,7 @@ export default class Player implements GameObject {
    * Creates a new Player instance
    * @param configOrCanvas - Player configuration object OR HTMLCanvasElement (for backward compatibility)
    */
-  constructor(configOrCanvas: PlayerConfig | HTMLCanvasElement, eventBus: EventBus, id: string = '') {
+  constructor(configOrCanvas: PlayerConfig | HTMLCanvasElement, _eventBus: EventBus, id: string = '') {
     this.id = id;
     // Handle backward compatibility with old HTMLCanvasElement constructor
     if (configOrCanvas instanceof HTMLCanvasElement) {

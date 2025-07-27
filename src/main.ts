@@ -6,16 +6,15 @@
 
 import './styles/index.css'
 import Game from './core/Game'
-import { ResponsiveCanvas } from './utils/responsiveCanvas'
+import { FluidResponsiveSystem, createFluidCanvas } from './systems/FluidResponsiveSystem'
 import { DeviceInfo } from './types'
 import { setupPolyfills } from './utils/polyfills'
 import { setupPerformanceMonitoring } from './utils/performance'
-import { initMobileViewportFix, applyChromeMobileFixes } from './utils/mobileViewportFix'
 import { DrawerUI } from './ui/DrawerUI'
 
 // Global game instance
 let gameInstance: Game | null = null
-let responsiveCanvas: ResponsiveCanvas | null = null
+let fluidResponsive: FluidResponsiveSystem | null = null
 let drawerUI: DrawerUI | null = null
 
 class DeviceDetector {
@@ -105,8 +104,7 @@ class GameApplication {
   }
 
   private setupEnvironment(): void {
-    initMobileViewportFix()
-    applyChromeMobileFixes()
+    // FluidResponsiveSystem handles all mobile viewport fixes
     ErrorHandler.setupGlobalHandlers()
     
     if (process.env.NODE_ENV === 'development') {
@@ -126,17 +124,30 @@ class GameApplication {
     this.canvas.removeAttribute('width')
     this.canvas.removeAttribute('height')
 
-    responsiveCanvas = new ResponsiveCanvas(this.canvas, {
-      maintainAspectRatio: false,
-      minWidth: 320,
-      minHeight: 240,
-      maxWidth: 2560,
-      maxHeight: 1440,
-      devicePixelRatio: 1 // FIXED: number instead of boolean
+    fluidResponsive = createFluidCanvas(this.canvas, {
+      designWidth: 600,
+      designHeight: 700,
+      maintainAspectRatio: true,
+      pixelPerfect: true,
+      minScale: 0.15,
+      maxScale: 5.0
     })
 
-    responsiveCanvas.onResize((_widthScale: number, _heightScale: number, deviceInfo: DeviceInfo) => {
-      console.log(`Canvas resized: ${deviceInfo.screenWidth}x${deviceInfo.screenHeight}`)
+    fluidResponsive.subscribe((scaling) => {
+      console.log(`Canvas fluid resize: ${scaling.canvasWidth}x${scaling.canvasHeight} (scale: ${scaling.scale.toFixed(2)})`)
+      
+      // Update device info for compatibility
+      const deviceInfo: DeviceInfo = {
+        screenWidth: scaling.viewport.width,
+        screenHeight: scaling.viewport.height,
+        isTouchDevice: scaling.viewport.isTouch,
+        isMobile: scaling.viewport.screenType === 'phone',
+        isTablet: scaling.viewport.screenType === 'tablet',
+        isDesktop: scaling.viewport.screenType === 'desktop',
+        isLandscape: scaling.viewport.orientation === 'landscape',
+        devicePixelRatio: scaling.viewport.devicePixelRatio
+      }
+      
       DeviceDetector.applyOptimizations(deviceInfo)
       
       if (gameInstance && typeof (gameInstance as any).onResize === 'function') {
@@ -263,9 +274,9 @@ class GameApplication {
   }
 
   public cleanup(): void {
-    if (responsiveCanvas) {
-      responsiveCanvas.destroy()
-      responsiveCanvas = null
+    if (fluidResponsive) {
+      fluidResponsive.dispose()
+      fluidResponsive = null
     }
     
     if (drawerUI) {
@@ -321,5 +332,5 @@ window.addEventListener('offline', () => {
 if (process.env.NODE_ENV === 'development') {
   ;(window as any).gameApp = app
   ;(window as any).getGameInstance = () => gameInstance
-  ;(window as any).getResponsiveCanvas = () => responsiveCanvas
+  ;(window as any).getFluidResponsive = () => fluidResponsive
 }
