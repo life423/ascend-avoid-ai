@@ -108,10 +108,11 @@ export default class MultiplayerGameMode extends GameMode {
   private handleStateUpdate(state: any): void {
     if (!state || !state.players) return;
 
-    console.log(`📡 State update: ${state.players.size || 0} total players`);
+    const playerCount = Object.keys(state.players).length;
+    console.log(`📡 State update: ${playerCount} total players`);
 
     // Update remote players from state
-    state.players.forEach((playerData: any, sessionId: string) => {
+    Object.entries(state.players).forEach(([sessionId, playerData]: [string, any]) => {
       console.log(`🔍 Processing player ${sessionId} (local: ${this.localSessionId})`);
       
       if (sessionId === this.localSessionId) {
@@ -130,7 +131,7 @@ export default class MultiplayerGameMode extends GameMode {
     console.log(`🎮 Remote players count: ${this.remotePlayers.size}`);
 
     // Remove players that are no longer in the state
-    const statePlayerIds = new Set(state.players.keys());
+    const statePlayerIds = new Set(Object.keys(state.players));
     this.remotePlayers.forEach((_player, id) => {
       if (!statePlayerIds.has(id) && id !== this.localSessionId) {
         console.log(`🗑️ Removing disconnected player: ${id}`);
@@ -151,18 +152,24 @@ export default class MultiplayerGameMode extends GameMode {
     let remotePlayer = this.remotePlayers.get(sessionId);
     
     if (!remotePlayer) {
-      // Create new remote player
+      // Create new remote player with debug positioning
+      const playerIndex = this.remotePlayers.size; // Use current count as index
+      const debugX = 100 + playerIndex * 80; // Spread horizontally
+      const debugY = 200 + playerIndex * 60; // Spread vertically
+      
       remotePlayer = {
         id: sessionId,
         sessionId: sessionId,
-        x: playerData.x || 0,
-        y: playerData.y || 0,
-        name: playerData.name || `Player ${playerData.playerIndex + 1}`,
-        color: PLAYER_COLORS[playerData.playerIndex % PLAYER_COLORS.length],
-        isAlive: playerData.state === 'alive',
+        x: playerData.x ?? debugX,
+        y: playerData.y ?? debugY,
+        name: playerData.name || `Player ${playerIndex + 1}`,
+        color: PLAYER_COLORS[playerIndex % PLAYER_COLORS.length],
+        isAlive: true, // Force alive for now to test rendering
         score: playerData.score || 0,
         lastUpdate: Date.now()
       };
+      
+      console.log(`🎨 Created remote player at (${remotePlayer.x}, ${remotePlayer.y}) color: ${remotePlayer.color}`);
       
       this.remotePlayers.set(sessionId, remotePlayer);
       console.log('➕ Created remote player:', remotePlayer.name);
@@ -178,7 +185,7 @@ export default class MultiplayerGameMode extends GameMode {
       };
       
       remotePlayer.name = playerData.name || remotePlayer.name;
-      remotePlayer.isAlive = playerData.state === 'alive';
+      remotePlayer.isAlive = true; // Force alive for now
       remotePlayer.score = playerData.score || 0;
       remotePlayer.lastUpdate = Date.now();
     }
@@ -304,26 +311,6 @@ export default class MultiplayerGameMode extends GameMode {
    * Render all remote players
    */
   private renderRemotePlayers(ctx: CanvasRenderingContext2D, _timestamp: number): void {
-    let drawnCount = 0;
-    
-    // TEST: Draw fake remote players to verify rendering works
-    if (this.remotePlayers.size === 0) {
-      // Draw 2 test players
-      ctx.save();
-      ctx.fillStyle = '#FF5252'; // Red
-      ctx.fillRect(100, 200, 30, 30);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(100, 200, 30, 30);
-      
-      ctx.fillStyle = '#4CAF50'; // Green
-      ctx.fillRect(200, 300, 30, 30);
-      ctx.strokeRect(200, 300, 30, 30);
-      ctx.restore();
-      
-      console.log('🧪 Drawing test remote players');
-    }
-    
     this.remotePlayers.forEach((player, _sessionId) => {
       if (!player.isAlive) return;
       
@@ -348,8 +335,6 @@ export default class MultiplayerGameMode extends GameMode {
         this.game.player?.width || 30,
         this.game.player?.height || 30
       );
-      
-      drawnCount++;
       
       // Restore context state
       ctx.restore();
