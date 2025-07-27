@@ -1,14 +1,12 @@
 /**
  * RenderSystem - Handles rendering
  */
-import { System } from '../core/System';
-import { globalServiceLocator as ServiceLocator } from '../core/ServiceLocator';
-import { Entity } from '../core/Entity';
+import { GameObject } from '../types';
 
-export class RenderSystem extends System {
+export class RenderSystem {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
-    private entities: Set<Entity>;
+    private entities: Set<GameObject>;
     private backgroundColor: string;
     private clearBeforeRender: boolean;
     
@@ -19,9 +17,6 @@ export class RenderSystem extends System {
      * @param clearBeforeRender - Whether to clear canvas before rendering (default: true)
      */
     constructor(canvas: HTMLCanvasElement, backgroundColor: string = 'transparent', clearBeforeRender: boolean = true) {
-        // Render system has low priority (runs last)
-        super(1);
-        
         this.canvas = canvas;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
@@ -41,25 +36,16 @@ export class RenderSystem extends System {
      * Initialize the render system
      */
     public init(): void {
-        // Register with ServiceLocator
-        ServiceLocator.register('renderSystem', this);
+        // Initialization logic can go here if needed in the future
     }
     
     /**
-     * Update the render system (performs rendering)
-     * @param deltaTime - Time since last frame in seconds
-     */
-    public update(_deltaTime: number): void {
-        this.renderEntities();
-    }
-    
-    /**
-     * Public render method (implements System interface)
-     * @param ctx - Canvas rendering context
+     * Public render method
+     * @param _ctx - Canvas rendering context (ignored, uses internal context)
      * @param timestamp - Current timestamp for animation
      */
-    public render(_ctx: CanvasRenderingContext2D, _timestamp?: number): void {
-        this.renderEntities();
+    public render(_ctx: CanvasRenderingContext2D, timestamp?: number): void {
+        this.renderEntities(timestamp);
     }
     
     /**
@@ -78,7 +64,7 @@ export class RenderSystem extends System {
     /**
      * Render all entities
      */
-    private renderEntities(): void {
+    private renderEntities(timestamp?: number): void {
         // Clear canvas if needed
         if (this.clearBeforeRender) {
             this.clearCanvas();
@@ -93,7 +79,7 @@ export class RenderSystem extends System {
         
         // Render all entities
         for (const entity of sortedEntities) {
-            this.renderEntity(entity);
+            this.renderEntity(entity, timestamp);
         }
     }
     
@@ -113,14 +99,14 @@ export class RenderSystem extends System {
      * Render a single entity
      * @param entity - Entity to render
      */
-    private renderEntity(entity: Entity): void {
+    private renderEntity(entity: GameObject, timestamp?: number): void {
         // Save canvas state
         this.ctx.save();
         
         try {
             // Check if entity has a custom render method
             if (typeof entity.render === 'function') {
-                entity.render(this.ctx);
+                entity.render(this.ctx, timestamp);
             } else {
                 // Default rendering - simple rectangle
                 this.ctx.fillStyle = 'color' in entity ? (entity as any).color || '#000000' : '#000000';
@@ -138,7 +124,7 @@ export class RenderSystem extends System {
      * Add an entity to rendering
      * @param entity - Entity to add
      */
-    public addEntity(entity: Entity): void {
+    public addEntity(entity: GameObject): void {
         this.entities.add(entity);
     }
     
@@ -146,8 +132,12 @@ export class RenderSystem extends System {
      * Remove an entity from rendering
      * @param entity - Entity to remove
      */
-    public removeEntity(entity: Entity): void {
+    public removeEntity(entity: GameObject): void {
         this.entities.delete(entity);
+    }
+
+    public remove(entity: GameObject): void {
+        this.removeEntity(entity);
     }
     
     /**
@@ -186,7 +176,7 @@ export class RenderSystem extends System {
      * Get all entities in render system
      * @returns Set of entities
      */
-    public getEntities(): Set<Entity> {
+    public getEntities(): Set<GameObject> {
         return new Set(this.entities);
     }
     
@@ -213,11 +203,6 @@ export class RenderSystem extends System {
      */
     public dispose(): void {
         this.clearEntities();
-        
-        // Remove from ServiceLocator
-        ServiceLocator.remove('renderSystem');
-        
-        super.dispose();
     }
 }
 

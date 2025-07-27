@@ -87,14 +87,10 @@ export class GameRoom extends Room<GameState> {
         return;
       }
 
-      console.log(`🎮 SERVER: Input from ${client.sessionId}:`, data);
-      player.movementKeys = {
-        up: data.up ?? false,
-        down: data.down ?? false,
-        left: data.left ?? false,
-        right: data.right ?? false,
-      };
-      console.log(`📍 SERVER: Player ${client.sessionId} at (${player.x}, ${player.y})`);
+      player.upKey = data.up ?? false;
+      player.downKey = data.down ?? false;
+      player.leftKey = data.left ?? false;
+      player.rightKey = data.right ?? false;
     });
 
     this.onMessage("updateName", (client: Client, data: NameUpdateMessage) => {
@@ -116,23 +112,31 @@ export class GameRoom extends Room<GameState> {
    * Called when a client successfully joins
    */
   onJoin(client: Client, options: JoinOptions = {}): void {
-    logger.info(`Player ${client.sessionId} joined`);
-    console.log(`🔗 SERVER: Player ${client.sessionId} joining...`);
+    try {
+      logger.info(`Player ${client.sessionId} joined`);
+      console.log(`🔗 SERVER: Player ${client.sessionId} joining...`);
+      console.log(`🔗 SERVER: Join options:`, options);
 
-    const player = this.state.createPlayer(client.sessionId);
-    console.log(`✅ SERVER: Created player at (${player.x}, ${player.y})`);
-    
-    if (options.name) {
-      player.name = options.name.substring(0, 20);
+      const player = this.state.createPlayer(client.sessionId);
+      console.log(`✅ SERVER: Created player at (${player.x}, ${player.y})`);
+      
+      if (options.playerName) {
+        player.name = options.playerName.substring(0, 20);
+        console.log(`📝 SERVER: Set player name to: ${player.name}`);
+      }
+
+      this.broadcast("playerJoined", {
+        id: client.sessionId,
+        name: player.name,
+      });
+
+      console.log(`📊 SERVER: Total players now: ${this.state.totalPlayers}`);
+      console.log(`📊 SERVER: Players in state:`, this.state.players.size);
+      logger.info(`Current players: ${this.state.totalPlayers}`);
+    } catch (error) {
+      console.error(`❌ SERVER: Error in onJoin:`, error);
+      throw error;
     }
-
-    this.broadcast("playerJoined", {
-      id: client.sessionId,
-      name: player.name,
-    });
-
-    console.log(`📊 SERVER: Total players now: ${this.state.totalPlayers}`);
-    logger.info(`Current players: ${this.state.totalPlayers}`);
   }
 
   /**

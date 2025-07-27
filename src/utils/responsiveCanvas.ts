@@ -31,14 +31,16 @@ export class ResponsiveCanvas {
             throw new Error('Failed to get 2D context from canvas')
         }
 
-        // Default configuration
+        // Default configuration - FIXED: use number for devicePixelRatio
         this.config = {
-            maintainAspectRatio: false,
+            baseWidth: 320,
+            baseHeight: 240,
             minWidth: 320,
             minHeight: 240,
             maxWidth: 2560,
             maxHeight: 1440,
-            devicePixelRatio: true,
+            maintainAspectRatio: false,
+            devicePixelRatio: window.devicePixelRatio || 1, // FIXED: number instead of boolean
             ...config,
         }
 
@@ -47,32 +49,21 @@ export class ResponsiveCanvas {
         this.initialResize()
     }
 
-    /**
-     * Sets up the canvas with proper styling and attributes
-     */
     private setupCanvas(): void {
-        // Ensure canvas fills its container
         this.canvas.style.width = '100%'
         this.canvas.style.height = '100%'
         this.canvas.style.display = 'block'
         this.canvas.style.position = 'absolute'
         this.canvas.style.top = '0'
         this.canvas.style.left = '0'
-        this.canvas.style.imageRendering = 'pixelated' // For crisp pixel art
+        this.canvas.style.imageRendering = 'pixelated'
 
-        // Disable context menu on right-click
         this.canvas.addEventListener('contextmenu', e => e.preventDefault())
-
-        // Improve touch handling
         this.canvas.style.touchAction = 'none'
         this.canvas.style.userSelect = 'none'
     }
 
-    /**
-     * Sets up all event listeners for responsive behavior
-     */
     private setupEventListeners(): void {
-        // Use ResizeObserver for better performance if available
         if (typeof ResizeObserver !== 'undefined') {
             this.resizeObserver = new ResizeObserver(_entries => {
                 this.throttledResize()
@@ -82,25 +73,12 @@ export class ResponsiveCanvas {
             )
         }
 
-        // Fallback to window resize events
         window.addEventListener('resize', this.throttledResize.bind(this))
         window.addEventListener('orientationchange', () => {
-            // Orientation change needs a delay to get correct dimensions
             setTimeout(this.throttledResize.bind(this), 100)
         })
-
-        // Handle device pixel ratio changes (zoom, display changes)
-        if ('devicePixelRatio' in window) {
-            const media = window.matchMedia(
-                `(resolution: ${window.devicePixelRatio}dppx)`
-            )
-            media.addEventListener('change', this.throttledResize.bind(this))
-        }
     }
 
-    /**
-     * Throttled resize handler to prevent excessive calls
-     */
     private throttledResize(): void {
         if (this.throttleTimeout) {
             clearTimeout(this.throttleTimeout)
@@ -108,12 +86,9 @@ export class ResponsiveCanvas {
 
         this.throttleTimeout = window.setTimeout(() => {
             this.handleResize()
-        }, 16) // ~60fps throttling
+        }, 16)
     }
 
-    /**
-     * Main resize handler that updates canvas dimensions and scaling
-     */
     private handleResize(): void {
         const deviceInfo = this.getDeviceInfo()
         const container = this.canvas.parentElement || document.body
@@ -123,17 +98,17 @@ export class ResponsiveCanvas {
 
         // Apply min/max constraints
         width = Math.max(
-            this.config.minWidth,
-            Math.min(this.config.maxWidth, width)
+            this.config.minWidth || 320,
+            Math.min(this.config.maxWidth || 2560, width)
         )
         height = Math.max(
-            this.config.minHeight,
-            Math.min(this.config.maxHeight, height)
+            this.config.minHeight || 240,
+            Math.min(this.config.maxHeight || 1440, height)
         )
 
         // Handle aspect ratio maintenance if enabled
         if (this.config.maintainAspectRatio) {
-            const aspectRatio = this.config.minWidth / this.config.minHeight
+            const aspectRatio = (this.config.minWidth || 320) / (this.config.minHeight || 240)
             const currentAspect = width / height
 
             if (currentAspect > aspectRatio) {
@@ -144,9 +119,7 @@ export class ResponsiveCanvas {
         }
 
         // Get device pixel ratio for sharp rendering
-        const devicePixelRatio = this.config.devicePixelRatio
-            ? deviceInfo.devicePixelRatio
-            : 1
+        const devicePixelRatio = this.config.devicePixelRatio || deviceInfo.devicePixelRatio
 
         // Only update if dimensions actually changed
         if (
@@ -163,32 +136,21 @@ export class ResponsiveCanvas {
         }
     }
 
-    /**
-     * Updates the actual canvas dimensions and scaling
-     */
     private updateCanvasDimensions(
         width: number,
         height: number,
         devicePixelRatio: number
     ): void {
-        // Set CSS size
         this.canvas.style.width = `${width}px`
         this.canvas.style.height = `${height}px`
 
-        // Set actual canvas buffer size
         this.canvas.width = width * devicePixelRatio
         this.canvas.height = height * devicePixelRatio
 
-        // Scale the context to handle device pixel ratio
         this.ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0)
-
-        // Ensure crisp rendering
         this.ctx.imageSmoothingEnabled = false
     }
 
-    /**
-     * Gets comprehensive device information
-     */
     public getDeviceInfo(): DeviceInfo {
         const width = window.innerWidth
         const height = window.innerHeight
@@ -206,15 +168,11 @@ export class ResponsiveCanvas {
         }
     }
 
-    /**
-     * Gets current scaling information for game objects
-     */
     public getScalingInfo(): ScalingInfo {
-        const baseWidth = this.config.minWidth
-        const baseHeight = this.config.minHeight
+        const baseWidth = this.config.baseWidth || 320
+        const baseHeight = this.config.baseHeight || 240
         const currentWidth = this.canvas.width / (window.devicePixelRatio || 1)
-        const currentHeight =
-            this.canvas.height / (window.devicePixelRatio || 1)
+        const currentHeight = this.canvas.height / (window.devicePixelRatio || 1)
         const deviceInfo = this.getDeviceInfo()
 
         const scaleX = currentWidth / baseWidth
@@ -222,7 +180,6 @@ export class ResponsiveCanvas {
         const pixelRatio = window.devicePixelRatio || 1
 
         return {
-            // New format properties
             scaleX,
             scaleY,
             offsetX: 0,
@@ -235,23 +192,16 @@ export class ResponsiveCanvas {
             isDesktop: deviceInfo.isDesktop,
             isMobile: deviceInfo.isMobile,
             isTablet: deviceInfo.isTablet,
-            // Legacy format properties (required by interface)
             widthScale: scaleX,
             heightScale: scaleY,
             pixelRatio: pixelRatio,
         }
     }
 
-    /**
-     * Adds a callback to be called when the canvas is resized
-     */
     public onResize(callback: ResizeCallback): void {
         this.resizeCallbacks.push(callback)
     }
 
-    /**
-     * Removes a resize callback
-     */
     public offResize(callback: ResizeCallback): void {
         const index = this.resizeCallbacks.indexOf(callback)
         if (index > -1) {
@@ -259,9 +209,6 @@ export class ResponsiveCanvas {
         }
     }
 
-    /**
-     * Notifies all callbacks of resize events
-     */
     private notifyCallbacks(deviceInfo: DeviceInfo): void {
         const scalingInfo = this.getScalingInfo()
 
@@ -276,37 +223,18 @@ export class ResponsiveCanvas {
                 console.error('Error in resize callback:', error)
             }
         })
-
-        // Also notify global game object if it exists
-        if (window.game?.onResize) {
-            window.game.onResize(
-                scalingInfo.scaleX || scalingInfo.widthScale,
-                scalingInfo.scaleY || scalingInfo.heightScale,
-                deviceInfo.isDesktop
-            )
-        }
     }
 
-    /**
-     * Forces an immediate resize check and update
-     */
     public forceResize(): void {
         this.handleResize()
     }
 
-    /**
-     * Performs initial resize to set up canvas
-     */
     private initialResize(): void {
-        // Small delay to ensure DOM is ready
         setTimeout(() => {
             this.handleResize()
         }, 0)
     }
 
-    /**
-     * Cleans up event listeners and observers
-     */
     public destroy(): void {
         if (this.resizeObserver) {
             this.resizeObserver.disconnect()
@@ -320,23 +248,14 @@ export class ResponsiveCanvas {
         this.resizeCallbacks.length = 0
     }
 
-    /**
-     * Gets the canvas element
-     */
     public getCanvas(): HTMLCanvasElement {
         return this.canvas
     }
 
-    /**
-     * Gets the 2D context
-     */
     public getContext(): CanvasRenderingContext2D {
         return this.ctx
     }
 
-    /**
-     * Static factory method for easy setup
-     */
     public static setup(
         canvasId: string,
         config?: Partial<ResponsiveConfig>
@@ -349,7 +268,6 @@ export class ResponsiveCanvas {
     }
 }
 
-// Legacy functions for backward compatibility
 export function makeCanvasResponsive(
     canvas: HTMLCanvasElement
 ): ResponsiveCanvas {

@@ -1,8 +1,8 @@
 import * as schema from "@colyseus/schema";
 const { Schema, MapSchema, ArraySchema, type } = schema;
-import { PlayerSchema } from "./PlayerSchema.js";
-import { ObstacleSchema } from "./ObstacleSchema.js";
-import { GAME_CONSTANTS } from "../constants/serverConstants.js";
+import { PlayerSchema } from "./PlayerSchema";
+import { ObstacleSchema } from "./ObstacleSchema";
+import { GAME_CONSTANTS } from "../constants/serverConstants";
 
 /**
  * Interface for player positions used in obstacle placement
@@ -352,5 +352,6 @@ type([ObstacleSchema])(GameState.prototype, "obstacles");
 type("number")(GameState.prototype, "aliveCount");
 type("number")(GameState.prototype, "totalPlayers");
 type("string")(GameState.prototype, "winnerName");
+type("number")(GameState.prototype, "lastUpdateTime");
 
 export { GameState };

@@ -5,6 +5,7 @@
 import { PLAYER } from '../constants/gameConstants';
 import { getSprite } from '../utils/sprites';
 import { GameObject, InputState } from '../types';
+import { EventBus } from '../core/EventBus';
 
 export interface PlayerConfig {
   canvasWidth: number;
@@ -15,6 +16,7 @@ export interface PlayerConfig {
 }
 
 export default class Player implements GameObject {
+  id: string;
   // Position and dimensions (server-authoritative in multiplayer)
   x: number;
   y: number;
@@ -42,7 +44,8 @@ export default class Player implements GameObject {
    * Creates a new Player instance
    * @param configOrCanvas - Player configuration object OR HTMLCanvasElement (for backward compatibility)
    */
-  constructor(configOrCanvas: PlayerConfig | HTMLCanvasElement) {
+  constructor(configOrCanvas: PlayerConfig | HTMLCanvasElement, eventBus: EventBus, id: string = '') {
+    this.id = id;
     // Handle backward compatibility with old HTMLCanvasElement constructor
     if (configOrCanvas instanceof HTMLCanvasElement) {
       const canvas = configOrCanvas;

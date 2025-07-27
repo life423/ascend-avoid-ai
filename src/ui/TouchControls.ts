@@ -4,7 +4,7 @@
  * Updated for multiplayer-only mode.
  */
 import Game from '../core/Game'
-import Player from '../entities/Player'
+import { EventBus } from '../core/EventBus'
 import { TouchControlsAdapter } from '../adapters/TouchControlsAdapter'
 
 // Interface for control button definition
@@ -30,7 +30,7 @@ interface ButtonElements {
 
 export default class TouchControls {
     private game: Game
-    private player: Player | null = null // Can be null in multiplayer mode
+    private eventBus: EventBus
     private controlsAdapter: TouchControlsAdapter | null = null
 
     // Control button properties with symbols
@@ -45,9 +45,9 @@ export default class TouchControls {
     // Device detection
     private isTouchDevice: boolean
 
-    constructor(game: Game) {
+    constructor(game: Game, eventBus: EventBus) {
         this.game = game
-        this.player = game.player // Can be null in multiplayer mode
+        this.eventBus = eventBus
 
         // Control button properties with symbols
         this.buttons = {
@@ -296,17 +296,12 @@ export default class TouchControls {
             this.activeButtons[key] = touchId
 
             if (key === 'restart') {
-                this.game.resetGame()
+                this.eventBus.emit('game:restart', {})
             } else if (key === 'boost' || key === 'missile') {
                 console.log(`Action button pressed: ${key}`)
             } else {
-                // In multiplayer mode, player might be null - handle gracefully
-                if (this.player) {
-                    this.player.setMovementKey(key, true)
-                } else {
-                    // In multiplayer mode, input is handled by InputManager
-                    console.log(`Touch input: ${key} = true`)
-                }
+                // In multiplayer mode, input is handled by InputManager
+                console.log(`Touch input: ${key} = true`)
             }
         } else {
             if (this.activeButtons[key] === touchId) {
@@ -314,11 +309,7 @@ export default class TouchControls {
                 delete this.activeButtons[key]
 
                 if (key !== 'restart' && key !== 'boost' && key !== 'missile') {
-                    if (this.player) {
-                        this.player.setMovementKey(key, false)
-                    } else {
-                        console.log(`Touch input: ${key} = false`)
-                    }
+                    console.log(`Touch input: ${key} = false`)
                 }
             }
         }

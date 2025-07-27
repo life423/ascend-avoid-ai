@@ -14,6 +14,10 @@ interface Star {
 }
 
 export default class Background {
+  x: number = 0;
+  y: number = 0;
+  width: number;
+  height: number;
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private stars: Star[];
@@ -25,6 +29,8 @@ export default class Background {
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
+    this.width = canvas.width;
+    this.height = canvas.height;
     
     // Stars for background
     this.stars = [];
@@ -137,6 +143,10 @@ export default class Background {
    */
   draw(timestamp: number): void {
     this.update(timestamp);
+  }
+
+  render(ctx: CanvasRenderingContext2D, timestamp?: number): void {
+    this.draw(timestamp || 0);
   }
 
   /**

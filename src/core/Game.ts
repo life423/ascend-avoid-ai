@@ -1,497 +1,203 @@
-// src/core/Game.ts
-
-/**
- * Main game controller - Multiplayer-only implementation
- * Manages the game loop, rendering pipeline, and multiplayer coordination
- */
-import { PerformanceStats, ScalingInfo } from '../types'
+import { InputState, ScalingInfo, NetworkPlayer } from '../types'
 import Background from '../entities/Background'
-import Player from '../entities/Player'
-import ResponsiveManager from '../managers/ResponsiveManager'
-import TouchControls from '../ui/TouchControls'
-import ParticleSystem from '../entities/ParticleSystem'
-import AssetManager from '../managers/AssetManager'
+import { EventBus } from './EventBus'
+import GameConfig from './GameConfig'
 import InputManager from '../managers/InputManager'
 import ObstacleManager from '../managers/ObstacleManager'
 import UIManager from '../managers/UIManager'
-import GameConfig from './GameConfig'
-import MultiplayerGameMode from './MultiplayerGameMode'
+import AssetManager from '../managers/AssetManager'
+import ParticleSystem from '../entities/ParticleSystem'
+import TouchControls from '../ui/TouchControls'
+import { Client, Room } from 'colyseus.js'
+import { GAME_CONFIG } from '../constants/client-constants'
+import { generateRandomName } from '../utils/utils'
 
-const BASE_CANVAS_HEIGHT = 550
-
-interface KeyMappings {
-    UP: string[]
-    DOWN: string[]
-    LEFT: string[]
-    RIGHT: string[]
-    RESTART: string[]
-    SHOOT: string[]
-    [key: string]: string[]
-}
+const PLAYER_COLORS = ['#FF5722', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#E91E63', '#00BCD4']
 
 export default class Game {
-    // Core game components
     canvas: HTMLCanvasElement
     ctx: CanvasRenderingContext2D
-    
-    // Managers
-    responsiveManager!: ResponsiveManager
-    inputManager: InputManager | null
-    obstacleManager: ObstacleManager | null
-    uiManager: UIManager | null
-    assetManager: AssetManager | null
-    
-    // Game state
-    gameState: string
-    score: number
-    highScore: number
-    lastFrameTime: number
-    
-    // Configuration
-    config: GameConfig
-    isDesktop: boolean
-    scalingInfo: ScalingInfo
-    
-    // Game mode
-    multiplayerMode: MultiplayerGameMode | null
-    
-    // Visual components
+    eventBus: EventBus
     background: Background
+    lastFrameTime: number = 0
+    scalingInfo: ScalingInfo = { widthScale: 1, heightScale: 1, pixelRatio: 1 }
+    config: GameConfig
+    inputManager: InputManager
+    obstacleManager: ObstacleManager
+    uiManager: UIManager
+    assetManager: AssetManager
+    particleSystem: ParticleSystem
     touchControls: TouchControls
-    particleSystem: ParticleSystem | null
+    gameState: string
+    score: number = 0
     
-    // Legacy compatibility - null in multiplayer mode
-    player: Player | null = null
-    
-    // Performance tracking
-    frameTimes: number[]
-    frameTimeIndex: number
-    frameTimeWindow: number
-    performanceStats: PerformanceStats
+    // Multiplayer
+    private client: Client | null = null
+    private room: Room | null = null
+    private players: Map<string, NetworkPlayer> = new Map()
+    private localSessionId: string = ''
 
     constructor() {
-        console.log('Initializing multiplayer game...')
-
-        // Canvas setup - try multiple selectors for compatibility
-        this.canvas = (document.querySelector('.game-canvas[data-canvas="primary"]') as HTMLCanvasElement) ||
-                     (document.getElementById('gameCanvas') as HTMLCanvasElement) ||
-                     document.createElement('canvas')
-        
+        this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
+        if (!this.canvas) {
+            throw new Error('Canvas not found')
+        }
         this.ctx = this.canvas.getContext('2d')!
-        
-        // Initialize game state
-        this.score = 0
-        this.highScore = 0
-        this.lastFrameTime = 0
-        this.multiplayerMode = null
-        
-        // Performance monitoring setup
-        this.frameTimes = []
-        this.frameTimeIndex = 0
-        this.frameTimeWindow = 60
-        this.performanceStats = {
-            avgFrameTime: 0,
-            maxFrameTime: 0,
-            minFrameTime: Infinity,
-            frameCount: 0,
-            fps: 0,
-            renderTime: 0,
-            updateTime: 0,
-        }
-        
-        // Device and configuration setup
-        this.isDesktop = window.matchMedia('(min-width: 1200px)').matches
-        this.config = new GameConfig({ isDesktop: this.isDesktop })
+        this.eventBus = new EventBus()
+        this.config = new GameConfig({ isDesktop: window.innerWidth > 1024 })
         this.gameState = this.config.STATE.READY
-        
-        // Initialize managers as null - they'll be created in init()
-        this.inputManager = null
-        this.obstacleManager = null
-        this.uiManager = null
-        this.assetManager = null
-        
-        // Scaling information for responsive design
-        this.scalingInfo = {
-            widthScale: 1,
-            heightScale: 1,
-            pixelRatio: 1,
-            reducedResolution: false,
-        }
-        
-        // Visual components initialized in init()
-        this.background = null!
-        this.touchControls = null!
-        this.particleSystem = null
-        
-        this.init()
-    }
 
-    /**
-     * Initialize all game systems and start the multiplayer connection
-     */
-    async init(): Promise<void> {
-        // Set up UI manager first for loading screen
-        const scoreElement = document.querySelector('.score-value[data-score="current"]') as HTMLElement
-        const highScoreElement = document.querySelector('.score-value[data-score="high"]') as HTMLElement
-        
+        this.assetManager = new AssetManager()
+        this.inputManager = new InputManager({ keyMappings: this.config.getKeys() as any })
         this.uiManager = new UIManager({
-            scoreElement: scoreElement || document.createElement('div'),
-            highScoreElement: highScoreElement || document.createElement('div'),
+            scoreElement: document.querySelector('.score-value[data-score="current"]') as HTMLElement,
+            highScoreElement: document.querySelector('.score-value[data-score="high"]') as HTMLElement,
             config: this.config,
         })
-
-        this.uiManager.showLoading('Connecting to multiplayer server...')
-        
-        // Initialize asset manager
-        this.assetManager = new AssetManager()
-        await this.preloadAssets()
-
-        // Set up responsive canvas management
-        this.responsiveManager = new ResponsiveManager(this)
-        this.responsiveManager.init(this.canvas)
-        this.scalingInfo = this.responsiveManager.getScalingInfo()
-        this.responsiveManager.onResize = this.onResize.bind(this)
-
-        // Initialize visual components
-        this.background = new Background(this.canvas)
+        this.obstacleManager = new ObstacleManager({
+            canvas: this.canvas,
+            config: this.config,
+        })
         this.particleSystem = new ParticleSystem({
             canvas: this.canvas,
             poolSize: 200,
             maxParticles: 500,
         })
+        this.touchControls = new TouchControls(this, this.eventBus)
+        this.background = new Background(this.canvas)
 
-        // Initialize obstacle system
-        this.obstacleManager = new ObstacleManager({
-            canvas: this.canvas,
-            config: this.config,
-        })
-        this.obstacleManager.initialize()
-
-        // Set up input handling - cast to expected type
-        this.inputManager = new InputManager({
-            keyMappings: this.config.getKeys() as KeyMappings,
-        })
-
-        // Event listeners
-        document.addEventListener('game:restart', this.handleRestartEvent.bind(this))
-        this.setupTouchControls()
-
-        // Initialize multiplayer mode
-        await this.initializeMultiplayerMode()
-
-        // Hide loading screen and start game loop
-        this.uiManager.hideLoading()
-        this.gameState = this.config.STATE.PLAYING
-        requestAnimationFrame(this.gameLoop.bind(this))
-
-        console.log('Multiplayer game initialized successfully')
+        this.connectToServer()
+        this.gameLoop()
     }
 
-    /**
-     * Initialize and connect to multiplayer server
-     */
-    async initializeMultiplayerMode(): Promise<void> {
-        if (this.multiplayerMode) {
-            this.multiplayerMode.dispose()
-            this.multiplayerMode = null
-        }
-
-        this.multiplayerMode = new MultiplayerGameMode(this)
-        await this.multiplayerMode.initialize()
-        console.log('Connected to multiplayer server')
-    }
-
-    /**
-     * Handle window resize events
-     */
-    onResize(): void {
-        this.scalingInfo = this.responsiveManager.getScalingInfo()
-        this.isDesktop = window.innerWidth >= 1024
-        this.config.setDesktopMode(this.isDesktop)
-
-        if (this.background) {
-            this.background.resize()
-        }
-
-        // Recalculate obstacle heights for new screen size
-        if (this.obstacleManager) {
-            const obstacles = this.obstacleManager.getObstacles()
-            for (const obstacle of obstacles) {
-                obstacle.calculateHeight()
-            }
-        }
-    }
-
-    /**
-     * Set up touch controls for mobile devices
-     */
-    setupTouchControls(): void {
-        this.touchControls = new TouchControls(this)
-        const isSmallScreen = window.innerWidth < 768
-        
-        if (isSmallScreen) {
-            this.touchControls.show()
-        }
-
-        // Register touch buttons with input manager
-        if (this.inputManager && this.touchControls.buttonElements) {
-            for (const [direction, button] of Object.entries(this.touchControls.buttonElements)) {
-                if (button) {
-                    this.inputManager.registerTouchButton(button as HTMLElement, direction)
+    private async connectToServer(): Promise<void> {
+        try {
+            const wsUrl = window.location.hostname === 'localhost' ? 'ws://localhost:3000' : `wss://${window.location.host}`
+            this.client = new Client(wsUrl)
+            this.room = await this.client.joinOrCreate(GAME_CONFIG.ROOM_NAME)
+            
+            this.localSessionId = this.room.sessionId
+            console.log('🔗 Connected to server, sessionId:', this.localSessionId)
+            
+            this.room.onStateChange((state) => {
+                console.log('📡 State update - players:', state.players?.size || 0)
+                
+                // Simple: just get the first player from server state
+                if (state.players && state.players.size > 0) {
+                    const firstPlayer = Array.from(state.players.values())[0]
+                    console.log('📦 Shared rectangle at:', firstPlayer.x, firstPlayer.y)
+                    
+                    this.players.clear()
+                    this.players.set('shared', {
+                        id: 'shared',
+                        sessionId: 'shared',
+                        x: firstPlayer.x,
+                        y: firstPlayer.y,
+                        width: 50,
+                        height: 50,
+                        name: 'Shared Box',
+                        color: '#FF5722',
+                        isAlive: true,
+                        score: 0,
+                        playerIndex: 0
+                    })
                 }
-            }
-        }
-
-        if (this.inputManager) {
-            this.inputManager.setupTouchControls(this.canvas)
+            })
+        } catch (error) {
+            console.error('Failed to connect to server:', error)
         }
     }
 
-    /**
-     * Preload any required assets
-     */
-    async preloadAssets(): Promise<boolean> {
-        console.log('Assets preloaded (using generated sprites)')
-        return true
-    }
-
-    /**
-     * Handle game restart events
-     */
-    handleRestartEvent(): void {
-        if (this.gameState === this.config.STATE.GAME_OVER) {
-            this.completeReset()
-        } else if (this.gameState === this.config.STATE.PLAYING) {
-            this.resetGame()
-        }
-
-        if (this.uiManager) {
-            this.uiManager.hideGameOver()
-        }
-    }
-
-    /**
-     * Main game loop - handles update and render cycles
-     */
-    gameLoop(timestamp: number): void {
-        const frameStartTime = performance.now()
-        requestAnimationFrame(this.gameLoop.bind(this))
-
-        // Calculate delta time with cap to prevent large jumps
-        let deltaTime = 0
-        if (this.lastFrameTime !== 0) {
-            deltaTime = (timestamp - this.lastFrameTime) / 1000
-            deltaTime = Math.min(deltaTime, 0.1) // Cap at 100ms
-        }
+    gameLoop(timestamp: number = 0): void {
+        const deltaTime = (timestamp - this.lastFrameTime) / 1000
         this.lastFrameTime = timestamp
 
-        try {
-            // Always render, but only update game logic when playing
-            if (this.gameState === this.config.STATE.PLAYING) {
-                // Get current input state
-                const inputState = this.inputManager ? this.inputManager.getInputState() : 
-                    { up: false, down: false, left: false, right: false }
+        const inputState = this.inputManager.getInputState()
+        this.sendInput(inputState)
+        this.obstacleManager.update(timestamp, this.score, this.scalingInfo)
+        this.render()
 
-                // Update multiplayer mode
-                if (this.multiplayerMode) {
-                    this.multiplayerMode.update(inputState, deltaTime, timestamp)
-                }
-
-                // Update common systems
-                this.updateCommonSystems(deltaTime)
-            }
-
-            // Always render
-            this.render(timestamp)
-
-            // Post-update checks (win conditions, etc.)
-            if (this.gameState === this.config.STATE.PLAYING && this.multiplayerMode) {
-                this.multiplayerMode.postUpdate()
-            }
-
-            // Track performance
-            this.trackFrameTime(performance.now() - frameStartTime)
-        } catch (error) {
-            console.error('Error in game loop:', error)
+        requestAnimationFrame(this.gameLoop.bind(this))
+    }
+    
+    private sendInput(inputState: InputState): void {
+        if (!this.room) return
+        
+        // Only the first client (lowest sessionId) can control the shared rectangle
+        const canControl = this.room.state?.players?.size === 1 || 
+                          Array.from(this.room.state?.players?.keys() || [])[0] === this.localSessionId
+        
+        if (canControl && (inputState.up || inputState.down || inputState.left || inputState.right)) {
+            console.log('🎮 Controlling shared rectangle')
+            this.room.send('input', {
+                up: inputState.up || false,
+                down: inputState.down || false,
+                left: inputState.left || false,
+                right: inputState.right || false
+            })
         }
     }
-
-    /**
-     * Track frame time for performance monitoring
-     */
-    trackFrameTime(frameTime: number): void {
-        this.frameTimes[this.frameTimeIndex] = frameTime
-        this.frameTimeIndex = (this.frameTimeIndex + 1) % this.frameTimeWindow
-
-        this.performanceStats.frameCount++
-        if (this.performanceStats.frameCount % 60 === 0) {
-            let sum = 0, max = 0, min = Infinity
-            for (let i = 0; i < this.frameTimes.length; i++) {
-                const time = this.frameTimes[i] || 0
-                sum += time
-                max = Math.max(max, time)
-                if (time > 0) min = Math.min(min, time)
-            }
-
-            const validTimes = this.frameTimes.filter(t => t > 0)
-            this.performanceStats.avgFrameTime = sum / (validTimes.length || 1)
-            this.performanceStats.maxFrameTime = max
-            this.performanceStats.minFrameTime = min === Infinity ? 0 : min
-        }
-    }
-
-    /**
-     * Update systems that run regardless of game mode
-     */
-    updateCommonSystems(deltaTime: number): void {
-        if (this.particleSystem) {
-            this.particleSystem.update(deltaTime)
-        }
-    }
-
-    /**
-     * Main render method - delegates to multiplayer mode
-     */
-    render(timestamp: number): void {
-        if (!this.ctx || !this.canvas) return
-
-        // Clear canvas
+    
+    private render(): void {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-
-        // Render game through multiplayer mode
-        if (this.multiplayerMode) {
-            this.multiplayerMode.render(this.ctx, timestamp)
-        }
-
-        // Debug info overlay
-        if (this.config.isDebugEnabled()) {
-            this.drawDebugInfo()
-        }
-    }
-
-    /**
-     * Render shared scene elements (called by multiplayer mode)
-     * This allows the mode to control when these elements are drawn
-     */
-    public renderSharedScene(ctx: CanvasRenderingContext2D, timestamp: number): void {
-        // Draw background
-        if (this.background && typeof this.background.draw === 'function') {
-            this.background.draw(timestamp)
-        } else {
-            ctx.fillStyle = '#0a192f'
-            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
-        }
-
-        // Draw obstacles
-        const obstacles = this.obstacleManager?.getObstacles() || []
+        
+        // Render background
+        this.background.render(this.ctx, performance.now())
+        
+        // Render obstacles
+        const obstacles = this.obstacleManager.getObstacles()
         obstacles.forEach(obstacle => {
-            if (typeof (obstacle as any).draw === 'function') {
-                (obstacle as any).draw(ctx)
+            if (typeof (obstacle as any).render === 'function') {
+                (obstacle as any).render(this.ctx)
             }
         })
-
-        // Draw particles
-        if (this.particleSystem) {
-            this.particleSystem.draw()
-        }
-
-        // Draw touch controls
-        if (this.touchControls && typeof this.touchControls.draw === 'function') {
-            this.touchControls.draw()
-        }
-
-        // Draw winning line
-        this.drawWinningLine(timestamp)
-    }
-
-    /**
-     * Reset game state while keeping connection
-     */
-    resetGame(): void {
-        this.score = 0
-        if (this.uiManager) {
-            this.uiManager.updateScore(0)
-        }
-        if (this.obstacleManager) {
-            this.obstacleManager.reset()
-        }
-        if (this.particleSystem) {
-            this.particleSystem.clear()
-        }
-    }
-
-    /**
-     * Complete reset after game over
-     */
-    completeReset(): void {
-        if (this.uiManager) {
-            this.uiManager.hideGameOver()
-        }
-        this.resetGame()
-        this.gameState = this.config.STATE.PLAYING
-    }
-
-    /**
-     * Draw the animated winning line
-     */
-    drawWinningLine(timestamp: number): void {
-        const scaledWinningLine = this.config.getWinningLine(this.canvas.height, BASE_CANVAS_HEIGHT)
         
-        this.ctx.save()
-        this.ctx.globalAlpha = 0.7 + 0.3 * Math.sin(timestamp * 0.002)
-        this.ctx.strokeStyle = '#7FDBFF'
-        this.ctx.lineWidth = 2 * this.scalingInfo.heightScale
-        this.ctx.setLineDash([5, 5])
-        this.ctx.beginPath()
-        this.ctx.moveTo(0, scaledWinningLine)
-        this.ctx.lineTo(this.canvas.width, scaledWinningLine)
-        this.ctx.stroke()
-        this.ctx.restore()
-    }
-
-    /**
-     * Draw debug information overlay
-     */
-    drawDebugInfo(): void {
-        this.ctx.save()
-        this.ctx.fillStyle = '#ffffff'
-        this.ctx.font = '12px monospace'
-        this.ctx.textAlign = 'left'
-
-        const fps = Math.round(1000 / (this.performanceStats.avgFrameTime || 16))
-        const playerCount = this.multiplayerMode?.getPlayerCount() || 0
-
-        const debugLines = [
-            `FPS: ${fps}`,
-            `Players: ${playerCount}`,
-            `Canvas: ${this.canvas.width}x${this.canvas.height}`,
-            `Game State: ${this.gameState}`,
-        ]
-
-        debugLines.forEach((line, index) => {
-            this.ctx.fillText(line, 10, 20 + index * 15)
+        // Render particles
+        this.particleSystem.draw()
+        
+        // Render shared rectangle that all tabs can see
+        this.players.forEach((player) => {
+            this.ctx.save()
+            
+            // Draw shared rectangle
+            this.ctx.fillStyle = player.color
+            this.ctx.fillRect(player.x, player.y, player.width, player.height)
+            
+            // Check if this client can control it
+            const canControl = this.room?.state?.players?.size === 1 || 
+                              Array.from(this.room?.state?.players?.keys() || [])[0] === this.localSessionId
+            
+            // Add border - yellow if you control it, white if you don't
+            this.ctx.strokeStyle = canControl ? '#ffff00' : '#ffffff'
+            this.ctx.lineWidth = canControl ? 4 : 2
+            this.ctx.strokeRect(player.x, player.y, player.width, player.height)
+            
+            // Show control status
+            this.ctx.fillStyle = '#ffffff'
+            this.ctx.font = '14px Arial'
+            this.ctx.textAlign = 'center'
+            const controlText = canControl ? 'YOU CONTROL' : 'SHARED VIEW'
+            this.ctx.fillText(controlText, player.x + player.width/2, player.y - 10)
+            
+            this.ctx.restore()
         })
-
-        this.ctx.restore()
     }
 
-    /**
-     * Clean up resources and disconnect
-     */
-    dispose(): void {
-        document.removeEventListener('game:restart', this.handleRestartEvent.bind(this))
-        
-        if (this.multiplayerMode) {
-            this.multiplayerMode.dispose()
-            this.multiplayerMode = null
-        }
+    public getPlayerCount(): number {
+        return this.room?.state?.players?.size || 0
+    }
 
-        if (this.responsiveManager) {
-            this.responsiveManager.dispose()
-        }
+    public isConnected(): boolean {
+        return this.room !== null && this.room.connection.isOpen
+    }
 
-        if (this.touchControls) {
-            this.touchControls.hide()
+    public dispose(): void {
+        if (this.room) {
+            this.room.leave()
+            this.room = null
+        }
+        if (this.client) {
+            this.client = null
         }
     }
 }

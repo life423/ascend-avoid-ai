@@ -1,6 +1,6 @@
 import * as schema from "@colyseus/schema";
 const { Schema, type } = schema;
-import { GAME_CONSTANTS } from "../constants/serverConstants.js";
+import { GAME_CONSTANTS } from "../constants/serverConstants";
 
 /**
  * Interface for player position (used in obstacle placement)

@@ -1,6 +1,6 @@
 import * as schema from "@colyseus/schema";
 const { Schema, type } = schema;
-import { GAME_CONSTANTS } from "../constants/serverConstants.js";
+import { GAME_CONSTANTS } from "../constants/serverConstants";
 
 /**
  * Interface for movement keys
@@ -25,7 +25,10 @@ class PlayerSchema extends Schema {
   height: number;
   state: string;
   score: number;
-  movementKeys: MovementKeys;
+  upKey: boolean;
+  downKey: boolean;
+  leftKey: boolean;
+  rightKey: boolean;
   lastUpdateTime: number;
 
   constructor(sessionId: string, playerIndex: number) {
@@ -41,12 +44,10 @@ class PlayerSchema extends Schema {
     this.height = GAME_CONSTANTS.PLAYER.BASE_HEIGHT;
     this.state = GAME_CONSTANTS.PLAYER_STATE.ALIVE;
     this.score = 0;
-    this.movementKeys = {
-      up: false,
-      down: false,
-      left: false,
-      right: false
-    };
+    this.upKey = false;
+    this.downKey = false;
+    this.leftKey = false;
+    this.rightKey = false;
     this.lastUpdateTime = Date.now();
   }
   
@@ -75,19 +76,19 @@ class PlayerSchema extends Schema {
     const moveY = GAME_CONSTANTS.PLAYER.BASE_SPEED;
     
     // Apply movement based on keys
-    if (this.movementKeys.up && this.y > GAME_CONSTANTS.GAME.WINNING_LINE) {
+    if (this.upKey && this.y > GAME_CONSTANTS.GAME.WINNING_LINE) {
       this.y -= moveY;
     }
     
-    if (this.movementKeys.down && this.y + this.height < canvasHeight - 10) {
+    if (this.downKey && this.y + this.height < canvasHeight - 10) {
       this.y += moveY;
     }
     
-    if (this.movementKeys.left && this.x > 5) {
+    if (this.leftKey && this.x > 5) {
       this.x -= moveX;
     }
     
-    if (this.movementKeys.right && this.x + this.width < canvasWidth - 5) {
+    if (this.rightKey && this.x + this.width < canvasWidth - 5) {
       this.x += moveX;
     }
   }
@@ -117,6 +118,10 @@ type("number")(PlayerSchema.prototype, "width");
 type("number")(PlayerSchema.prototype, "height");
 type("string")(PlayerSchema.prototype, "state");
 type("number")(PlayerSchema.prototype, "score");
+type("boolean")(PlayerSchema.prototype, "upKey");
+type("boolean")(PlayerSchema.prototype, "downKey");
+type("boolean")(PlayerSchema.prototype, "leftKey");
+type("boolean")(PlayerSchema.prototype, "rightKey");
 type("number")(PlayerSchema.prototype, "lastUpdateTime");
 
 export { PlayerSchema };
