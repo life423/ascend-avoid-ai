@@ -250,24 +250,62 @@
     max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 4rem);
 }
 
-/* Landscape optimizations for touch devices */
-.touch-device.landscape .app-header {
+.screen-tablet .game-area {
+    display: grid;
+    grid-template-columns: 1fr calc(250px + var(--fluid-scale) * 50px);
+    gap: calc(var(--space-lg) * var(--fluid-scale));
+}
+
+/* Phone portrait optimizations */
+.screen-phone.portrait .game-main {
+    padding: calc(var(--space-xs) * var(--fluid-scale));
+}
+
+.screen-phone.portrait .app-header {
+    padding: calc(var(--space-sm) * var(--fluid-scale));
+    padding-top: max(calc(var(--space-sm) * var(--fluid-scale)), env(safe-area-inset-top, 8px));
+    min-height: calc(3rem + var(--fluid-scale) * 0.5rem);
+}
+
+.screen-phone.portrait .control-panel {
+    padding: calc(var(--space-xs) * var(--fluid-scale));
+    max-height: calc(var(--vh, 1vh) * 100 - 150px - var(--adaptation-level) * 50px);
+}
+
+.screen-phone.portrait .game-canvas {
+    max-width: calc(var(--viewport-width) - var(--space-md));
+    max-height: calc(var(--vh, 1vh) * 100 - var(--ctrl-h, 120px) - 5rem);
+}
+
+/* Phone landscape optimizations */
+.screen-phone.landscape .app-header {
     padding: calc(var(--space-sm) * var(--fluid-scale)) calc(var(--space-md) * var(--fluid-scale));
     min-height: calc(40px + var(--fluid-scale) * 10px);
 }
 
-.touch-device.landscape .control-panel {
+.screen-phone.landscape .control-panel {
     padding: calc(var(--space-xs) * var(--fluid-scale)) calc(var(--space-sm) * var(--fluid-scale));
     max-height: calc(15vh + var(--fluid-scale) * 5vh);
 }
 
-.touch-device.landscape .touch-controller {
+.screen-phone.landscape .touch-controller {
     min-height: calc(40px + var(--diagonal-inches) * 8px + var(--fluid-scale) * 20px);
 }
 
-.touch-device.landscape .game-canvas {
+.screen-phone.landscape .game-canvas {
     max-width: calc(var(--viewport-width) - 1rem);
     max-height: calc(var(--vh, 1vh) * 100 - 6rem);
+}
+
+/* Tablet landscape optimizations */
+.screen-tablet.landscape .game-area {
+    display: grid;
+    grid-template-columns: 1fr calc(280px + var(--fluid-scale) * 70px);
+    gap: calc(var(--space-xl) * var(--fluid-scale));
+}
+
+.screen-tablet.landscape .touch-controller {
+    min-height: calc(50px + var(--diagonal-inches) * 6px + var(--fluid-scale) * 25px);
 }
 
 /* ============================================
@@ -372,22 +410,9 @@
     50% { opacity: 0.5; }
 }
 
-/* Show orientation overlay on portrait mobile */
-/* @media (max-width: 768px) and (orientation: portrait) {
-    .orientation-overlay {
-        display: flex;
-    }
-    
-    .app-root {
-        display: none;
-    }
-} */
- @media (max-width: 768px) and (orientation: portrait) {
-    .orientation-overlay {
-        display: none;  /* Changed from flex - hide the "rotate" message */
-    }
-    
-    /* DELETE the .app-root rule entirely - let the game show */
+/* Orientation overlay controlled by viewport classes instead of media queries */
+.screen-phone.portrait .orientation-overlay {
+    display: none; /* Keep disabled - let portrait mode work */
 }
 
 /* ============================================

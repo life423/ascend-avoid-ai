@@ -6,8 +6,8 @@
 import Game from '../core/Game'
 import { EventBus } from '../core/EventBus'
 import { TouchControlsAdapter } from '../adapters/TouchControlsAdapter'
-import { SmartResponsiveness, TouchInteractionData, createSmartResponsiveness } from '../systems/SmartResponsiveness'
-import { FluidResponsiveSystem } from '../systems/FluidResponsiveSystem'
+import { SmartResponsiveness, createSmartResponsiveness } from '../systems/SmartResponsiveness'
+import type { TouchInteractionData } from '../systems/SmartResponsiveness'
 
 // Interface for control button definition
 interface ControlButton {
@@ -404,6 +404,104 @@ export default class TouchControls {
 
     draw(): void {
         // No canvas drawing needed - controls are DOM elements
+    }
+
+    // Neural network data collection methods
+    private recordTouchStart(buttonId: string, touch: Touch, _button: HTMLElement): void {
+        if (!this.smartResponsiveness) return
+
+        this.touchStartTimes.set(buttonId, Date.now())
+        this.touchStartPositions.set(buttonId, { x: touch.clientX, y: touch.clientY })
+    }
+
+    private recordTouchEnd(buttonId: string, touch: Touch, button: HTMLElement, wasSuccessful: boolean): void {
+        if (!this.smartResponsiveness) return
+
+        const startTime = this.touchStartTimes.get(buttonId)
+        const startPos = this.touchStartPositions.get(buttonId)
+        
+        if (!startTime || !startPos) return
+
+        // Calculate touch accuracy (distance from button center)
+        const buttonRect = button.getBoundingClientRect()
+        const buttonCenterX = buttonRect.left + buttonRect.width / 2
+        const buttonCenterY = buttonRect.top + buttonRect.height / 2
+        
+        const distanceFromCenter = Math.sqrt(
+            Math.pow(touch.clientX - buttonCenterX, 2) + 
+            Math.pow(touch.clientY - buttonCenterY, 2)
+        )
+        
+        const maxDistance = Math.sqrt(
+            Math.pow(buttonRect.width / 2, 2) + 
+            Math.pow(buttonRect.height / 2, 2)
+        )
+        
+        const accuracy = Math.max(0, 1 - (distanceFromCenter / maxDistance))
+        const pressureDuration = Date.now() - startTime
+
+        // Get current button size
+        const currentSize = Math.min(buttonRect.width, buttonRect.height)
+
+        // Collect device info
+        const deviceInfo = {
+            diagonal: Math.sqrt(screen.width ** 2 + screen.height ** 2),
+            screenType: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1200 ? 'tablet' : 'desktop',
+            isTouch: true
+        }
+
+        const interactionData = {
+            buttonId,
+            timestamp: Date.now(),
+            accuracy,
+            pressureDuration,
+            deviceInfo,
+            currentButtonSize: currentSize,
+            wasSuccessful
+        }
+
+        this.smartResponsiveness.recordInteraction(interactionData)
+
+        // Clean up tracking data
+        this.touchStartTimes.delete(buttonId)
+        this.touchStartPositions.delete(buttonId)
+    }
+
+    private applyButtonOptimizations(optimizations: Map<string, any>): void {
+        if (!this.buttonElements) return
+
+        optimizations.forEach((state, buttonId) => {
+            const button = this.buttonElements[buttonId]
+            if (!button || state.interactionCount < 3) return
+
+            const newSize = state.optimalSize
+            const currentSize = Math.min(
+                parseFloat(getComputedStyle(button).width),
+                parseFloat(getComputedStyle(button).height)
+            )
+
+            // Only apply significant changes (>5px difference)
+            if (Math.abs(newSize - currentSize) > 5) {
+                button.style.width = `${newSize}px`
+                button.style.height = `${newSize}px`
+                button.style.minWidth = `${newSize}px`
+                button.style.minHeight = `${newSize}px`
+
+                // Add visual feedback
+                button.style.transition = 'all 0.3s ease'
+                button.style.boxShadow = '0 0 8px rgba(0, 188, 212, 0.6)'
+                
+                setTimeout(() => {
+                    button.style.boxShadow = '0 var(--space-xs) var(--space-sm) rgba(0,0,0,0.3)'
+                }, 1000)
+
+                console.log(`🎯 Optimized ${buttonId}: ${currentSize.toFixed(1)}px → ${newSize.toFixed(1)}px`)
+            }
+        })
+    }
+
+    public getNeuralNetStats(): any {
+        return this.smartResponsiveness?.getStats() || null
     }
 
     dispose(): void {

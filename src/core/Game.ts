@@ -13,9 +13,6 @@ import TouchControls from '../ui/TouchControls'
 import { Client, Room } from 'colyseus.js'
 import { GAME_CONFIG, PLAYER_COLORS } from '../constants/gameConstants'
 import { generateRandomName } from '../utils/utils'
-// ResponsiveManager now handles responsive system integration
-
-
 
 export default class Game {
     canvas: HTMLCanvasElement
@@ -68,7 +65,6 @@ export default class Game {
         })
         
         // Initialize responsive manager after UI manager
-        // ResponsiveManager works with UnifiedResponsiveSystem to handle canvas sizing
         console.log('🖼️ Initializing ResponsiveManager for canvas sizing...')
         this.responsiveManager = new ResponsiveManager(this)
         this.responsiveManager.init(this.canvas)
@@ -325,7 +321,6 @@ export default class Game {
 
     gameLoop(timestamp: number = 0): void {
         this.lastFrameTime = timestamp
-
         const inputState = this.inputManager.getInputState()
         this.sendInput(inputState)
         this.obstacleManager.update(timestamp, this.score, this.scalingInfo)
@@ -722,54 +717,61 @@ export default class Game {
         }
     }
     
-    
     /**
      * Updates CSS classes and viewport properties to coordinate with responsive.css
+     * Now relies primarily on FluidResponsiveSystem classes
      */
     private updateResponsiveClasses(): void {
         console.log('🎨 Updating responsive CSS classes...')
         
         const body = document.body
         const root = document.documentElement
-        const isDesktop = this.responsiveManager?.isDesktopDevice() || false
-        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-        const isLandscape = window.innerWidth > window.innerHeight
-        const deviceWidth = window.innerWidth
-        const deviceHeight = window.innerHeight
         
-        // Remove all device type classes
-        body.classList.remove('desktop-layout', 'tablet-layout', 'mobile-layout', 
-                            'touch-device', 'landscape', 'portrait', 'chrome-mobile')
-        
-        // Add appropriate device type classes
-        if (isDesktop) {
-            body.classList.add('desktop-layout')
-        } else if (deviceWidth >= 768 && deviceWidth < 1200) {
-            body.classList.add('tablet-layout')
-        } else {
-            body.classList.add('mobile-layout')
+        // FluidResponsiveSystem already applies classes to documentElement
+        // We just need to ensure body also gets the classes for legacy CSS
+        const fluidSystem = this.responsiveManager?.fluidSystem
+        if (fluidSystem) {
+            const scaling = fluidSystem.getScaling()
+            if (scaling) {
+                const { viewport } = scaling
+                
+                // Remove legacy classes that conflict
+                body.classList.remove('desktop-layout', 'tablet-layout', 'mobile-layout')
+                
+                // Copy essential classes from root to body for CSS compatibility
+                if (root.classList.contains('touch-device')) body.classList.add('touch-device')
+                if (root.classList.contains('mouse-device')) body.classList.add('mouse-device')
+                if (root.classList.contains('landscape')) body.classList.add('landscape')
+                if (root.classList.contains('portrait')) body.classList.add('portrait')
+                if (root.classList.contains('screen-phone')) body.classList.add('screen-phone')
+                if (root.classList.contains('screen-tablet')) body.classList.add('screen-tablet')
+                if (root.classList.contains('screen-desktop')) body.classList.add('screen-desktop')
+                if (root.classList.contains('screen-tv')) body.classList.add('screen-tv')
+                
+                // Detect Chrome mobile for specific fixes
+                const isChromeMobile = /Chrome/.test(navigator.userAgent) && /Mobile/.test(navigator.userAgent)
+                if (isChromeMobile) {
+                    root.classList.add('chrome-mobile')
+                    body.classList.add('chrome-mobile')
+                }
+                
+                console.log(`  FluidResponsive: ${viewport.screenType} | ${viewport.isTouch ? 'Touch' : 'Mouse'} | ${viewport.orientation}`)
+                console.log(`  Classes: ${Array.from(root.classList).filter(c => c.startsWith('screen-') || ['touch-device', 'mouse-device', 'landscape', 'portrait'].includes(c)).join(', ')}`)
+            }
         }
         
-        // Add device capability classes
-        if (isTouchDevice) body.classList.add('touch-device')
-        body.classList.add(isLandscape ? 'landscape' : 'portrait')
-        
-        // Detect Chrome mobile for specific fixes
-        const isChromeMobile = /Chrome/.test(navigator.userAgent) && /Mobile/.test(navigator.userAgent)
-        if (isChromeMobile) {
-            body.classList.add('chrome-mobile')
+        // Fallback for when FluidResponsiveSystem isn't available yet
+        else {
+            const isDesktop = this.responsiveManager?.isDesktopDevice() || false
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+            const isLandscape = window.innerWidth > window.innerHeight
+            
+            body.classList.add(isTouchDevice ? 'touch-device' : 'mouse-device')
+            body.classList.add(isLandscape ? 'landscape' : 'portrait')
+            body.classList.add(isDesktop ? 'screen-desktop' : 'screen-phone')
+            
+            console.log(`  Fallback: ${isDesktop ? 'Desktop' : 'Mobile'} | ${isTouchDevice ? 'Touch' : 'Mouse'} | ${isLandscape ? 'Landscape' : 'Portrait'}`)
         }
-        
-        // Update CSS custom properties
-        root.style.setProperty('--device-width', `${deviceWidth}px`)
-        root.style.setProperty('--device-height', `${deviceHeight}px`)
-        root.style.setProperty('--device-ratio', (window.devicePixelRatio || 1).toString())
-        root.style.setProperty('--canvas-width', `${this.canvas.width}px`)
-        root.style.setProperty('--canvas-height', `${this.canvas.height}px`)
-        root.style.setProperty('--scale-x', this.scalingInfo.widthScale.toString())
-        root.style.setProperty('--scale-y', this.scalingInfo.heightScale.toString())
-        
-        console.log(`  Device: ${isDesktop ? 'Desktop' : 'Mobile'} | Touch: ${isTouchDevice} | Orientation: ${isLandscape ? 'Landscape' : 'Portrait'}`)
     }
     
     /**

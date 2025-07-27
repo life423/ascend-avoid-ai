@@ -3,16 +3,6 @@ const { Schema, type } = schema;
 import { GAME_CONSTANTS } from "../constants/serverConstants";
 
 /**
- * Interface for movement keys
- */
-interface MovementKeys {
-  up: boolean;
-  down: boolean;
-  left: boolean;
-  right: boolean;
-}
-
-/**
  * PlayerSchema defines the synchronized properties for each player
  */
 class PlayerSchema extends Schema {

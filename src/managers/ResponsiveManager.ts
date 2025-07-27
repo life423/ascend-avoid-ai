@@ -23,7 +23,7 @@ export default class ResponsiveManager {
     baseCanvasWidth: number
     baseCanvasHeight: number
     scalingInfo: ScalingInfo
-    private fluidSystem: FluidResponsiveSystem | null = null
+    fluidSystem: FluidResponsiveSystem | null = null // Made public for Game.ts access
     private unsubscribeFn: (() => void) | null = null
     
     onResize?: (

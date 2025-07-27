@@ -7,7 +7,7 @@
  * - Makes real-time adjustments without breakpoints
  */
 
-import { FluidResponsiveSystem } from './FluidResponsiveSystem'
+// Neural network-based button optimization system
 
 export interface TouchInteractionData {
     buttonId: string
@@ -48,7 +48,6 @@ export class SmartResponsiveness {
     private config: SmartResponsivenessConfig
     private interactionHistory: TouchInteractionData[] = []
     private buttonStates: Map<string, ButtonOptimizationState> = new Map()
-    private fluidSystem: FluidResponsiveSystem | null = null
     private callbacks: Set<(optimizations: Map<string, ButtonOptimizationState>) => void> = new Set()
 
     private constructor(config: Partial<SmartResponsivenessConfig> = {}) {
@@ -62,7 +61,6 @@ export class SmartResponsiveness {
             ...config
         }
 
-        this.fluidSystem = FluidResponsiveSystem.getInstance()
         this.startDataCleanup()
         
         console.log('🧠 SmartResponsiveness initialized:', this.config)
