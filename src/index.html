@@ -56,6 +56,30 @@
                             role="img"
                         ></canvas>
                     </div>
+                    
+                    <!-- Desktop Info Panel (hidden on mobile, shown on desktop) -->
+                    <div class="info-panel desktop-only" data-panel="info">
+                        <div class="panel-content" data-content="instructions">
+                            <h3>How to Play</h3>
+                            <p>Survive as the last player standing in this real-time multiplayer battle!</p>
+                            
+                            <ul>
+                                <li>Move your colored block using arrow keys or WASD</li>
+                                <li>Avoid collisions with other players</li>
+                                <li>Stay within the shrinking arena</li>
+                                <li>Be the last player alive to win</li>
+                            </ul>
+                            
+                            <div class="note">
+                                The arena shrinks over time, forcing players closer together for intense battles!
+                            </div>
+                        </div>
+                        
+                        <div class="info-actions">
+                            <button class="nav-button" onclick="window.game?.getState()">Game Stats</button>
+                            <button class="nav-button" onclick="console.log('Multiplayer active')">Status</button>
+                        </div>
+                    </div>
                 </div>
             </main>
 
