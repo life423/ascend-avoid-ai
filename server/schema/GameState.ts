@@ -1,8 +1,6 @@
-import * as schema from "@colyseus/schema";
-const { Schema, MapSchema, ArraySchema, type } = schema;
-import { PlayerSchema } from "./PlayerSchema";
-import { ObstacleSchema } from "./ObstacleSchema";
 import { GAME_CONSTANTS } from "../constants/serverConstants";
+import { GameState as SharedGameState, PlayerSchema, ObstacleSchema } from "../../shared/schema";
+import { ArraySchema } from "@colyseus/schema";
 
 /**
  * Interface for player positions used in obstacle placement
@@ -13,51 +11,23 @@ interface PlayerPosition {
 }
 
 /**
- * GameState defines the full synchronized game state
+ * GameState extends the shared schema with server-side logic
  */
-class GameState extends Schema {
-  // Game state properties
-  gameState: string;
-  elapsedTime: number;
-  startTime: number;
-  countdownTime: number; 
-  
-  // Arena settings
-  arenaWidth: number;
-  arenaHeight: number;
-  areaPercentage: number;
-  nextShrinkTime: number;
-  
-  // Collections for players and obstacles
-  players: schema.MapSchema<PlayerSchema>;
-  obstacles: schema.ArraySchema<ObstacleSchema>;
-  
-  // Game statistics
-  aliveCount: number;
-  totalPlayers: number;
-  winnerName: string;
-  
-  // Last update time for delta calculations
-  lastUpdateTime: number;
-
+class GameState extends SharedGameState {
   constructor() {
     super();
     
-    // Initialize game state
+    // Initialize game state with server-specific values
     this.gameState = GAME_CONSTANTS.STATE.WAITING;
     this.elapsedTime = 0;
     this.startTime = 0;
     this.countdownTime = 5; // 5 second countdown before game starts
     
-    // Arena settings
-    this.arenaWidth = 800;
-    this.arenaHeight = 600;
+    // Arena settings - use standardized dimensions
+    this.arenaWidth = GAME_CONSTANTS.GAME.ARENA_WIDTH;
+    this.arenaHeight = GAME_CONSTANTS.GAME.ARENA_HEIGHT;
     this.areaPercentage = GAME_CONSTANTS.ARENA.INITIAL_AREA_PERCENTAGE;
     this.nextShrinkTime = 0;
-    
-    // Create collections for players and obstacles
-    this.players = new MapSchema<PlayerSchema>();
-    this.obstacles = new ArraySchema<ObstacleSchema>();
     
     // Game statistics
     this.aliveCount = 0;
@@ -347,24 +317,8 @@ class GameState extends Schema {
     });
     
     // Clear obstacles
-    this.obstacles = new ArraySchema<ObstacleSchema>();
+    this.obstacles.clear();
   }
 }
-
-// Define the schema types for network synchronization
-type("string")(GameState.prototype, "gameState");
-type("number")(GameState.prototype, "elapsedTime");
-type("number")(GameState.prototype, "startTime");
-type("number")(GameState.prototype, "countdownTime");
-type("number")(GameState.prototype, "arenaWidth");
-type("number")(GameState.prototype, "arenaHeight");
-type("number")(GameState.prototype, "areaPercentage");
-type("number")(GameState.prototype, "nextShrinkTime");
-type({ map: PlayerSchema })(GameState.prototype, "players");
-type([ObstacleSchema])(GameState.prototype, "obstacles");
-type("number")(GameState.prototype, "aliveCount");
-type("number")(GameState.prototype, "totalPlayers");
-type("string")(GameState.prototype, "winnerName");
-type("number")(GameState.prototype, "lastUpdateTime");
 
 export { GameState };

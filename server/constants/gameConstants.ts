@@ -52,6 +52,9 @@ export const GAME = {
   ROOM_NAME: "last_player_standing",
   MAX_OBSTACLES: 12,
   DIFFICULTY_INCREASE_RATE: 0.15,
+  // Standardized arena dimensions (independent of client screen size)
+  ARENA_WIDTH: 1200,
+  ARENA_HEIGHT: 800,
 } as const;
 
 // Game states

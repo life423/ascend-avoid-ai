@@ -1,8 +1,6 @@
 // server/rooms/GameRoom.ts
 
 import { Room, Client } from "colyseus";
-// import { GameState } from "../schema/GameState";
-// import { GameState } from "../schema/GameState";
 import { GAME_CONSTANTS } from "../constants/serverConstants";
 import logger from "../utils/logger";
 import { GameState } from '../schema/GameState';
@@ -11,6 +9,7 @@ import { GameState } from '../schema/GameState';
  */
 interface JoinOptions {
   name?: string;
+  playerName?: string;
   width?: number;
   height?: number;
 }
@@ -59,11 +58,8 @@ export class GameRoom extends Room<GameState> {
     // Set patch rate for state synchronization
     this.setPatchRate(50);
 
-    // Override arena dimensions if provided
-    if (options.width && options.height) {
-      this.state.arenaWidth = options.width;
-      this.state.arenaHeight = options.height;
-    }
+    // Arena dimensions are now standardized and not client-dependent
+    console.log(`🎮 Using standardized arena: ${this.state.arenaWidth}×${this.state.arenaHeight}`);
 
     // Start the game loop
     const updateRate = GAME_CONSTANTS.GAME.STATE_UPDATE_RATE;

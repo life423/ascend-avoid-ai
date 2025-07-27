@@ -1,5 +1,5 @@
 import { InputState, ScalingInfo, NetworkPlayer } from '../types'
-import { PlayerSchema, GameStateSchema } from '../types/colyseus-schema'
+import { PlayerSchema, GameState } from '../../shared/schema'
 import Background from '../entities/Background'
 import { EventBus } from './EventBus'
 import GameConfig from './GameConfig'
@@ -38,10 +38,11 @@ export default class Game {
     private players: Map<string, NetworkPlayer> = new Map()
     private localSessionId: string = ''
 
-    private serverArenaWidth: number = 800
-    private serverArenaHeight: number = 600
-    private scaleX: number = 1
-    private scaleY: number = 1
+    // Virtual coordinate system - fixed dimensions for consistent gameplay
+    private readonly VIRTUAL_WIDTH: number = 1200
+    private readonly VIRTUAL_HEIGHT: number = 800
+    private serverArenaWidth: number = 1200  // Will be updated from server
+    private serverArenaHeight: number = 800  // Will be updated from server
 
     constructor() {
         this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement
@@ -81,9 +82,7 @@ export default class Game {
             const wsUrl = window.location.hostname === 'localhost' ? 'ws://localhost:3000' : `wss://${window.location.host}`
             this.client = new Client(wsUrl)
             this.room = await this.client.joinOrCreate(GAME_CONFIG.ROOM_NAME, {
-                playerName: generateRandomName(),
-                width: this.canvas.width,
-                height: this.canvas.height
+                playerName: generateRandomName()
             })
             
             this.localSessionId = this.room.sessionId
@@ -108,13 +107,16 @@ export default class Game {
                 console.log('   Room ID:', this.room?.id)
                 console.log('   Total players:', state.players?.size || 0)
                 
-                // Get server arena dimensions and calculate scale
+                // Get server arena dimensions (should match our virtual dimensions)
                 if (state.arenaWidth && state.arenaHeight) {
                     this.serverArenaWidth = state.arenaWidth
                     this.serverArenaHeight = state.arenaHeight
-                    this.updateScale()
                     console.log('🎮 Server arena:', this.serverArenaWidth, 'x', this.serverArenaHeight)
-                    console.log('📏 Scale factors:', this.scaleX.toFixed(2), 'x', this.scaleY.toFixed(2))
+                    console.log('📏 Virtual space:', this.VIRTUAL_WIDTH, 'x', this.VIRTUAL_HEIGHT)
+                    
+                    if (this.serverArenaWidth !== this.VIRTUAL_WIDTH || this.serverArenaHeight !== this.VIRTUAL_HEIGHT) {
+                        console.warn('⚠️ Server arena size differs from virtual coordinate system!')
+                    }
                 }
                 
                 // Set up fine-grained callbacks for the players map
@@ -125,32 +127,34 @@ export default class Game {
         }
     }
 
-    private updateScale(): void {
-        this.scaleX = this.canvas.width / this.serverArenaWidth
-        this.scaleY = this.canvas.height / this.serverArenaHeight
+    private serverToVirtualX(serverX: number): number {
+        // Server coordinates map directly to virtual coordinates
+        // since server now uses the same dimensions as virtual space
+        return serverX
     }
 
-    private serverToClientX(serverX: number): number {
-        return serverX * this.scaleX
+    private serverToVirtualY(serverY: number): number {
+        // Server coordinates map directly to virtual coordinates
+        return serverY
     }
 
-    private serverToClientY(serverY: number): number {
-        return serverY * this.scaleY
+    private virtualToCanvasX(virtualX: number): number {
+        // ResponsiveCanvas handles the scaling automatically via devicePixelRatio
+        // We just need to scale from virtual space to current canvas logical size
+        const logicalWidth = this.canvas.width / (window.devicePixelRatio || 1)
+        return (virtualX / this.VIRTUAL_WIDTH) * logicalWidth
     }
 
-    private clientToServerX(clientX: number): number {
-        return clientX / this.scaleX
+    private virtualToCanvasY(virtualY: number): number {
+        const logicalHeight = this.canvas.height / (window.devicePixelRatio || 1)
+        return (virtualY / this.VIRTUAL_HEIGHT) * logicalHeight
     }
 
-    private clientToServerY(clientY: number): number {
-        return clientY / this.scaleY
-    }
-
-    private setupPlayerCallbacks(state: GameStateSchema): void {
+    private setupPlayerCallbacks(state: GameState): void {
         if (!state.players) return
         
         // Handle new players being added
-        state.players.onAdd = (player: PlayerSchema, sessionId: string) => {
+        state.players.onAdd((player: PlayerSchema, sessionId: string) => {
             console.log('➕ Player added via onAdd:', sessionId)
             
             // Create visual representation for the player - use server's playerIndex for consistent colors
@@ -159,10 +163,10 @@ export default class Game {
             const networkPlayer: NetworkPlayer = {
                 id: sessionId,
                 sessionId: sessionId,
-                x: this.serverToClientX(player.x || 0),
-                y: this.serverToClientY(player.y || 0),
-                width: this.serverToClientX(player.width || 50),
-                height: this.serverToClientY(player.height || 50),
+                x: this.serverToVirtualX(player.x || 0),
+                y: this.serverToVirtualY(player.y || 0),
+                width: this.serverToVirtualX(player.width || 50),
+                height: this.serverToVirtualY(player.height || 50),
                 name: player.name || 'Player',
                 color: color,
                 isAlive: player.state === 'alive',
@@ -175,40 +179,70 @@ export default class Game {
             console.log(`   Server pos: (${player.x}, ${player.y}) -> Client pos: (${networkPlayer.x.toFixed(1)}, ${networkPlayer.y.toFixed(1)})`)
             
             // Set up property change listeners for this player
-            player.onChange = (changes: any[]) => {
+            player.onChange(() => {
                 const localPlayer = this.players.get(sessionId)
                 if (!localPlayer) return
                 
-                changes.forEach((change) => {
-                    if (change.field === 'x') localPlayer.x = this.serverToClientX(change.value)
-                    else if (change.field === 'y') localPlayer.y = this.serverToClientY(change.value)
-                    else if (change.field === 'name') localPlayer.name = change.value
-                    else if (change.field === 'state') localPlayer.isAlive = change.value === 'alive'
-                    else if (change.field === 'score') localPlayer.score = change.value
-                })
-            }
+                // Update all properties when any change occurs
+                localPlayer.x = this.serverToVirtualX(player.x || 0)
+                localPlayer.y = this.serverToVirtualY(player.y || 0)
+                localPlayer.name = player.name || 'Player'
+                localPlayer.isAlive = player.state === 'alive'
+                localPlayer.score = player.score || 0
+            })
             
             // Alternative: Listen to specific properties
             player.listen('x', (value: number) => {
                 const localPlayer = this.players.get(sessionId)
-                if (localPlayer) localPlayer.x = this.serverToClientX(value)
+                if (localPlayer) localPlayer.x = this.serverToVirtualX(value)
             })
             
             player.listen('y', (value: number) => {
                 const localPlayer = this.players.get(sessionId)
-                if (localPlayer) localPlayer.y = this.serverToClientY(value)
+                if (localPlayer) localPlayer.y = this.serverToVirtualY(value)
             })
-        }
+        })
         
         // Handle players being removed
-        state.players.onRemove = (player: PlayerSchema, sessionId: string) => {
+        state.players.onRemove((player: PlayerSchema, sessionId: string) => {
             console.log('➖ Player removed via onRemove:', sessionId)
             this.players.delete(sessionId)
-        }
+        })
         
         // Handle any existing players (if reconnecting)
         state.players.forEach((player: PlayerSchema, sessionId: string) => {
-            state.players.onAdd(player, sessionId)
+            // Manually call the onAdd logic for existing players
+            console.log('🔄 Processing existing player:', sessionId)
+            
+            const color = PLAYER_COLORS[player.playerIndex % PLAYER_COLORS.length]
+            
+            const networkPlayer: NetworkPlayer = {
+                id: sessionId,
+                sessionId: sessionId,
+                x: this.serverToVirtualX(player.x || 0),
+                y: this.serverToVirtualY(player.y || 0),
+                width: this.serverToVirtualX(player.width || 50),
+                height: this.serverToVirtualY(player.height || 50),
+                name: player.name || 'Player',
+                color: color,
+                isAlive: player.state === 'alive',
+                score: player.score || 0,
+                playerIndex: player.playerIndex || 0
+            }
+            
+            this.players.set(sessionId, networkPlayer)
+            
+            // Set up listeners for existing players too
+            player.onChange(() => {
+                const localPlayer = this.players.get(sessionId)
+                if (!localPlayer) return
+                
+                localPlayer.x = this.serverToVirtualX(player.x || 0)
+                localPlayer.y = this.serverToVirtualY(player.y || 0)
+                localPlayer.name = player.name || 'Player'
+                localPlayer.isAlive = player.state === 'alive'
+                localPlayer.score = player.score || 0
+            })
         })
     }
 
@@ -258,21 +292,30 @@ export default class Game {
         // Render particles
         this.particleSystem.draw()
         
-        // Render all players
+        // Render arena bounds indicator
+        this.renderArenaBounds()
+        
+        // Render all players (convert from virtual to canvas coordinates)
         this.players.forEach((player, sessionId) => {
             if (!player.isAlive) return
             
             this.ctx.save()
             
+            // Convert virtual coordinates to canvas coordinates
+            const canvasX = this.virtualToCanvasX(player.x)
+            const canvasY = this.virtualToCanvasY(player.y)
+            const canvasWidth = this.virtualToCanvasX(player.width)
+            const canvasHeight = this.virtualToCanvasY(player.height)
+            
             // Draw player rectangle
             this.ctx.fillStyle = player.color
-            this.ctx.fillRect(player.x, player.y, player.width, player.height)
+            this.ctx.fillRect(canvasX, canvasY, canvasWidth, canvasHeight)
             
             // Add border - thicker for local player
             const isLocalPlayer = sessionId === this.localSessionId
             this.ctx.strokeStyle = isLocalPlayer ? '#ffffff' : player.color
             this.ctx.lineWidth = isLocalPlayer ? 3 : 1
-            this.ctx.strokeRect(player.x, player.y, player.width, player.height)
+            this.ctx.strokeRect(canvasX, canvasY, canvasWidth, canvasHeight)
             
             // Draw player name
             this.ctx.fillStyle = '#ffffff'
@@ -280,8 +323,8 @@ export default class Game {
             this.ctx.textAlign = 'center'
             this.ctx.fillText(
                 player.name + (isLocalPlayer ? ' (YOU)' : ''), 
-                player.x + player.width/2, 
-                player.y - 5
+                canvasX + canvasWidth/2, 
+                canvasY - 5
             )
             
             this.ctx.restore()
@@ -294,6 +337,40 @@ export default class Game {
 
     public isConnected(): boolean {
         return this.room !== null && this.room.connection.isOpen
+    }
+
+    private renderArenaBounds(): void {
+        // Draw a subtle border to show the virtual game arena bounds
+        this.ctx.save()
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+        this.ctx.lineWidth = 2
+        this.ctx.setLineDash([5, 5])
+        
+        // Convert virtual arena bounds to canvas coordinates
+        const canvasWidth = this.virtualToCanvasX(this.VIRTUAL_WIDTH)
+        const canvasHeight = this.virtualToCanvasY(this.VIRTUAL_HEIGHT)
+        this.ctx.strokeRect(0, 0, canvasWidth, canvasHeight)
+        
+        this.ctx.setLineDash([]) // Reset line dash
+        this.ctx.restore()
+        
+        // Show virtual coordinate system info for debugging
+        this.ctx.save()
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
+        this.ctx.fillRect(10, 10, 280, 80)
+        this.ctx.fillStyle = '#ffffff'
+        this.ctx.font = '12px Arial'
+        
+        const logicalWidth = this.canvas.width / (window.devicePixelRatio || 1)
+        const logicalHeight = this.canvas.height / (window.devicePixelRatio || 1)
+        const scaleX = logicalWidth / this.VIRTUAL_WIDTH
+        const scaleY = logicalHeight / this.VIRTUAL_HEIGHT
+        
+        this.ctx.fillText(`Virtual: ${this.VIRTUAL_WIDTH}×${this.VIRTUAL_HEIGHT}`, 15, 25)
+        this.ctx.fillText(`Logical: ${logicalWidth.toFixed(0)}×${logicalHeight.toFixed(0)}`, 15, 40)
+        this.ctx.fillText(`Physical: ${this.canvas.width}×${this.canvas.height}`, 15, 55)
+        this.ctx.fillText(`Scale: ${scaleX.toFixed(2)}×${scaleY.toFixed(2)}`, 15, 70)
+        this.ctx.restore()
     }
 
     private renderGameStateOverlay(): void {
@@ -369,9 +446,18 @@ export default class Game {
     }
 
     public onResize(): void {
-        this.updateScale()
-        console.log('🖼️ Canvas resized:', this.canvas.width, 'x', this.canvas.height)
-        console.log('📏 New scale factors:', this.scaleX.toFixed(2), 'x', this.scaleY.toFixed(2))
+        // ResponsiveCanvas handles all the scaling automatically
+        // We just log the new dimensions for debugging
+        const logicalWidth = this.canvas.width / (window.devicePixelRatio || 1)
+        const logicalHeight = this.canvas.height / (window.devicePixelRatio || 1)
+        const scaleX = logicalWidth / this.VIRTUAL_WIDTH
+        const scaleY = logicalHeight / this.VIRTUAL_HEIGHT
+        
+        console.log('🖼️ Canvas resized:')
+        console.log(`  Physical: ${this.canvas.width}×${this.canvas.height}`)
+        console.log(`  Logical: ${logicalWidth}×${logicalHeight}`)
+        console.log(`  Virtual: ${this.VIRTUAL_WIDTH}×${this.VIRTUAL_HEIGHT}`)
+        console.log(`  Scale: ${scaleX.toFixed(2)}×${scaleY.toFixed(2)}`)
     }
 
     public dispose(): void {

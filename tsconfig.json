@@ -1,10 +1,14 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
+    "target": "ES2017",
+    "useDefineForClassFields": false,
     "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2017", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
+    
+    /* Legacy decorators for Colyseus schema */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -50,7 +54,8 @@
     "src/utils/**/*.ts",
     "src/constants/**/*.ts",
     "src/types.d.ts",
-    "src/styles/**/*.ts"
+    "src/styles/**/*.ts",
+    "shared/**/*.ts"
   ],
   "exclude": [
     "node_modules", 

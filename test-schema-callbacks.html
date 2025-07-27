@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Schema Callbacks Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .client {
+            border: 2px solid #444;
+            padding: 10px;
+            margin: 10px 0;
+            background: #2a2a2a;
+            border-radius: 5px;
+            width: 400px;
+        }
+        .connected { border-color: #4CAF50; }
+        .disconnected { border-color: #f44336; }
+        .log {
+            background: #111;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .info {
+            background: #333;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Colyseus Schema Callbacks Test</h1>
+    
+    <div class="info">
+        <h3>Testing Proper Schema Callback Integration</h3>
+        <p>This test verifies that we can properly use Colyseus schema callbacks:</p>
+        <ul>
+            <li><code>room.state.players.onAdd()</code> - When players join</li>
+            <li><code>room.state.players.onRemove()</code> - When players leave</li>
+            <li><code>player.onChange()</code> - When player properties change</li>
+            <li><code>player.listen('x')</code> - Listen to specific properties</li>
+        </ul>
+        <p><strong>Expected:</strong> All callbacks should work without TypeScript errors</p>
+    </div>
+
+    <div class="container">
+        <div id="client1" class="client disconnected">
+            <h3>Client 1</h3>
+            <button onclick="connectClient(1)">Connect Client 1</button>
+            <button onclick="disconnectClient(1)">Disconnect Client 1</button>
+            <div class="log" id="log1"></div>
+        </div>
+
+        <div id="client2" class="client disconnected">
+            <h3>Client 2</h3>
+            <button onclick="connectClient(2)">Connect Client 2</button>
+            <button onclick="disconnectClient(2)">Disconnect Client 2</button>
+            <div class="log" id="log2"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/colyseus.js@0.15.7/dist/colyseus.js"></script>
+    <script>
+        const clients = {};
+        const rooms = {};
+
+        function log(clientId, message, type = 'info') {
+            const logEl = document.getElementById(`log${clientId}`);
+            const time = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : '';
+            logEl.innerHTML += `<div class="${className}">[${time}] ${message}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        async function connectClient(clientId) {
+            try {
+                log(clientId, '🔌 Connecting to server...');
+                
+                // Create Colyseus client
+                clients[clientId] = new Colyseus.Client('ws://localhost:3000');
+                
+                // Join or create room
+                rooms[clientId] = await clients[clientId].joinOrCreate('game_room', {
+                    playerName: `TestClient${clientId}`
+                });
+                
+                const room = rooms[clientId];
+                log(clientId, `✅ Connected! Room: ${room.id}`, 'success');
+                log(clientId, `🆔 Session: ${room.sessionId}`);
+                
+                // Update UI
+                document.getElementById(`client${clientId}`).classList.add('connected');
+                document.getElementById(`client${clientId}`).classList.remove('disconnected');
+                
+                // Test schema callbacks
+                setupSchemaCallbacks(room, clientId);
+                
+            } catch (error) {
+                log(clientId, `❌ Connection failed: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function setupSchemaCallbacks(room, clientId) {
+            log(clientId, '📡 Setting up schema callbacks...');
+            
+            // Wait for initial state
+            room.onStateChange.once((state) => {
+                log(clientId, '📋 Initial state received');
+                log(clientId, `  Players MapSchema: ${state.players.constructor.name}`);
+                
+                try {
+                    // Test MapSchema callbacks
+                    state.players.onAdd = (player, sessionId) => {
+                        log(clientId, `➕ onAdd callback: ${sessionId}`, 'success');
+                        log(clientId, `  Player name: ${player.name}`);
+                        log(clientId, `  Player index: ${player.playerIndex}`);
+                        log(clientId, `  Position: (${player.x}, ${player.y})`);
+                        
+                        // Test individual player callbacks
+                        try {
+                            player.onChange = (changes) => {
+                                changes.forEach(change => {
+                                    if (change.field === 'x' || change.field === 'y') {
+                                        log(clientId, `🔄 ${sessionId} moved: ${change.field}=${change.value}`, 'success');
+                                    }
+                                });
+                            };
+                            log(clientId, `✅ onChange callback set for ${sessionId}`, 'success');
+                            
+                            // Test property-specific listeners
+                            player.listen('x', (value) => {
+                                log(clientId, `👂 listen('x'): ${sessionId} x=${value}`, 'success');
+                            });
+                            log(clientId, `✅ listen('x') callback set for ${sessionId}`, 'success');
+                            
+                        } catch (error) {
+                            log(clientId, `❌ Error setting player callbacks: ${error.message}`, 'error');
+                        }
+                    };
+                    log(clientId, '✅ onAdd callback set', 'success');
+                    
+                    state.players.onRemove = (player, sessionId) => {
+                        log(clientId, `➖ onRemove callback: ${sessionId}`, 'success');
+                    };
+                    log(clientId, '✅ onRemove callback set', 'success');
+                    
+                    // Process existing players
+                    state.players.forEach((player, sessionId) => {
+                        state.players.onAdd(player, sessionId);
+                    });
+                    
+                    log(clientId, '🎉 All schema callbacks working!', 'success');
+                    
+                } catch (error) {
+                    log(clientId, `❌ Schema callback error: ${error.message}`, 'error');
+                    console.error('Schema callback error:', error);
+                }
+            });
+            
+            // Listen for room messages
+            room.onMessage('playerJoined', (data) => {
+                log(clientId, `📨 playerJoined message: ${data.name}`, 'success');
+            });
+            
+            room.onMessage('playerLeft', (data) => {
+                log(clientId, `📨 playerLeft message: ${data.id}`, 'success');
+            });
+            
+            // Listen for errors
+            room.onError((code, message) => {
+                log(clientId, `❌ Room error ${code}: ${message}`, 'error');
+            });
+            
+            room.onLeave((code) => {
+                log(clientId, `👋 Left room with code: ${code}`);
+            });
+        }
+
+        function disconnectClient(clientId) {
+            if (rooms[clientId]) {
+                rooms[clientId].leave();
+                delete rooms[clientId];
+                delete clients[clientId];
+                
+                log(clientId, '🔌 Disconnected');
+                document.getElementById(`client${clientId}`).classList.remove('connected');
+                document.getElementById(`client${clientId}`).classList.add('disconnected');
+            }
+        }
+
+        // Auto-clear logs after 100 entries
+        setInterval(() => {
+            [1, 2].forEach(id => {
+                const logEl = document.getElementById(`log${id}`);
+                const lines = logEl.innerHTML.split('<div');
+                if (lines.length > 50) {
+                    logEl.innerHTML = '<div' + lines.slice(-25).join('<div');
+                }
+            });
+        }, 10000);
+    </script>
+</body>
+</html>

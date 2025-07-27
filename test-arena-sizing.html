@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Arena Sizing Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .client {
+            border: 2px solid #444;
+            background: #2a2a2a;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .canvas {
+            border: 2px solid #666;
+            background: #333;
+            display: block;
+            margin: 10px 0;
+        }
+        .info {
+            background: #333;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Arena Sizing Issue Demonstration</h1>
+    
+    <div class="controls">
+        <button onclick="createClient(800, 600)">Small Client (800×600)</button>
+        <button onclick="createClient(1200, 800)">Medium Client (1200×800)</button>
+        <button onclick="createClient(1600, 1000)">Large Client (1600×1000)</button>
+        <button onclick="clearClients()">Clear All</button>
+    </div>
+
+    <div class="info">
+        <h3>Arena Sizing Fix Demonstration</h3>
+        <p><strong>Problem:</strong> Before the fix, the first client's canvas size would become the arena size for everyone.</p>
+        <p><strong>Solution:</strong> Now the server uses a standardized arena size (1200×800) independent of client screen size.</p>
+        <p><strong>Result:</strong> All clients see the same logical game area, properly scaled to their screen.</p>
+    </div>
+
+    <div class="container" id="clientContainer"></div>
+
+    <script>
+        const STANDARD_ARENA_WIDTH = 1200;
+        const STANDARD_ARENA_HEIGHT = 800;
+        let clientCount = 0;
+
+        function createClient(canvasWidth, canvasHeight) {
+            clientCount++;
+            
+            const clientDiv = document.createElement('div');
+            clientDiv.className = 'client';
+            clientDiv.innerHTML = `
+                <h3>Client ${clientCount} (${canvasWidth}×${canvasHeight})</h3>
+                <canvas class="canvas" width="${canvasWidth}" height="${canvasHeight}"></canvas>
+                <div class="info">
+                    <div>Canvas Size: ${canvasWidth} × ${canvasHeight}</div>
+                    <div>Arena Size: ${STANDARD_ARENA_WIDTH} × ${STANDARD_ARENA_HEIGHT}</div>
+                    <div>Scale X: ${(canvasWidth / STANDARD_ARENA_WIDTH).toFixed(2)}</div>
+                    <div>Scale Y: ${(canvasHeight / STANDARD_ARENA_HEIGHT).toFixed(2)}</div>
+                    <div>Coordinate (600, 400) renders at:</div>
+                    <div>  X: ${(600 * canvasWidth / STANDARD_ARENA_WIDTH).toFixed(1)}px</div>
+                    <div>  Y: ${(400 * canvasHeight / STANDARD_ARENA_HEIGHT).toFixed(1)}px</div>
+                </div>
+            `;
+            
+            document.getElementById('clientContainer').appendChild(clientDiv);
+            
+            // Draw visualization
+            const canvas = clientDiv.querySelector('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Draw background
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Draw arena bounds
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Draw grid to show scaling
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= STANDARD_ARENA_WIDTH; x += 100) {
+                const scaledX = x * canvasWidth / STANDARD_ARENA_WIDTH;
+                ctx.beginPath();
+                ctx.moveTo(scaledX, 0);
+                ctx.lineTo(scaledX, canvasHeight);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= STANDARD_ARENA_HEIGHT; y += 100) {
+                const scaledY = y * canvasHeight / STANDARD_ARENA_HEIGHT;
+                ctx.beginPath();
+                ctx.moveTo(0, scaledY);
+                ctx.lineTo(canvasWidth, scaledY);
+                ctx.stroke();
+            }
+            
+            // Draw example players at consistent arena coordinates
+            const players = [
+                { arenaX: 300, arenaY: 700, color: '#FF5252', name: 'P1' },
+                { arenaX: 600, arenaY: 700, color: '#4CAF50', name: 'P2' },
+                { arenaX: 900, arenaY: 700, color: '#2196F3', name: 'P3' }
+            ];
+            
+            players.forEach(player => {
+                const canvasX = player.arenaX * canvasWidth / STANDARD_ARENA_WIDTH;
+                const canvasY = player.arenaY * canvasHeight / STANDARD_ARENA_HEIGHT;
+                
+                // Draw player
+                ctx.fillStyle = player.color;
+                ctx.fillRect(canvasX - 15, canvasY - 15, 30, 30);
+                
+                // Draw player name
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(player.name, canvasX, canvasY - 20);
+            });
+            
+            // Draw arena info
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(10, 10, 250, 80);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Arena: ${STANDARD_ARENA_WIDTH}×${STANDARD_ARENA_HEIGHT}`, 15, 25);
+            ctx.fillText(`Canvas: ${canvasWidth}×${canvasHeight}`, 15, 40);
+            ctx.fillText(`Scale: ${(canvasWidth/STANDARD_ARENA_WIDTH).toFixed(2)}×${(canvasHeight/STANDARD_ARENA_HEIGHT).toFixed(2)}`, 15, 55);
+            ctx.fillText('Players at same arena positions', 15, 75);
+        }
+
+        function clearClients() {
+            document.getElementById('clientContainer').innerHTML = '';
+            clientCount = 0;
+        }
+
+        // Create initial examples
+        setTimeout(() => {
+            createClient(800, 600);
+            createClient(1200, 800);
+            createClient(1600, 1000);
+        }, 500);
+    </script>
+</body>
+</html>
