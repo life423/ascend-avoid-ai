@@ -1,250 +1,264 @@
 // src/core/MultiplayerGameMode.ts
-import GameMode from './GameMode';
-import { InputState, NetworkPlayer } from '../types';
-import { MultiplayerManager } from '../managers/MultiplayerManager';
-import { EventBus } from './EventBus';
-import { GameEvents } from '../constants/client-constants';
+
+/**
+ * Multiplayer game mode implementation
+ * Handles all multiplayer-specific logic including networking,
+ * player synchronization, and rendering of remote players
+ */
+import { InputState, NetworkPlayer } from '../types'
+import { MultiplayerManager } from '../managers/MultiplayerManager'
+import { EventBus } from './EventBus'
+import { GameEvents } from '../constants/client-constants'
 
 // Player colors for visual distinction
 const PLAYER_COLORS = [
-  '#FF5252', // Red
-  '#FF9800', // Orange  
-  '#FFEB3B', // Yellow
-  '#4CAF50', // Green
-  '#2196F3', // Blue
-  '#9C27B0', // Purple
-  '#E91E63', // Pink
-  '#00BCD4', // Cyan
-];
+    '#FF5252', '#FF9800', '#FFEB3B', '#4CAF50', 
+    '#2196F3', '#9C27B0', '#E91E63', '#00BCD4'
+]
 
-export default class MultiplayerGameMode extends GameMode {
-  private multiplayerManager: MultiplayerManager;
-  private eventBus: EventBus;
-  private remotePlayers: Map<string, NetworkPlayer> = new Map();
-  private localSessionId: string = '';
-  private lastInputSent: number = 0;
-  private inputSendRate: number = 50;
+// Type definition for the game instance to avoid circular dependencies
+interface Game {
+    gameState: string
+    score: number
+    highScore: number
+    config: any
+    canvas: HTMLCanvasElement
+    ctx: CanvasRenderingContext2D
+    obstacleManager: any
+    particleSystem: any
+    uiManager: any
+    assetManager: any
+    scalingInfo: any
+    eventBus?: EventBus
+    renderSharedScene: (ctx: CanvasRenderingContext2D, timestamp: number) => void
+}
 
-  constructor(game: any) {
-    super(game);
-    
-    this.eventBus = game.eventBus || new EventBus();
-    this.multiplayerManager = new MultiplayerManager(
-      this.eventBus,
-      game.assetManager || null
-    );
-    
-    this.setupEventListeners();
-  }
+export default class MultiplayerGameMode {
+    private game: Game
+    private multiplayerManager: MultiplayerManager
+    private eventBus: EventBus
+    private players: Map<string, NetworkPlayer> = new Map()
+    private localSessionId: string = ''
+    private lastInputSent: number = 0
+    private inputSendRate: number = 50 // Send input every 50ms to balance responsiveness and bandwidth
 
-  private setupEventListeners(): void {
-    this.eventBus.on(GameEvents.MULTIPLAYER_CONNECTED, (data) => {
-      console.log('🔗 Connected to multiplayer:', data);
-      this.localSessionId = data.sessionId;
-    });
-
-    this.eventBus.on(GameEvents.MULTIPLAYER_STATE_UPDATE, (state) => {
-      this.handleStateUpdate(state);
-    });
-
-    this.eventBus.on(GameEvents.PLAYER_JOINED, (data) => {
-      console.log('👤 Player joined:', data);
-    });
-
-    this.eventBus.on(GameEvents.PLAYER_LEFT, (data) => {
-      console.log('👋 Player left:', data);
-      this.remotePlayers.delete(data.id);
-    });
-  }
-
-  async initialize(): Promise<void> {
-    await super.initialize();
-    
-    console.log('🎮 Initializing multiplayer mode...');
-    
-    try {
-      const connected = await this.multiplayerManager.connect();
-      
-      if (!connected) {
-        console.log('⚠️ Server not available, falling back to single player');
-        await (this.game as any).switchGameMode('singlePlayer');
-        return;
-      }
-      
-      this.game.isMultiplayerMode = true;
-      console.log('✅ Multiplayer mode initialized successfully');
-    } catch (error) {
-      console.error('❌ Failed to initialize multiplayer:', error);
-      console.log('⚠️ Falling back to single player mode');
-      await (this.game as any).switchGameMode('singlePlayer');
+    constructor(game: Game) {
+        this.game = game
+        this.eventBus = game.eventBus || new EventBus()
+        this.multiplayerManager = new MultiplayerManager(this.eventBus, game.assetManager || null)
+        this.setupEventListeners()
     }
-  }
 
-  private handleStateUpdate(state: any): void {
-    if (!state || !state.players) return;
+    /**
+     * Set up event listeners for multiplayer events
+     */
+    private setupEventListeners(): void {
+        // Connection established
+        this.eventBus.on(GameEvents.MULTIPLAYER_CONNECTED, (data) => {
+            console.log('🔗 Connected to multiplayer:', data)
+            this.localSessionId = data.sessionId
+            console.log('🎯 My session ID:', this.localSessionId)
+        })
 
-    const playerCount = Object.keys(state.players).length;
-    console.log(`📡 State update: ${playerCount} total players`);
+        // Game state updates from server
+        this.eventBus.on(GameEvents.MULTIPLAYER_STATE_UPDATE, (state) => {
+            this.handleStateUpdate(state)
+        })
 
-    Object.entries(state.players).forEach(([sessionId, playerData]: [string, any]) => {
-      if (sessionId === this.localSessionId) {
-        if (this.game.player && state.gameState !== this.game.config.STATE.PLAYING) {
-          this.game.player.x = playerData.x;
-          this.game.player.y = playerData.y;
+        // Player joined
+        this.eventBus.on(GameEvents.PLAYER_JOINED, (data) => {
+            console.log('👤 Player joined:', data)
+        })
+
+        // Player left
+        this.eventBus.on(GameEvents.PLAYER_LEFT, (data) => {
+            console.log('👋 Player left:', data)
+            this.players.delete(data.id)
+        })
+    }
+
+    /**
+     * Initialize multiplayer connection
+     */
+    async initialize(): Promise<void> {
+        console.log('🎮 Initializing multiplayer mode...')
+        
+        const connected = await this.multiplayerManager.connect()
+        if (!connected) {
+            throw new Error('Multiplayer server unavailable - this game requires multiplayer connection')
         }
-      } else {
-        this.updateRemotePlayer(sessionId, playerData);
-      }
-    });
-
-    const statePlayerIds = new Set(Object.keys(state.players));
-    this.remotePlayers.forEach((_player, id) => {
-      if (!statePlayerIds.has(id) && id !== this.localSessionId) {
-        this.remotePlayers.delete(id);
-      }
-    });
-
-    if (state.gameState) {
-      this.game.gameState = state.gameState;
-    }
-  }
-
-  private updateRemotePlayer(sessionId: string, playerData: any): void {
-    let remotePlayer = this.remotePlayers.get(sessionId);
-    
-    if (!remotePlayer) {
-      const playerIndex = this.remotePlayers.size;
-      const debugX = 100 + playerIndex * 80;
-      const debugY = 200 + playerIndex * 60;
-      
-      remotePlayer = {
-        id: sessionId,
-        sessionId: sessionId,
-        x: playerData.x ?? debugX,
-        y: playerData.y ?? debugY,
-        name: playerData.name || `Player ${playerIndex + 1}`,
-        color: PLAYER_COLORS[playerIndex % PLAYER_COLORS.length],
-        isAlive: playerData.state === 'alive' || true,
-        score: playerData.score || 0,
-        lastUpdate: Date.now()
-      };
-      
-      this.remotePlayers.set(sessionId, remotePlayer);
-    } else {
-      remotePlayer.interpolationData = {
-        startX: remotePlayer.x,
-        startY: remotePlayer.y,
-        targetX: playerData.x ?? remotePlayer.x,
-        targetY: playerData.y ?? remotePlayer.y,
-        startTime: Date.now(),
-        duration: 100
-      };
-      
-      remotePlayer.name = playerData.name || remotePlayer.name;
-      remotePlayer.isAlive = playerData.state === 'alive' || true;
-      remotePlayer.score = playerData.score || 0;
-      remotePlayer.lastUpdate = Date.now();
-    }
-  }
-
-  update(inputState: InputState, _deltaTime: number, timestamp: number): void {
-    if (this.game.obstacleManager) {
-      this.game.obstacleManager.update(timestamp, this.game.score, this.game.scalingInfo);
-    }
-    
-    this.updateLocalPlayerMovement(inputState);
-    
-    if (this.game.player) {
-      this.game.player.move();
-    }
-    
-    this.interpolateRemotePlayers(timestamp);
-    
-    const now = Date.now();
-    if (now - this.lastInputSent >= this.inputSendRate) {
-      this.sendInputToServer(inputState);
-      this.lastInputSent = now;
-    }
-  }
-
-  private interpolateRemotePlayers(timestamp: number): void {
-    this.remotePlayers.forEach(player => {
-      if (player.interpolationData) {
-        const { startX, startY, targetX, targetY, startTime, duration } = player.interpolationData;
-        const elapsed = timestamp - startTime;
-        const progress = Math.min(elapsed / duration, 1);
         
-        const easeProgress = this.easeInOutQuad(progress);
+        console.log('✅ Multiplayer mode initialized successfully')
+    }
+
+    /**
+     * Handle state updates from the server
+     * This is where we synchronize all player positions and game state
+     */
+    private handleStateUpdate(state: any): void {
+        console.log('📡 State update - Total players:', state.totalPlayers)
         
-        player.x = startX + (targetX - startX) * easeProgress;
-        player.y = startY + (targetY - startY) * easeProgress;
-        
-        if (progress >= 1) {
-          player.interpolationData = undefined;
+        if (!state || !state.players) {
+            console.log('⚠️ No players in state')
+            return
         }
-      }
-    });
-  }
 
-  private easeInOutQuad(t: number): number {
-    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-  }
+        // Clear existing players and rebuild from server state
+        this.players.clear()
 
-  private updateLocalPlayerMovement(inputState: InputState): void {
-    if (!this.game.player) return;
+        // Add each player from the server state
+        state.players.forEach((playerData: any, sessionId: string) => {
+            console.log(`🔍 Player ${sessionId}: (${playerData.x}, ${playerData.y})`)
+            this.addPlayer(sessionId, playerData)
+        })
 
-    this.game.player.setMovementKey('up', inputState.up);
-    this.game.player.setMovementKey('down', inputState.down);
-    this.game.player.setMovementKey('left', inputState.left);
-    this.game.player.setMovementKey('right', inputState.right);
-  }
-
-  private sendInputToServer(inputState: InputState): void {
-    if (!this.multiplayerManager.isConnected()) return;
-    
-    const input = {
-      up: inputState.up || false,
-      down: inputState.down || false,
-      left: inputState.left || false,
-      right: inputState.right || false
-    };
-    
-    console.log(`🎮 Sending input:`, input);
-    this.multiplayerManager.sendInput(input);
-  }
-
-  render(ctx: CanvasRenderingContext2D, timestamp: number): void {
-    if (!ctx) return;
-    
-    (this.game as any).renderSharedScene(ctx, timestamp);
-    this.renderRemotePlayers(ctx, timestamp);
-    
-    if (this.game.player) {
-      this.game.player.draw(timestamp);
+        console.log(`✅ Final: ${this.players.size} total players`)
     }
-  }
 
-  private renderRemotePlayers(ctx: CanvasRenderingContext2D, _timestamp: number): void {
-    this.remotePlayers.forEach((player, _sessionId) => {
-      if (!player.isAlive) return;
-      
-      ctx.save();
-      ctx.fillStyle = player.color || '#00ff00';
-      ctx.fillRect(player.x, player.y, 30, 30);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(player.x, player.y, 30, 30);
-      ctx.restore();
-    });
-  }
+    /**
+     * Add or update a player in the local state
+     */
+    private addPlayer(sessionId: string, playerData: any): void {
+        const playerIndex = this.players.size
+        
+        // Ensure player positions are within bounds
+        const x = Math.max(50, Math.min(playerData.x || (100 + playerIndex * 80), 700))
+        const y = Math.max(50, Math.min(playerData.y || (200 + playerIndex * 60), 800))
+        
+        const player: NetworkPlayer = {
+            id: sessionId,
+            sessionId: sessionId,
+            x: x,
+            y: y,
+            name: playerData.name || `Player ${playerIndex + 1}`,
+            color: PLAYER_COLORS[playerIndex % PLAYER_COLORS.length],
+            isAlive: true,
+            score: 0,
+            lastUpdate: Date.now()
+        }
+        
+        this.players.set(sessionId, player)
+        
+        const isMe = sessionId === this.localSessionId ? ' (ME)' : ''
+        console.log(`➕ Added player: ${sessionId}${isMe} at (${x}, ${y}) Color: ${player.color}`)
+    }
 
-  postUpdate(): void {}
-  reset(): void {}
-  completeReset(): void {}
-  
-  dispose(): void {
-    super.dispose();
-    this.multiplayerManager.disconnect();
-    this.remotePlayers.clear();
-  }
+    /**
+     * Update game logic and send input to server
+     */
+    update(inputState: InputState, _deltaTime: number, timestamp: number): void {
+        // Update local game systems (obstacles, etc.)
+        if (this.game.obstacleManager) {
+            this.game.obstacleManager.update(timestamp, this.game.score, this.game.scalingInfo)
+        }
+        
+        // Send input to server at controlled rate
+        const now = Date.now()
+        if (now - this.lastInputSent >= this.inputSendRate) {
+            this.sendInputToServer(inputState)
+            this.lastInputSent = now
+        }
+    }
+
+    /**
+     * Send local player input to server
+     */
+    private sendInputToServer(inputState: InputState): void {
+        if (!this.multiplayerManager.isConnected()) return
+        
+        // Only send the input state, server handles position updates
+        const input = {
+            up: inputState.up || false,
+            down: inputState.down || false,
+            left: inputState.left || false,
+            right: inputState.right || false
+        }
+        
+        this.multiplayerManager.sendInput(input)
+    }
+
+    /**
+     * Render all game elements including shared scene and players
+     */
+    render(ctx: CanvasRenderingContext2D, timestamp: number): void {
+        if (!ctx) return
+        
+        // Render the shared game scene (background, obstacles, particles, etc.)
+        this.game.renderSharedScene(ctx, timestamp)
+        
+        // Render all players on top
+        this.renderAllPlayers(ctx, timestamp)
+    }
+
+    /**
+     * Render all players (both local and remote)
+     */
+    private renderAllPlayers(ctx: CanvasRenderingContext2D, _timestamp: number): void {
+        console.log(`🎨 Rendering: ${this.players.size} total players`)
+        
+        this.players.forEach((player, sessionId) => {
+            const isLocalPlayer = sessionId === this.localSessionId
+            const playerType = isLocalPlayer ? 'ME' : 'OTHER'
+            console.log(`🎨 Drawing ${playerType} ${sessionId} at (${player.x}, ${player.y}) ${player.color}`)
+            
+            ctx.save()
+            
+            // Draw player as colored rectangle
+            ctx.fillStyle = player.color
+            ctx.fillRect(player.x, player.y, 30, 30)
+            
+            // Add border to distinguish local player
+            ctx.strokeStyle = isLocalPlayer ? '#ffff00' : '#ffffff'
+            ctx.lineWidth = isLocalPlayer ? 3 : 2
+            ctx.strokeRect(player.x, player.y, 30, 30)
+            
+            // Draw player name above the character
+            ctx.fillStyle = '#ffffff'
+            ctx.font = '12px Arial'
+            ctx.textAlign = 'center'
+            ctx.fillText(player.name, player.x + 15, player.y - 5)
+            
+            ctx.restore()
+        })
+    }
+
+    /**
+     * Handle post-update operations
+     * In multiplayer, win/lose conditions are handled by the server
+     */
+    postUpdate(): void {
+        // Server handles win/lose conditions in multiplayer
+        // This method is here for interface compatibility
+    }
+
+    /**
+     * Reset is handled by server in multiplayer
+     */
+    reset(): void {
+        // Server controls game resets
+    }
+
+    /**
+     * Complete reset is handled by server in multiplayer
+     */
+    completeReset(): void {
+        // Server controls game resets
+    }
+
+    /**
+     * Get the current number of players
+     */
+    getPlayerCount(): number {
+        return this.players.size
+    }
+
+    /**
+     * Clean up resources and disconnect from server
+     */
+    dispose(): void {
+        console.log('🔌 Disposing multiplayer mode...')
+        this.multiplayerManager.disconnect()
+        this.players.clear()
+        this.eventBus.dispose()
+    }
 }

@@ -1,18 +1,21 @@
 /**
  * Player class representing the player entity in the game.
- * Updated with TypeScript support and improved collision detection.
+ * Refactored for multiplayer compatibility - canvas-agnostic and input-separated.
  */
-import { GAME, PLAYER } from '../constants/gameConstants';
+import { PLAYER } from '../constants/gameConstants';
 import { getSprite } from '../utils/sprites';
-import { SCALE_FACTOR, BASE_CANVAS_WIDTH, BASE_CANVAS_HEIGHT } from '../utils/utils';
 import { GameObject, InputState } from '../types';
 
+export interface PlayerConfig {
+  canvasWidth: number;
+  canvasHeight: number;
+  baseCanvasWidth?: number;
+  baseCanvasHeight?: number;
+  scaleFactor?: number;
+}
+
 export default class Player implements GameObject {
-  // Canvas and context
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  
-  // Position and dimensions
+  // Position and dimensions (server-authoritative in multiplayer)
   x: number;
   y: number;
   width: number;
@@ -20,7 +23,10 @@ export default class Player implements GameObject {
   private baseWidth: number;
   private baseHeight: number;
   
-  // Movement state
+  // Canvas configuration (not tied to specific canvas instance)
+  private config: PlayerConfig;
+  
+  // Movement state (for local prediction only)
   private movementKeys: Record<string, boolean>;
   private canMove: Record<string, boolean>;
   
@@ -34,30 +40,32 @@ export default class Player implements GameObject {
   
   /**
    * Creates a new Player instance
-   * @param canvas - The game canvas
+   * @param config - Player configuration with canvas dimensions and scaling
    */
-  constructor(canvas: HTMLCanvasElement) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d')!;
+  constructor(config: PlayerConfig) {
+    this.config = {
+      baseCanvasWidth: 560,
+      baseCanvasHeight: 550,
+      scaleFactor: 1,
+      ...config
+    };
     
     // Base size that will be scaled
     this.baseWidth = PLAYER.BASE_WIDTH;
     this.baseHeight = PLAYER.BASE_HEIGHT;
     
-    // Actual size after scaling
-    this.width = this.baseWidth * SCALE_FACTOR;
-    this.height = this.baseHeight * SCALE_FACTOR;
+    // Calculate actual size after scaling
+    const scaleFactor = this.config.scaleFactor || 1;
+    this.width = this.baseWidth * scaleFactor;
+    this.height = this.baseHeight * scaleFactor;
     
-    // Initialize position properties - will be set in resetPosition
+    // Initialize position properties (will be set by calling code)
     this.x = 0;
     this.y = 0;
-    this.lastY = 0;  // Initialize previous position tracking
-    this.hasScored = false;  // Initialize scoring flag
+    this.lastY = 0;
+    this.hasScored = false;
     
-    // Set initial position
-    this.resetPosition();
-    
-    // Movement state
+    // Movement state (for local input processing)
     this.movementKeys = {
       up: false,
       down: false,
@@ -78,21 +86,23 @@ export default class Player implements GameObject {
    * Reset player to starting position at the bottom center of the screen
    */
   resetPosition(): void {
+    const scaleFactor = this.config.scaleFactor || 1;
+    
     // Use same dimension calculation as move() method
     const playerSize = Math.max(
-      this.baseWidth * SCALE_FACTOR,
+      this.baseWidth * scaleFactor,
       15
     );
     this.width = playerSize;
     this.height = playerSize;
     
     // Position player at the bottom center with proper boundary clamping
-    this.x = this.canvas.width / 2 - this.width / 2;
-    this.y = this.canvas.height - this.height - (10 * SCALE_FACTOR);
+    this.x = this.config.canvasWidth / 2 - this.width / 2;
+    this.y = this.config.canvasHeight - this.height - (10 * scaleFactor);
     
     // Ensure position is within bounds
-    this.x = Math.max(0, Math.min(this.x, this.canvas.width - this.width));
-    this.y = Math.max(0, Math.min(this.y, this.canvas.height - this.height));
+    this.x = Math.max(0, Math.min(this.x, this.config.canvasWidth - this.width));
+    this.y = Math.max(0, Math.min(this.y, this.config.canvasHeight - this.height));
     
     // CRITICAL: Reset collision detection properties
     this.lastY = this.y;  // Set lastY to current position
@@ -100,13 +110,29 @@ export default class Player implements GameObject {
   }
   
   /**
-   * Draw the player on the canvas
+   * Set player position directly (for server-authoritative multiplayer)
+   * @param x - X coordinate
+   * @param y - Y coordinate
+   */
+  setPosition(x: number, y: number): void {
+    this.lastY = this.y; // Store previous position for collision detection
+    this.x = x;
+    this.y = y;
+    
+    // Ensure position is within bounds
+    this.x = Math.max(0, Math.min(this.x, this.config.canvasWidth - this.width));
+    this.y = Math.max(0, Math.min(this.y, this.config.canvasHeight - this.height));
+  }
+  
+  /**
+   * Draw the player on any canvas context (canvas-agnostic)
+   * @param ctx - Canvas rendering context to draw on
    * @param timestamp - Current timestamp for animation
    */
-  draw(timestamp: number = 0): void {
+  draw(ctx: CanvasRenderingContext2D, timestamp: number = 0): void {
     // Get and draw animated player sprite with current timestamp for animation
     const playerSprite = getSprite('player', 0, timestamp);
-    this.ctx.drawImage(playerSprite, this.x, this.y, this.width, this.height);
+    ctx.drawImage(playerSprite, this.x, this.y, this.width, this.height);
   }
   
   /**

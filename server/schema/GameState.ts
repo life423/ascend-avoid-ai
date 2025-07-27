@@ -174,6 +174,13 @@ class GameState extends Schema {
     // Update based on current game state
     switch (this.gameState) {
       case GAME_CONSTANTS.STATE.WAITING:
+        // Always update player movement even in waiting state
+        this.players.forEach((player, _sessionId) => {
+          if (player.state === GAME_CONSTANTS.PLAYER_STATE.ALIVE) {
+            player.updateMovement(deltaTime, this.arenaWidth, this.arenaHeight);
+          }
+        });
+        
         // Check if enough players to start
         if (this.totalPlayers >= 2) { // Minimum of 2 players for testing (can be increased later)
           this.gameState = GAME_CONSTANTS.STATE.STARTING;

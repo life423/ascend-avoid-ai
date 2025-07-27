@@ -117,5 +117,6 @@ type("number")(PlayerSchema.prototype, "width");
 type("number")(PlayerSchema.prototype, "height");
 type("string")(PlayerSchema.prototype, "state");
 type("number")(PlayerSchema.prototype, "score");
+type("number")(PlayerSchema.prototype, "lastUpdateTime");
 
 export { PlayerSchema };

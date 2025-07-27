@@ -1,6 +1,7 @@
 /**
  * On-screen touch controls for mobile devices using DOM elements instead of canvas
  * Converted to TypeScript and organized in ui/ directory.
+ * Updated for multiplayer-only mode.
  */
 import Game from '../core/Game'
 import Player from '../entities/Player'
@@ -29,7 +30,7 @@ interface ButtonElements {
 
 export default class TouchControls {
     private game: Game
-    private player: Player
+    private player: Player | null = null // Can be null in multiplayer mode
     private controlsAdapter: TouchControlsAdapter | null = null
 
     // Control button properties with symbols
@@ -44,13 +45,9 @@ export default class TouchControls {
     // Device detection
     private isTouchDevice: boolean
 
-    /**
-     * Creates a new TouchControls instance
-     * @param game - The main game instance
-     */
     constructor(game: Game) {
         this.game = game
-        this.player = game.player
+        this.player = game.player // Can be null in multiplayer mode
 
         // Control button properties with symbols
         this.buttons = {
@@ -82,7 +79,7 @@ export default class TouchControls {
         // Active button state
         this.activeButtons = {}
 
-        // Check if we're on a touch device (improved detection focusing on input method not screen size)
+        // Check if we're on a touch device
         this.isTouchDevice =
             'ontouchstart' in window ||
             navigator.maxTouchPoints > 0 ||
@@ -109,20 +106,12 @@ export default class TouchControls {
         window.addEventListener('resize', this.handleResize.bind(this))
     }
 
-    /**
-     * Handle window resize and adjust controls for the screen size
-     */
     handleResize(): void {
-        // Always show touch controls on small screens regardless of touch support
-        // This ensures they're available on all mobile devices
-        const isSmallScreen = window.innerWidth < 1200 // 1200px matches CSS breakpoint
-
-        // Also check for desktop layout class or large-screen class
+        const isSmallScreen = window.innerWidth < 1200
         const isLargeDisplay =
             document.body.classList.contains('desktop-layout') ||
             document.body.classList.contains('large-screen')
 
-        // Show controls if it's a small screen AND NOT on a large display
         if (isSmallScreen && !isLargeDisplay) {
             console.log('Showing touch controls on small screen')
             this.show()
@@ -132,29 +121,22 @@ export default class TouchControls {
         }
     }
 
-    /**
-     * Create DOM elements for touch controls in GameBoy style layout
-     * D-pad on left, two action buttons on right
-     */
     private createControlElements(): void {
-        // Get the container for controls using the new selector system
         const containerElement = document.querySelector(
             '.touch-controller[data-controller="main"]'
         )
         if (!containerElement) {
             console.log('Touch controls container not found, creating one')
-            // Create the container if it doesn't exist
             this.container = document.createElement('div')
             this.container.className = 'touch-controller'
             this.container.setAttribute('data-controller', 'main')
-            // Use relative positioning within the CSS layout flow instead of fixed
             this.container.style.position = 'relative'
             this.container.style.width = '100%'
             this.container.style.display = 'flex'
             this.container.style.justifyContent = 'space-between'
             this.container.style.alignItems = 'center'
             this.container.style.padding = '10px 10px 30px 10px'
-            this.container.style.pointerEvents = 'none' // Parent container doesn't intercept clicks
+            this.container.style.pointerEvents = 'none'
             this.container.style.background =
                 'linear-gradient(to top, rgba(10, 25, 47, 0.8), transparent)'
 
@@ -170,9 +152,9 @@ export default class TouchControls {
         leftControls.style.justifyContent = 'center'
         leftControls.style.alignItems = 'center'
         leftControls.style.flex = '1'
-        leftControls.style.pointerEvents = 'auto' // Enable pointer events for controls
+        leftControls.style.pointerEvents = 'auto'
 
-        // Create d-pad container with grid layout (GameBoy style)
+        // Create d-pad container with grid layout
         this.directionControls = document.createElement('div')
         this.directionControls.className = 'dpad-controls'
         this.directionControls.style.display = 'grid'
@@ -188,7 +170,6 @@ export default class TouchControls {
             button.dataset.direction = direction
             button.textContent = this.buttons[direction].symbol
 
-            // Basic button styling (adapter will handle responsive sizing)
             button.style.backgroundColor = 'rgba(0, 188, 212, 0.3)'
             button.style.border = '3px solid var(--accent-primary, #00bcd4)'
             button.style.borderRadius = '50%'
@@ -199,8 +180,6 @@ export default class TouchControls {
             button.style.userSelect = 'none'
             button.style.touchAction = 'none'
             button.style.boxShadow = '0 3px 5px rgba(0,0,0,0.3)'
-
-            // Position in grid based on direction
             button.style.gridArea = direction
 
             this.directionControls.appendChild(button)
@@ -208,7 +187,7 @@ export default class TouchControls {
 
         leftControls.appendChild(this.directionControls)
 
-        // Create right side controls (action buttons in GameBoy layout)
+        // Create right side controls (action buttons)
         const rightControls = document.createElement('div')
         rightControls.className = 'right-controls'
         rightControls.style.display = 'flex'
@@ -217,29 +196,25 @@ export default class TouchControls {
         rightControls.style.flex = '1'
         rightControls.style.pointerEvents = 'auto'
 
-        // Create action buttons container - horizontal layout for GameBoy style
         const actionButtons = document.createElement('div')
         actionButtons.className = 'action-buttons'
         actionButtons.style.display = 'flex'
-        actionButtons.style.flexDirection = 'row' // Horizontal layout
-        actionButtons.style.gap = '25px' // Increased spacing between buttons
+        actionButtons.style.flexDirection = 'row'
+        actionButtons.style.gap = '25px'
 
-        // Create two action buttons: boost and missile (GameBoy A and B style)
+        // Create action buttons
         for (const action of ['boost', 'missile']) {
             const button = document.createElement('div')
             button.className = 'control-button action-button'
             button.dataset.action = action
-
-            // Only use the letter label (A or B), no icon
-            button.textContent = action === 'boost' ? 'B' : 'A' // GameBoy style labels
+            button.textContent = action === 'boost' ? 'B' : 'A'
             
-            // Basic button styling (adapter will handle responsive sizing)
             button.style.backgroundColor = 'rgba(0, 188, 212, 0.3)'
             button.style.border = '3px solid var(--accent-primary, #00bcd4)'
             button.style.borderRadius = '50%'
             button.style.display = 'flex'
-            button.style.justifyContent = 'center' // Center horizontally
-            button.style.alignItems = 'center' // Center vertically
+            button.style.justifyContent = 'center'
+            button.style.alignItems = 'center'
             button.style.color = 'white'
             button.style.fontWeight = 'bold'
             button.style.userSelect = 'none'
@@ -249,234 +224,144 @@ export default class TouchControls {
             actionButtons.appendChild(button)
         }
 
-        // Add action buttons to right controls
         rightControls.appendChild(actionButtons)
 
         // Assemble the layout
         this.container.appendChild(leftControls)
         this.container.appendChild(rightControls)
 
-        // Store references to all buttons for easy access
+        // Store references to all buttons
         this.buttonElements = {
-            up: this.directionControls.querySelector(
-                '[data-direction="up"]'
-            ) as HTMLElement,
-            down: this.directionControls.querySelector(
-                '[data-direction="down"]'
-            ) as HTMLElement,
-            left: this.directionControls.querySelector(
-                '[data-direction="left"]'
-            ) as HTMLElement,
-            right: this.directionControls.querySelector(
-                '[data-direction="right"]'
-            ) as HTMLElement,
-            boost: actionButtons.querySelector(
-                '[data-action="boost"]'
-            ) as HTMLElement,
-            missile: actionButtons.querySelector(
-                '[data-action="missile"]'
-            ) as HTMLElement,
-            restart: null as unknown as HTMLElement, // No restart button but keep the property
+            up: this.directionControls.querySelector('[data-direction="up"]') as HTMLElement,
+            down: this.directionControls.querySelector('[data-direction="down"]') as HTMLElement,
+            left: this.directionControls.querySelector('[data-direction="left"]') as HTMLElement,
+            right: this.directionControls.querySelector('[data-direction="right"]') as HTMLElement,
+            boost: actionButtons.querySelector('[data-action="boost"]') as HTMLElement,
+            missile: actionButtons.querySelector('[data-action="missile"]') as HTMLElement,
+            restart: null as unknown as HTMLElement,
             shield: null as unknown as HTMLElement,
         }
     }
 
-    /**
-     * Set up touch event listeners for all control buttons
-     */
     private setupTouchListeners(): void {
-        // For each button, add event listeners - check that button exists first
         Object.keys(this.buttonElements).forEach(key => {
             const button = this.buttonElements[key]
 
-            // Skip if button doesn't exist (like removed shield button)
             if (!button) {
-                console.log(
-                    `Skipping event listeners for missing button: ${key}`
-                )
+                console.log(`Skipping event listeners for missing button: ${key}`)
                 return
             }
 
-            // Touch start - activate button
-            button.addEventListener(
-                'touchstart',
-                (e: TouchEvent) => {
-                    e.preventDefault()
-                    this.handleButtonActivation(
-                        key,
-                        true,
-                        e.changedTouches[0].identifier
-                    )
-                },
-                { passive: false }
-            )
+            button.addEventListener('touchstart', (e: TouchEvent) => {
+                e.preventDefault()
+                this.handleButtonActivation(key, true, e.changedTouches[0].identifier)
+            }, { passive: false })
 
-            // Touch end - deactivate button
-            button.addEventListener(
-                'touchend',
-                (e: TouchEvent) => {
-                    e.preventDefault()
-                    this.handleButtonActivation(
-                        key,
-                        false,
-                        e.changedTouches[0].identifier
-                    )
-                },
-                { passive: false }
-            )
+            button.addEventListener('touchend', (e: TouchEvent) => {
+                e.preventDefault()
+                this.handleButtonActivation(key, false, e.changedTouches[0].identifier)
+            }, { passive: false })
 
-            // Touch cancel - deactivate button
-            button.addEventListener(
-                'touchcancel',
-                (e: TouchEvent) => {
-                    e.preventDefault()
-                    this.handleButtonActivation(
-                        key,
-                        false,
-                        e.changedTouches[0].identifier
-                    )
-                },
-                { passive: false }
-            )
+            button.addEventListener('touchcancel', (e: TouchEvent) => {
+                e.preventDefault()
+                this.handleButtonActivation(key, false, e.changedTouches[0].identifier)
+            }, { passive: false })
 
-            // Touch move - deactivate button if touch moves out (replaces non-standard touchleave)
-            button.addEventListener(
-                'touchmove',
-                (e: TouchEvent) => {
-                    e.preventDefault()
-                    // Check if touch has moved outside of button
-                    const touch = e.changedTouches[0]
-                    const buttonRect = button.getBoundingClientRect()
-                    if (
-                        touch.clientX < buttonRect.left ||
-                        touch.clientX > buttonRect.right ||
-                        touch.clientY < buttonRect.top ||
-                        touch.clientY > buttonRect.bottom
-                    ) {
-                        this.handleButtonActivation(
-                            key,
-                            false,
-                            touch.identifier
-                        )
-                    }
-                },
-                { passive: false }
-            )
+            button.addEventListener('touchmove', (e: TouchEvent) => {
+                e.preventDefault()
+                const touch = e.changedTouches[0]
+                const buttonRect = button.getBoundingClientRect()
+                if (
+                    touch.clientX < buttonRect.left ||
+                    touch.clientX > buttonRect.right ||
+                    touch.clientY < buttonRect.top ||
+                    touch.clientY > buttonRect.bottom
+                ) {
+                    this.handleButtonActivation(key, false, touch.identifier)
+                }
+            }, { passive: false })
         })
     }
 
-    /**
-     * Handle button activation state
-     * @param key - The button key (up, down, left, right, restart, boost, missile)
-     * @param isActive - Whether to activate or deactivate the button
-     * @param touchId - Touch identifier to keep track of which touch is on which button
-     */
-    private handleButtonActivation(
-        key: string,
-        isActive: boolean,
-        touchId: number
-    ): void {
+    private handleButtonActivation(key: string, isActive: boolean, touchId: number): void {
         const button = this.buttonElements[key]
 
-        // Skip if button doesn't exist
         if (!button) {
             console.log(`Cannot activate non-existent button: ${key}`)
             return
         }
 
         if (isActive) {
-            // Activate button
             button.classList.add('active')
             this.activeButtons[key] = touchId
 
-            // Trigger action based on button
             if (key === 'restart') {
                 this.game.resetGame()
             } else if (key === 'boost' || key === 'missile') {
-                // GameBoy style buttons - only boost and missile
                 console.log(`Action button pressed: ${key}`)
             } else {
-                this.player.setMovementKey(key, true)
+                // In multiplayer mode, player might be null - handle gracefully
+                if (this.player) {
+                    this.player.setMovementKey(key, true)
+                } else {
+                    // In multiplayer mode, input is handled by InputManager
+                    console.log(`Touch input: ${key} = true`)
+                }
             }
         } else {
-            // If this touch ID matches the one that activated this button
             if (this.activeButtons[key] === touchId) {
-                // Deactivate button
                 button.classList.remove('active')
                 delete this.activeButtons[key]
 
-                // Stop movement for movement keys
                 if (key !== 'restart' && key !== 'boost' && key !== 'missile') {
-                    this.player.setMovementKey(key, false)
+                    if (this.player) {
+                        this.player.setMovementKey(key, false)
+                    } else {
+                        console.log(`Touch input: ${key} = false`)
+                    }
                 }
             }
         }
     }
 
-    /**
-     * Hide the touch controls - called when touch is not supported or not needed
-     */
     hide(): void {
         if (this.container) {
-            // First set display to none
             this.container.style.cssText = 'display: none !important'
 
-            // For larger screens, completely remove from DOM instead of just hiding
             if (window.innerWidth >= 1200) {
-                // Use setTimeout to avoid any potential race conditions
                 setTimeout(() => {
                     if (this.container && this.container.parentNode) {
                         this.container.parentNode.removeChild(this.container)
-                        console.log(
-                            'Touch controls removed from DOM for larger screen'
-                        )
+                        console.log('Touch controls removed from DOM for larger screen')
                     }
                 }, 100)
             }
         }
     }
-    /**
-     * Show the touch controls
-     */
+
     show(): void {
         if (this.container) {
-            // If container is in the DOM, just show it
             this.container.style.display = 'flex'
         } else {
-            // If container was removed from DOM, recreate it
-            console.log(
-                'Touch controls container was removed, recreating for small screen'
-            )
+            console.log('Touch controls container was removed, recreating for small screen')
             this.createControlElements()
             this.setupTouchListeners()
 
-            // Reinitialize the adapter
             if (this.container) {
                 this.controlsAdapter = new TouchControlsAdapter(this.container);
-                // Fix for TypeScript error - container is definitely HTMLElement here
                 const containerElement = this.container as HTMLElement;
                 containerElement.style.display = 'flex';
             }
         }
     }
 
-    /**
-     * Draw the touch controls - empty method to match Game's expectations
-     * Since we're using DOM elements, no actual canvas drawing is needed
-     */
     draw(): void {
         // No canvas drawing needed - controls are DOM elements
-        // This method exists to match the Game class expectations
     }
 
-    /**
-     * Clean up resources
-     */
     dispose(): void {
-        // Remove window resize listener
         window.removeEventListener('resize', this.handleResize.bind(this))
 
-        // Clean up button event listeners
         if (this.buttonElements) {
             Object.keys(this.buttonElements).forEach(key => {
                 const button = this.buttonElements[key]
@@ -486,20 +371,15 @@ export default class TouchControls {
             })
         }
 
-        // Clean up the adapter
         if (this.controlsAdapter) {
             this.controlsAdapter.dispose();
             this.controlsAdapter = null;
         }
 
-        // Remove container if needed
         if (this.container && this.container.parentNode) {
-            // Only remove if we created it programmatically
             if (
                 this.container.className.includes('touch-controller') &&
-                !document.querySelector(
-                    '.touch-controller[data-controller="main"]'
-                )
+                !document.querySelector('.touch-controller[data-controller="main"]')
             ) {
                 this.container.parentNode.removeChild(this.container)
             }

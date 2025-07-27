@@ -82,14 +82,19 @@ export class GameRoom extends Room<GameState> {
   private setupMessageHandlers(): void {
     this.onMessage("input", (client: Client, data: InputMessage) => {
       const player = this.state.players.get(client.sessionId);
-      if (!player) return;
+      if (!player) {
+        console.log(`⚠️ SERVER: No player found for input from ${client.sessionId}`);
+        return;
+      }
 
+      console.log(`🎮 SERVER: Input from ${client.sessionId}:`, data);
       player.movementKeys = {
         up: data.up ?? false,
         down: data.down ?? false,
         left: data.left ?? false,
         right: data.right ?? false,
       };
+      console.log(`📍 SERVER: Player ${client.sessionId} at (${player.x}, ${player.y})`);
     });
 
     this.onMessage("updateName", (client: Client, data: NameUpdateMessage) => {
@@ -112,8 +117,11 @@ export class GameRoom extends Room<GameState> {
    */
   onJoin(client: Client, options: JoinOptions = {}): void {
     logger.info(`Player ${client.sessionId} joined`);
+    console.log(`🔗 SERVER: Player ${client.sessionId} joining...`);
 
     const player = this.state.createPlayer(client.sessionId);
+    console.log(`✅ SERVER: Created player at (${player.x}, ${player.y})`);
+    
     if (options.name) {
       player.name = options.name.substring(0, 20);
     }
@@ -123,6 +131,7 @@ export class GameRoom extends Room<GameState> {
       name: player.name,
     });
 
+    console.log(`📊 SERVER: Total players now: ${this.state.totalPlayers}`);
     logger.info(`Current players: ${this.state.totalPlayers}`);
   }
 
