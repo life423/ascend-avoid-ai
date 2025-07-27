@@ -135,7 +135,7 @@ export default class SinglePlayerMode extends GameMode {
    * Render single player mode specific elements
    * @param _timestamp - Current timestamp for animation
    */
-  render(_timestamp: number): void {
+  render(_ctx: CanvasRenderingContext2D, _timestamp: number): void {
     // Single player mode doesn't have any mode-specific rendering
     // All rendering is handled by the main Game.render method
   }

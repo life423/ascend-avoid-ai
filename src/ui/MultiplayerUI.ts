@@ -3,6 +3,7 @@
  * Converted to TypeScript and organized in ui/ directory.
  */
 import { GAME_CONSTANTS } from '../constants/gameConstants';
+import { generateRandomName } from '../utils/utils';
 
 // Define interfaces for the MultiplayerUI
 interface Player {
@@ -143,7 +144,17 @@ export default class MultiplayerUI {
     nameLabel.textContent = 'Your Name:';
     this.playerNameInput = document.createElement('input');
     this.playerNameInput.type = 'text';
-    this.playerNameInput.value = 'Player' + Math.floor(Math.random() * 1000);
+    
+    // Get stored name or generate a fun new one
+    const storedName = sessionStorage.getItem('playerName');
+    if (storedName) {
+        this.playerNameInput.value = storedName;
+    } else {
+        const newName = generateRandomName();
+        this.playerNameInput.value = newName;
+        sessionStorage.setItem('playerName', newName);
+    }
+    
     nameLabel.appendChild(this.playerNameInput);
     form.appendChild(nameLabel);
     

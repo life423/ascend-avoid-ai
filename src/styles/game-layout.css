@@ -126,84 +126,151 @@
     /* Modern CSS: Logical properties for internationalization */
     border-inline-start: 4px solid var(--accent-primary);
     box-shadow: var(--shadow-medium);
-    /* Surgical flexbox fix */
-    flex-direction: column;
+    /* Modern CSS Grid layout */
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: clamp(1.5rem, 4cqh, 2.5rem);
     /* Modern CSS: Logical sizing */
     block-size: 100%;
-    padding: var(--space-lg);
+    padding: clamp(1.5rem, 4cqw, 2rem);
     /* Container queries support */
     container-type: size;
 }
 
 .panel-content {
-    flex: 1;
-    margin-bottom: var(--space-xxl);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
+    /* Grid child - takes available space */
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: clamp(1rem, 3cqh, 1.5rem);
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding: clamp(1rem, 3cqw, 1.5rem);
+    background: rgba(10, 25, 47, 0.3);
+    border-radius: calc(var(--border-radius) * 0.75);
+    border: 1px solid rgba(0, 188, 212, 0.15);
 }
 
 .panel-content h3 {
     color: var(--accent-secondary);
-    font-size: 1.25rem;
-    margin: 0 0 var(--space-sm) 0;
-    font-weight: 600;
-    line-height: 1.3;
+    font-size: clamp(1.25rem, 3cqw, 1.5rem);
+    margin: 0;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    position: relative;
+    padding-bottom: clamp(0.5rem, 2cqh, 0.75rem);
+}
+
+.panel-content h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: clamp(2.5rem, 15cqw, 3.5rem);
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-secondary), transparent);
+    border-radius: 2px;
 }
 
 .panel-content p {
     margin: 0;
-    line-height: 1.6;
+    line-height: 1.7;
+    color: rgba(245, 245, 245, 0.85);
+    font-size: clamp(0.875rem, 2.5cqw, 1rem);
+}
+
+.panel-content p:first-of-type {
+    font-size: clamp(0.95rem, 2.8cqw, 1.1rem);
+    font-weight: 500;
     color: var(--text-light);
+    margin-bottom: clamp(0.75rem, 2cqh, 1rem);
 }
 
 .panel-content p + p {
-    margin-top: var(--space-md);
+    margin-top: clamp(0.75rem, 2cqh, 1rem);
 }
 
 .panel-content ul {
-    margin: 0;
-    padding-left: var(--space-xl);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
+    margin: clamp(0.5rem, 2cqh, 0.75rem) 0;
+    padding: 0;
+    display: grid;
+    gap: clamp(0.5rem, 2cqh, 0.75rem);
+    list-style: none;
 }
 
 .panel-content li {
     margin: 0;
-    line-height: 1.5;
-    color: var(--text-light);
+    line-height: 1.6;
+    color: rgba(245, 245, 245, 0.9);
+    padding: clamp(0.75rem, 2cqh, 1rem) clamp(1rem, 3cqw, 1.25rem);
+    background: rgba(0, 188, 212, 0.08);
+    border-radius: calc(var(--border-radius) * 0.75);
+    border-left: 3px solid var(--accent-primary);
+    position: relative;
+    transition: all var(--transition);
+    font-size: clamp(0.875rem, 2.5cqw, 0.95rem);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(0.5rem, 2cqw, 0.75rem);
+    align-items: center;
+}
+
+.panel-content li:hover {
+    background: rgba(0, 188, 212, 0.15);
+    transform: translateX(clamp(2px, 0.5cqw, 4px));
+    border-left-color: var(--accent-secondary);
+}
+
+.panel-content li::before {
+    content: '▸';
+    color: var(--accent-primary);
+    font-weight: 700;
+    transition: transform var(--transition);
+}
+
+.panel-content li:hover::before {
+    transform: translateX(clamp(2px, 0.5cqw, 3px));
 }
 
 .panel-content .note {
-    font-style: italic;
+    font-style: normal;
     color: var(--accent-secondary);
-    font-size: 0.9rem;
-    margin: 0;
-    padding: var(--space-sm);
-    background: rgba(0, 188, 212, 0.1);
+    font-size: clamp(0.875rem, 2.5cqw, 0.95rem);
+    font-weight: 500;
+    margin: clamp(0.75rem, 2cqh, 1rem) 0 0;
+    padding: clamp(1rem, 3cqh, 1.25rem);
+    background: linear-gradient(135deg, rgba(0, 188, 212, 0.15), rgba(100, 255, 218, 0.1));
     border-radius: var(--border-radius);
-    border-left: 3px solid var(--accent-secondary);
+    border: 1px solid rgba(0, 188, 212, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.panel-content .note::before {
+    content: '⚡';
+    position: absolute;
+    top: clamp(0.5rem, 2cqh, 0.75rem);
+    right: clamp(0.5rem, 2cqw, 0.75rem);
+    font-size: clamp(1.2rem, 4cqw, 1.5rem);
+    opacity: 0.3;
 }
 
 .info-actions {
-    /* Surgical fix: push buttons to bottom */
-    margin-top: auto;
-    display: flex;
-    gap: 0.75rem;
-    /* Modern CSS: Logical padding */
-    padding-block: var(--space-lg) 1.5rem; /* breathing room */
+    /* Grid child - stays at bottom naturally */
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(0.75rem, 2cqw, 1rem);
+    /* Modern CSS: Logical padding with fluid spacing */
+    padding-block: clamp(1rem, 3cqh, 1.5rem);
     border-block-start: 2px solid var(--divider-line);
-    align-items: center;
-    justify-content: center;
 }
 
-/* Make buttons stretch equal width (your optional enhancement) */
+/* Buttons fill grid cells naturally */
 .info-actions button {
-    flex: 1 1 0;
-    /* Modern CSS: Dynamic button sizing */
-    --button-count: 2;
-    min-inline-size: calc(100% / var(--button-count) - 0.75rem);
+    /* Grid children automatically stretch */
+    width: 100%;
+    min-height: clamp(2.75rem, 8cqh, 3.5rem);
 }
 } /* End @layer components */
 
@@ -370,7 +437,7 @@
    ============================================ */
 @media (min-width: 1200px) {
     .info-panel {
-        display: flex;
+        display: grid;
         grid-column: 2;
         width: 280px;
         min-width: 280px;

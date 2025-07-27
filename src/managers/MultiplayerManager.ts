@@ -2,6 +2,7 @@ import { Client, Room } from 'colyseus.js';
 import { EventBus } from '../core/EventBus';
 import AssetManager from './AssetManager';
 import { GAME_CONFIG, GameEvents } from '../constants/client-constants';
+import { generateRandomName } from '../utils/utils';
 
 export class MultiplayerManager {
     private client: Client | null = null;
@@ -11,6 +12,8 @@ export class MultiplayerManager {
     private isConnecting: boolean = false;
     private reconnectAttempts: number = 0;
     private maxReconnectAttempts: number = 3;
+    private lastRemoteCount: number = 0;
+    private lastDebugTime: number = 0;
 
     constructor(eventBus: EventBus, _assetManager: AssetManager) {
         this.eventBus = eventBus;
@@ -166,8 +169,24 @@ export class MultiplayerManager {
         // Handle state changes
         this.room.onStateChange((state) => {
             console.log('📡 Room state changed:', state);
+            console.log(`📡 Total players: ${state.totalPlayers}, Alive: ${state.aliveCount}`);
             this.eventBus.emit(GameEvents.MULTIPLAYER_STATE_UPDATE, state);
         });
+
+        // Listen for player additions
+        this.room.state.players.onAdd = (player: any, sessionId: string) => {
+            console.log(`👤 Player added: ${sessionId} (${player.name})`);
+        };
+
+        // Listen for player changes
+        this.room.state.players.onChange = (player: any, sessionId: string) => {
+            console.log(`🔄 Player updated: ${sessionId} at (${player.x}, ${player.y})`);
+        };
+
+        // Listen for player removals
+        this.room.state.players.onRemove = (_player: any, sessionId: string) => {
+            console.log(`👋 Player removed: ${sessionId}`);
+        };
 
         // Handle messages from server
         this.room.onMessage('playerJoined', (data) => {
@@ -262,12 +281,47 @@ export class MultiplayerManager {
         
         const players = this.room.state.players;
         if (players) {
+            // Log summary instead of individual players to reduce spam
+            let totalPlayers = 0;
+            let remotePlayers_count = 0;
+            
+            // CRITICAL DEBUG: Check session ID logic (throttled)
+            const mySessionId = this.room?.sessionId;
+            const now = Date.now();
+            const shouldDebug = now - this.lastDebugTime > 2000; // Every 2 seconds
+            
+            if (shouldDebug) {
+                console.log(`🔍 DEBUG: My session ID: "${mySessionId}"`);
+                this.lastDebugTime = now;
+            }
+            
             players.forEach((player: any, sessionId: string) => {
+                totalPlayers++;
+                
+                if (shouldDebug) {
+                    console.log(`🔍 DEBUG: Player "${sessionId}" vs my "${mySessionId}" - Equal? ${sessionId === mySessionId}`);
+                }
+                
                 // Exclude our own player
-                if (sessionId !== this.room?.sessionId) {
+                if (sessionId !== mySessionId) {
                     remotePlayers[sessionId] = player;
+                    remotePlayers_count++;
+                    
+                    if (shouldDebug) {
+                        console.log(`✅ Added remote player: ${sessionId} at (${player.x}, ${player.y})`);
+                    }
+                } else {
+                    if (shouldDebug) {
+                        console.log(`🚫 Skipped own player: ${sessionId}`);
+                    }
                 }
             });
+            
+            // Only log when the count changes
+            if (!this.lastRemoteCount || this.lastRemoteCount !== remotePlayers_count) {
+                console.log(`🔍 FINAL: ${remotePlayers_count}/${totalPlayers} remote players`);
+                this.lastRemoteCount = remotePlayers_count;
+            }
         }
         
         return remotePlayers;
@@ -305,6 +359,43 @@ export class MultiplayerManager {
     }
 
     /**
+     * Get total player count
+     */
+    getTotalPlayers(): number {
+        if (!this.room || !this.room.state) {
+            return 0;
+        }
+        return this.room.state.totalPlayers || 0;
+    }
+
+    /**
+     * Get alive player count
+     */
+    getAliveCount(): number {
+        if (!this.room || !this.room.state) {
+            return 0;
+        }
+        return this.room.state.aliveCount || 0;
+    }
+
+    /**
+     * Get arena stats
+     */
+    getArenaStats(): any {
+        if (!this.room || !this.room.state) {
+            return null;
+        }
+        const state: any = this.room.state;
+        return {
+            width: state.arenaWidth,
+            height: state.arenaHeight,
+            areaPercentage: state.areaPercentage || 100,
+            elapsedTime: state.elapsedTime,
+            countdownTime: state.countdownTime
+        };
+    }
+
+    /**
      * Get player name from storage or generate
      */
     private getPlayerName(): string {
@@ -312,8 +403,8 @@ export class MultiplayerManager {
         let playerName = sessionStorage.getItem('playerName');
         
         if (!playerName) {
-            // Generate a random name
-            playerName = `Player${Math.floor(Math.random() * 10000)}`;
+            // Generate a fun adjective-animal name
+            playerName = generateRandomName();
             sessionStorage.setItem('playerName', playerName);
         }
         

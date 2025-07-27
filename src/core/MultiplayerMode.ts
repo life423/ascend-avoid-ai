@@ -298,10 +298,19 @@ export default class MultiplayerMode extends GameMode {
    * Render multiplayer mode specific elements
    * @param _timestamp - Current timestamp for animation
    */
-  render(_timestamp: number): void {
+  render(_ctx: CanvasRenderingContext2D, _timestamp: number): void {
+    // Get updated remote players
+    if (this.multiplayerManager) {
+      this.remotePlayers = this.multiplayerManager.getRemotePlayers();
+    }
+    
+    const remotePlayerCount = Object.keys(this.remotePlayers).length;
+    console.log(`🎨 MultiplayerMode.render() called with ${remotePlayerCount} remote players`);
+    
     // Render remote players
     for (const id in this.remotePlayers) {
       const remotePlayer = this.remotePlayers[id];
+      console.log(`🎨 Rendering remote player ${id} at (${remotePlayer.x}, ${remotePlayer.y})`);
       
       // Draw remote player - implementation depends on your player visualization
       if (remotePlayer.x !== undefined && remotePlayer.y !== undefined) {

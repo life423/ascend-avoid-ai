@@ -65,9 +65,10 @@ export default abstract class GameMode {
   
   /**
    * Render game elements specific to this mode
+   * @param ctx - Canvas rendering context
    * @param timestamp - Current timestamp for animation
    */
-  abstract render(timestamp: number): void;
+  abstract render(ctx: CanvasRenderingContext2D, timestamp: number): void;
   
   /**
    * Handle post-update operations like win/lose detection

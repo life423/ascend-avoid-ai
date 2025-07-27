@@ -55,6 +55,9 @@ export class GameRoom extends Room<GameState> {
     // Initialize the state schema
     this.setState(new GameState());
 
+    // Set patch rate for state synchronization
+    this.setPatchRate(50);
+
     // Override arena dimensions if provided
     if (options.width && options.height) {
       this.state.arenaWidth = options.width;

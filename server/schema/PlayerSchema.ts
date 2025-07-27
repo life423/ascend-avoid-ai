@@ -56,7 +56,7 @@ class PlayerSchema extends Schema {
    * @param canvasHeight - Height of the game canvas
    */
   resetPosition(canvasWidth: number, canvasHeight: number): void {
-    this.x = canvasWidth / 2 - this.width / 2;
+    this.x = Math.random() * (canvasWidth - this.width);
     this.y = canvasHeight - this.height - 10;
     this.state = GAME_CONSTANTS.PLAYER_STATE.ALIVE;
   }

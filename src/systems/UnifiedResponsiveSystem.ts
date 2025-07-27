@@ -336,6 +336,49 @@ export class UnifiedResponsiveSystem {
     public getCurrentConfig(): ViewportConfig | null {
         return this.currentConfig;
     }
+
+    /**
+     * Get scaling info for game compatibility
+     */
+    public getScalingInfo(): { widthScale: number; heightScale: number; pixelRatio: number; reducedResolution: boolean } {
+        const viewport = this.getViewportInfo();
+        const config = this.getCurrentConfig();
+        
+        if (!config) {
+            return {
+                widthScale: 1,
+                heightScale: 1,
+                pixelRatio: viewport.pixelRatio,
+                reducedResolution: false
+            };
+        }
+        
+        // Calculate scale based on design dimensions vs viewport
+        const designWidth = config.canvasStrategy.designWidth || 600;
+        const designHeight = config.canvasStrategy.designHeight || 700;
+        const scale = Math.min(viewport.width / designWidth, viewport.height / designHeight);
+        
+        return {
+            widthScale: scale,
+            heightScale: scale,
+            pixelRatio: viewport.pixelRatio,
+            reducedResolution: scale < 0.8 // Consider reduced resolution if scale is small
+        };
+    }
+
+    /**
+     * Cleanup method for compatibility
+     */
+    public dispose(): void {
+        // Clear subscribers
+        this.subscribers.clear();
+        
+        // Cancel any pending animation frame
+        if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
+        }
+    }
 }
 
 // Export a singleton instance for easy access

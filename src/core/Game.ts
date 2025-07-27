@@ -8,7 +8,8 @@ import { GameObject, InputState, PerformanceStats, ScalingInfo } from '../types'
 // Import player and background entities
 import Background from '../entities/Background'
 import Player from '../entities/Player'
-import ResponsiveManager from '../managers/ResponsiveManager'
+import ResponsiveManager from '../managers/ResponsiveManager' // Temporarily restored
+// import { ResponsiveSystem } from '../systems/UnifiedResponsiveSystem'
 import TouchControls from '../ui/TouchControls'
 
 // Fallback constants in case imports fail
@@ -53,8 +54,10 @@ import ObstacleManager from '../managers/ObstacleManager'
 import UIManager from '../managers/UIManager'
 import GameConfig from './GameConfig'
 
-// Import game modes from consolidated file
-import { GameMode, MultiplayerMode, SinglePlayerMode } from './GameModes'
+// Import game modes from individual files
+import GameMode from './GameMode'
+import SinglePlayerMode from './SinglePlayerMode'
+import MultiplayerGameMode from './MultiplayerGameMode'
 
 // Removed unused interfaces
 
@@ -62,7 +65,7 @@ export default class Game {
     // Canvas and rendering context
     canvas: HTMLCanvasElement
     ctx: CanvasRenderingContext2D
-    responsiveManager!: ResponsiveManager
+    responsiveManager!: ResponsiveManager // Temporarily restored
 
     // UI elements
     scoreElement: HTMLElement | null
@@ -226,7 +229,7 @@ export default class Game {
         this.assetManager = new AssetManager()
         await this.preloadAssets()
 
-        // Initialize the responsive manager
+        // Initialize the responsive manager (temporarily restored)
         this.responsiveManager = new ResponsiveManager(this)
         this.responsiveManager.init(this.canvas)
 
@@ -270,8 +273,8 @@ export default class Game {
         // Set up touch controls if needed
         this.setupTouchControls()
 
-        // Initialize the default game mode (single player)
-        await this.initializeGameMode('singlePlayer')
+        // Initialize the default game mode (multiplayer for instant online experience)
+        await this.initializeGameMode('multiplayer')
 
         // Hide loading screen
         this.uiManager.hideLoading()
@@ -303,7 +306,7 @@ export default class Game {
             // Create the appropriate game mode directly
             switch (mode) {
                 case 'multiplayer':
-                    this.currentGameMode = new MultiplayerMode(this)
+                    this.currentGameMode = new MultiplayerGameMode(this)
                     break
 
                 case 'singlePlayer':
@@ -313,7 +316,7 @@ export default class Game {
             }
 
             // Initialize the game mode
-            await this.currentGameMode.initialize()
+            await this.currentGameMode!.initialize()
 
             console.log(`Game mode initialized: ${mode}`)
             return Promise.resolve()
@@ -539,6 +542,11 @@ export default class Game {
 
             // 3. Render phase
             this.render(timestamp)
+            
+            // Draw remote sprites on top
+            if (this.currentGameMode?.render) {
+                this.currentGameMode.render(this.ctx, timestamp)
+            }
 
             // 4. Post-update phase (check win/lose conditions)
             if (this.currentGameMode) {
@@ -680,89 +688,90 @@ export default class Game {
      * Render the game
      * @param timestamp - Current animation timestamp
      */
+    /**
+     * Main render method - delegates to the current game mode
+     * This ensures proper rendering of both local and remote players
+     */
     render(timestamp: number): void {
-        // Draw background (replaces clearRect)
-        if (this.background) {
-            try {
-                this.background.update(timestamp)
-            } catch (e) {
-                console.error('Error updating background:', e)
-                // Fallback: Clear the canvas manually
-                if (this.ctx && this.canvas) {
-                    this.ctx.clearRect(
-                        0,
-                        0,
-                        this.canvas.width,
-                        this.canvas.height
-                    )
-                    this.ctx.fillStyle = '#0a192f' // Dark blue background
-                    this.ctx.fillRect(
-                        0,
-                        0,
-                        this.canvas.width,
-                        this.canvas.height
-                    )
-                }
-            }
-        } else {
-            console.warn('No background object available')
-            // Fallback: Clear the canvas manually
-            if (this.ctx && this.canvas) {
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-                this.ctx.fillStyle = '#0a192f' // Dark blue background
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
-            }
+        if (!this.ctx || !this.canvas) {
+            console.error('Canvas context not available');
+            return;
         }
 
-        // Get obstacles - with error handling
-        let obstacles: GameObject[] = []
-        try {
-            if (this.obstacleManager) {
-                obstacles = this.obstacleManager.getObstacles()
-            } else {
-                console.error('Obstacle manager not available')
-            }
-        } catch (e) {
-            console.error('Error getting obstacles:', e)
+        // Clear the canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // If we have a game mode, let it handle all rendering
+        if (this.currentGameMode) {
+            this.currentGameMode.render(this.ctx, timestamp);
+        } else {
+            // Fallback rendering if no game mode is active
+            this.renderFallback(timestamp);
+        }
+
+        // Draw UI elements on top
+        this.drawUI();
+    }
+
+    /**
+     * Render shared scene elements (background, obstacles, particles, winning line)
+     * Used by both single-player fallback and multiplayer mode
+     */
+    public renderSharedScene(ctx: CanvasRenderingContext2D, timestamp: number): void {
+        // Draw background
+        if (this.background && typeof this.background.draw === 'function') {
+            this.background.draw(timestamp);
+        } else {
+            // Simple background
+            ctx.fillStyle = '#0a192f';
+            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
 
         // Draw obstacles
-        for (const obstacle of obstacles) {
+        const obstacles = this.obstacleManager?.getObstacles() || [];
+        obstacles.forEach(obstacle => {
             if (typeof (obstacle as any).draw === 'function') {
-                ;(obstacle as any).draw(this.ctx)
-            } else if (typeof obstacle.render === 'function') {
-                obstacle.render(this.ctx, timestamp)
+                (obstacle as any).draw(ctx);
             }
-        }
-
-        // Draw local player - with error handling
-        try {
-            if (this.player) {
-                this.player.draw(timestamp)
-            } else {
-                console.error('Player object not available for drawing')
-            }
-        } catch (e) {
-            console.error('Error drawing player:', e)
-        }
+        });
 
         // Draw particles
-        this.drawParticles()
+        this.drawParticles();
 
-        // Draw touch controls if active and draw method exists
-        if (
-            this.touchControls &&
-            typeof this.touchControls.draw === 'function'
-        ) {
-            this.touchControls.draw()
+        // Draw touch controls
+        if (this.touchControls && typeof this.touchControls.draw === 'function') {
+            this.touchControls.draw();
         }
 
         // Draw winning line
-        this.drawWinningLine(timestamp)
+        this.drawWinningLine(timestamp);
+    }
+
+    /**
+     * Fallback rendering when no game mode is active
+     */
+    private renderFallback(timestamp: number): void {
+        // Use shared scene rendering
+        this.renderSharedScene(this.ctx, timestamp);
+        
+        // Draw local player only (single-player specific)
+        if (this.player) {
+            this.player.draw(timestamp);
+        }
 
         // Draw debug information if enabled
         if (this.config.isDebugEnabled()) {
-            this.drawDebugInfo(timestamp)
+            this.drawDebugInfo(timestamp);
+        }
+    }
+
+    /**
+     * Draw UI elements on top of game content
+     */
+    private drawUI(): void {
+        // Draw debug information if enabled
+        if (this.config.isDebugEnabled()) {
+            this.drawDebugInfo(performance.now());
         }
     }
 

@@ -19,10 +19,10 @@ export const VIEWPORT_CONFIGS: ViewportConfig[] = [
         className: 'viewport-phone-portrait',
         canvasStrategy: {
             mode: 'fit',
-            designWidth: 400,
-            designHeight: 600,
-            maxWidth: 400,
-            maxHeight: 600
+            designWidth: 600,
+            designHeight: 700,
+            maxWidth: 600,
+            maxHeight: 700
         },
         controlLayout: {
             position: 'bottom',
@@ -46,8 +46,8 @@ export const VIEWPORT_CONFIGS: ViewportConfig[] = [
         className: 'viewport-phone-landscape',
         canvasStrategy: {
             mode: 'fill',
-            designWidth: 800,
-            designHeight: 400,
+            designWidth: 600,
+            designHeight: 700,
             maxWidth: 800,
             maxHeight: 400
         },
@@ -73,8 +73,8 @@ export const VIEWPORT_CONFIGS: ViewportConfig[] = [
         className: 'viewport-tablet',
         canvasStrategy: {
             mode: 'fit',
-            designWidth: 1024,
-            designHeight: 768,
+            designWidth: 600,
+            designHeight: 700,
             maxWidth: 1024,
             maxHeight: 768
         },
@@ -100,8 +100,8 @@ export const VIEWPORT_CONFIGS: ViewportConfig[] = [
         className: 'viewport-desktop',
         canvasStrategy: {
             mode: 'pixelPerfect',
-            designWidth: 1200,
-            designHeight: 800,
+            designWidth: 600,
+            designHeight: 700,
             maxWidth: 1200,
             maxHeight: 800
         },
@@ -127,8 +127,8 @@ export const VIEWPORT_CONFIGS: ViewportConfig[] = [
         className: 'viewport-tv',
         canvasStrategy: {
             mode: 'fit',
-            designWidth: 1920,
-            designHeight: 1080,
+            designWidth: 600,
+            designHeight: 700,
             maxWidth: 1920,
             maxHeight: 1080
         },
@@ -158,8 +158,8 @@ export const DEFAULT_CONFIG: ViewportConfig = {
     className: 'viewport-fallback',
     canvasStrategy: {
         mode: 'fit',
-        designWidth: 800,
-        designHeight: 600,
+        designWidth: 600,
+        designHeight: 700,
         maxWidth: 800,
         maxHeight: 600
     },

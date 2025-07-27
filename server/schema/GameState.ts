@@ -98,6 +98,8 @@ class GameState extends Schema {
       if (player.state === GAME_CONSTANTS.PLAYER_STATE.ALIVE) {
         this.aliveCount--;
       }
+      //  ← fix: also decrement totalPlayers
+      this.totalPlayers--;
       
       this.players.delete(sessionId);
     }

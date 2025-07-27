@@ -217,3 +217,17 @@ export function debounce<T extends (...args: any[]) => any>(
     timeout = window.setTimeout(later, wait);
   };
 }
+
+// Fun name generation
+const ADJECTIVES = ["Swift", "Brave", "Clever", "Mighty", "Sly", "Nimble", "Fierce", "Lucky", "Wild", "Epic"];
+const ANIMALS = ["Tiger", "Falcon", "Panda", "Panther", "Fox", "Eagle", "Shark", "Dragon", "Wolf", "Unicorn"];
+
+/**
+ * Generates a random fun username using adjective + animal combination
+ * @returns A random username like "Swift Falcon" or "Brave Panda"
+ */
+export function generateRandomName(): string {
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+  const animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+  return `${adj} ${animal}`;
+}

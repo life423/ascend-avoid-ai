@@ -20,6 +20,7 @@ interface Game {
     uiManager: any
     assetManager: any
     scalingInfo: any
+    renderSharedScene: (ctx: CanvasRenderingContext2D, timestamp: number) => void
 }
 
 // Common interfaces
@@ -94,7 +95,7 @@ export abstract class GameMode {
      * Render game elements specific to this mode
      * @param timestamp - Current timestamp for animation
      */
-    abstract render(timestamp: number): void
+    abstract render(ctx: CanvasRenderingContext2D, timestamp: number): void
 
     /**
      * Handle post-update operations like win/lose detection
@@ -241,7 +242,7 @@ export class SinglePlayerMode extends GameMode {
     /**
      * Render single player mode specific elements
      */
-    render(_timestamp: number): void {
+    render(_ctx: CanvasRenderingContext2D, _timestamp: number): void {
         // Single player mode doesn't have any mode-specific rendering
         // All rendering is handled by the main Game.render method
     }
@@ -485,7 +486,11 @@ export class MultiplayerMode extends GameMode {
             // Set up multiplayer event handlers
             this.setupEventHandlers()
 
-            console.log('MultiplayerMode initialized')
+            console.log('🎮 MultiplayerMode initialized successfully')
+            console.log(`🎮 Game state: ${this.game.gameState}`)
+            console.log(`🎮 Expected playing state: ${this.game.config.STATE.PLAYING}`)
+            console.log(`🎮 Game player exists: ${!!this.game.player}`)
+            console.log(`🎮 Input manager exists: ${!!(this.game as any).inputManager}`)
         } catch (error) {
             console.error('Failed to initialize multiplayer mode:', error)
             throw error
@@ -537,11 +542,20 @@ export class MultiplayerMode extends GameMode {
     ): void {
         // Skip if game is not in playing state
         if (this.game.gameState !== this.game.config.STATE.PLAYING) {
+            console.log(`🚫 Multiplayer update skipped - game state: ${this.game.gameState}`);
             return
         }
 
         // Get local player from multiplayer manager
         const localPlayer = this.multiplayerManager?.getLocalPlayer()
+        
+        // DEBUG: Log input processing status
+        const hasInput = Object.values(inputState).some(Boolean);
+        if (hasInput) {
+            console.log(`🎮 Input received: ${JSON.stringify(inputState)}`);
+            console.log(`🎮 Local player exists: ${!!localPlayer}`);
+            console.log(`🎮 Game player exists: ${!!this.game.player}`);
+        }
 
         // Update local player based on input
         if (localPlayer && this.game.player) {
@@ -554,6 +568,8 @@ export class MultiplayerMode extends GameMode {
 
             // Network optimization: Only send inputs when they change or periodically
             this.throttledInputSend(inputState, timestamp)
+        } else if (hasInput) {
+            console.log(`❌ INPUT BLOCKED: localPlayer=${!!localPlayer}, game.player=${!!this.game.player}`);
         }
     }
 
@@ -612,55 +628,83 @@ export class MultiplayerMode extends GameMode {
     }
 
     /**
-     * Render multiplayer mode specific elements
+     * Render everything in the game world (background, obstacles, particles...)
+     * then draw remote + local players on top.
      */
-    render(_timestamp: number): void {
-        // Render remote players
-        for (const id in this.remotePlayers) {
-            const remotePlayer = this.remotePlayers[id]
+    render(ctx: CanvasRenderingContext2D, timestamp: number): void {
+        // 1) Draw the shared game scene (background, obstacles, particles, winning line)
+        this.game.renderSharedScene(ctx, timestamp);
 
-            // Draw remote player - implementation depends on your player visualization
-            if (remotePlayer.x !== undefined && remotePlayer.y !== undefined) {
-                // Draw remote player at position
-                this.drawRemotePlayer(remotePlayer)
-            }
+        // 2) Sync up remote‐player list
+        if (this.multiplayerManager) {
+            this.remotePlayers = this.multiplayerManager.getRemotePlayers();
         }
 
-        // Render any multiplayer-specific UI elements
-        this.renderMultiplayerUI()
+        // 3) Draw each remote player
+        Object.values(this.remotePlayers).forEach((playerData) => {
+            const color = this.getPlayerColor(playerData.playerIndex || 0);
+            ctx.save();
+            ctx.fillStyle = color;
+            ctx.fillRect(
+                playerData.x,
+                playerData.y,
+                this.game.player?.width ?? 30,
+                this.game.player?.height ?? 30
+            );
+            // optional border
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(
+                playerData.x,
+                playerData.y,
+                this.game.player?.width ?? 30,
+                this.game.player?.height ?? 30
+            );
+            // draw remote player name
+            if (playerData.name) {
+                ctx.font = '12px Arial';
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    playerData.name,
+                    playerData.x + (this.game.player?.width ?? 30) / 2,
+                    playerData.y - 6
+                );
+            }
+            ctx.restore();
+        });
+
+        // 4) Draw the local player on top
+        if (this.game.player) {
+            this.game.player.draw(timestamp);
+        }
+
+        // 5) Any other UI overlays (scores, countdown, etc.)
+        this.renderPlayerInfo(ctx);
     }
 
     /**
-     * Draw a remote player
+     * Render player info and UI overlays
      */
-    private drawRemotePlayer(playerData: NetworkPlayer): void {
-        if (!this.game.ctx) return
+    private renderPlayerInfo(ctx: CanvasRenderingContext2D): void {
+        if (!this.multiplayerManager) return;
 
-        // Get player color based on index or other property
-        const color = this.getPlayerColor(playerData.index || 0)
+        // Draw player count in top-right corner
+        const totalPlayers = this.multiplayerManager.getTotalPlayers();
+        const alivePlayers = this.multiplayerManager.getAliveCount();
 
-        // Draw remote player with distinct color
-        this.game.ctx.fillStyle = color
-        this.game.ctx.fillRect(
-            playerData.x,
-            playerData.y,
-            this.game.player ? this.game.player.width : 30,
-            this.game.player ? this.game.player.height : 30
-        )
-
-        // Draw player name above
-        if (playerData.name) {
-            this.game.ctx.fillStyle = 'white'
-            this.game.ctx.font = '12px Arial'
-            this.game.ctx.textAlign = 'center'
-            this.game.ctx.fillText(
-                playerData.name,
-                playerData.x +
-                    (this.game.player ? this.game.player.width / 2 : 15),
-                playerData.y - 5
-            )
-        }
+        ctx.save();
+        ctx.fillStyle = 'white';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText(
+            `Players: ${alivePlayers}/${totalPlayers}`,
+            this.game.canvas.width - 10,
+            20
+        );
+        ctx.restore();
     }
+
 
     /**
      * Get player color based on index
@@ -680,54 +724,6 @@ export class MultiplayerMode extends GameMode {
         return colors[index % colors.length]
     }
 
-    /**
-     * Render multiplayer-specific UI elements
-     */
-    private renderMultiplayerUI(): void {
-        if (!this.game.ctx || !this.multiplayerManager) return
-
-        // Draw player count
-        const totalPlayers = this.multiplayerManager.getTotalPlayers()
-        const alivePlayers = this.multiplayerManager.getAliveCount()
-
-        this.game.ctx.fillStyle = 'white'
-        this.game.ctx.font = '14px Arial'
-        this.game.ctx.textAlign = 'right'
-        this.game.ctx.fillText(
-            `Players: ${alivePlayers}/${totalPlayers}`,
-            this.game.canvas.width - 10,
-            20
-        )
-
-        // Draw arena boundary if applicable
-        const arenaStats = this.multiplayerManager.getArenaStats()
-        if (arenaStats && arenaStats.areaPercentage < 100) {
-            // Draw shrinking arena boundary
-            this.drawArenaBoundary(arenaStats)
-        }
-    }
-
-    /**
-     * Draw arena boundary for battle royale mode
-     */
-    private drawArenaBoundary(arenaStats: any): void {
-        if (!this.game.ctx) return
-
-        // Calculate arena dimensions based on percentage
-        const margin = (100 - arenaStats.areaPercentage) / 100
-        const marginX = this.game.canvas.width * (margin / 2)
-        const marginY = this.game.canvas.height * (margin / 2)
-
-        // Draw arena boundary
-        this.game.ctx.strokeStyle = 'rgba(255, 0, 0, 0.7)'
-        this.game.ctx.lineWidth = 2
-        this.game.ctx.strokeRect(
-            marginX,
-            marginY,
-            this.game.canvas.width - marginX * 2,
-            this.game.canvas.height - marginY * 2
-        )
-    }
 
     /**
      * Post-update operations for multiplayer mode

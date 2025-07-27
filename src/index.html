@@ -84,8 +84,8 @@
                                 Game speed increases as you score more points!
                             </p>
                             <p>
-                                Try to beat your high score and challenge your friends in
-                                multiplayer mode!
+                                You're now playing online with other players! Use Solo Mode
+                                if you want to practice offline.
                             </p>
                         </div>
                         <div class="info-actions">
@@ -98,10 +98,10 @@
                             </button>
                             <button
                                 class="nav-button btn-action"
-                                data-action="multiplayer-desktop"
-                                aria-label="Multiplayer mode"
+                                data-action="solo-desktop"
+                                aria-label="Solo practice mode"
                             >
-                                Multiplayer
+                                Solo Mode
                             </button>
                         </div>
                     </div>
@@ -129,11 +129,11 @@
                         Guide
                     </button>
                     <button
-                        class="btn-action" data-action="multiplayer"
-                        aria-label="Multiplayer mode"
-                        title="Multiplayer mode"
+                        class="btn-action" data-action="solo"
+                        aria-label="Solo practice mode"
+                        title="Solo practice mode"
                     >
-                        Multiplayer
+                        Solo Mode
                     </button>
                 </div>
             </div>
@@ -165,8 +165,8 @@
                                 Game speed increases as you score more points!
                             </p>
                             <p>
-                                Try to beat your high score and challenge your
-                                friends in multiplayer mode!
+                                You're now playing online with other players! Use Solo Mode
+                                if you want to practice offline.
                             </p>
                         </div>
                     </div>
@@ -198,9 +198,9 @@
                 const menuItems = document.querySelector('.float-options');
                 const floatMenu = document.querySelector('.float-menu');
                 const guideButton = document.querySelector('.btn-action[data-action="guide"]');
-                const multiplayerToggle = document.querySelector('.btn-action[data-action="multiplayer"]');
+                const soloToggle = document.querySelector('.btn-action[data-action="solo"]');
                 const guideSidebarBtn = document.querySelector('.btn-action[data-action="guide-desktop"]');
-                const multiplayerSidebarBtn = document.querySelector('.btn-action[data-action="multiplayer-desktop"]');
+                const soloSidebarBtn = document.querySelector('.btn-action[data-action="solo-desktop"]');
                 const instructionsModal = document.querySelector('.modal-panel');
                 const closeModalBtn = document.querySelector('.close-modal');
                 
@@ -262,8 +262,8 @@
                     });
                 }
                 
-                // Multiplayer toggle function
-                function toggleMultiplayer() {
+                // Solo mode toggle function  
+                function toggleSoloMode() {
                     const game = window.game;
                     if (game && typeof game.switchGameMode === 'function') {
                         const newMode = game.isMultiplayerMode ? 'singlePlayer' : 'multiplayer';
@@ -271,6 +271,8 @@
                             .then(() => {
                                 console.log(`Switched to ${newMode} mode`);
                                 closeMenu();
+                                // Update button text to reflect current mode
+                                updateModeButtons(newMode);
                             })
                             .catch(err => {
                                 console.error('Failed to switch game mode:', err);
@@ -278,12 +280,19 @@
                     }
                 }
                 
-                if (multiplayerToggle) {
-                    multiplayerToggle.addEventListener('click', toggleMultiplayer);
+                // Update button text based on current mode
+                function updateModeButtons(currentMode) {
+                    const buttonText = currentMode === 'multiplayer' ? 'Solo Mode' : 'Multiplayer';
+                    if (soloToggle) soloToggle.textContent = buttonText;
+                    if (soloSidebarBtn) soloSidebarBtn.textContent = buttonText;
                 }
                 
-                if (multiplayerSidebarBtn) {
-                    multiplayerSidebarBtn.addEventListener('click', toggleMultiplayer);
+                if (soloToggle) {
+                    soloToggle.addEventListener('click', toggleSoloMode);
+                }
+                
+                if (soloSidebarBtn) {
+                    soloSidebarBtn.addEventListener('click', toggleSoloMode);
                 }
                 
                 // Close menu when clicking outside - FIXED SELECTOR
@@ -325,6 +334,9 @@
                     // Prevent scrolling elsewhere
                     e.preventDefault();
                 }, { passive: false });
+                
+                // Initialize button text for multiplayer-first mode
+                updateModeButtons('multiplayer');
             });
         </script>
     </body>
