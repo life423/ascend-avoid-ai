@@ -11,7 +11,7 @@ import {
   PLAYER_STATE, 
   ARENA,
   PLAYER_COLORS 
-} from './gameConstants';
+} from '../../shared/constants/gameConstants';
 
 // Legacy aliases for backward compatibility
 export const GAME_CONSTANTS = {
@@ -19,12 +19,9 @@ export const GAME_CONSTANTS = {
   PLAYER,
   OBSTACLE,
   STATE: GAME_STATE,
-  GAME_STATE,
   PLAYER_STATE,
   ARENA
 };
-export const GAME = GAME_CONFIG;
-export const STATE = GAME_STATE;
 
 // Server-specific settings
 export const SERVER = {

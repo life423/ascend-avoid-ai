@@ -12,7 +12,7 @@ import ResponsiveManager from '../managers/ResponsiveManager'
 import ParticleSystem from '../entities/ParticleSystem'
 import TouchControls from '../ui/TouchControls'
 import { Client, Room } from 'colyseus.js'
-import { GAME_CONFIG, PLAYER_COLORS } from '../constants/gameConstants'
+import { GAME_CONFIG, PLAYER_COLORS } from '../../shared/constants/gameConstants'
 import { generateRandomName } from '../utils/utils'
 
 export default class Game {

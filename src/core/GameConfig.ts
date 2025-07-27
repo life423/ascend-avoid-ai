@@ -5,12 +5,12 @@
  */
 import {
     DESKTOP_SETTINGS,
-    GAME,
+    GAME_CONFIG,
     KEYS,
     OBSTACLE,
     PLAYER,
     GAME_STATE,
-} from '../constants/gameConstants'
+} from '../../shared/constants/gameConstants'
 import { GameConfig as GameConfigInterface } from '../types'
 
 interface GameSettings {
@@ -55,14 +55,14 @@ export default class GameConfig implements GameConfigInterface {
 
     private buildBaseSettings(isDesktop: boolean): GameSettings {
         const base = {
-            WINNING_LINE: GAME.WINNING_LINE,
+            WINNING_LINE: GAME_CONFIG.WINNING_LINE,
             BASE_SPEED: OBSTACLE.BASE_SPEED,
             PLAYER_SIZE_RATIO: PLAYER.SIZE_RATIO,
             MIN_STEP: PLAYER.MIN_STEP,
             OBSTACLE_MIN_WIDTH_RATIO: OBSTACLE.MIN_WIDTH_RATIO,
             OBSTACLE_MAX_WIDTH_RATIO: OBSTACLE.MAX_WIDTH_RATIO,
-            MAX_CARS: GAME.MAX_OBSTACLES,
-            DIFFICULTY_INCREASE_RATE: GAME.DIFFICULTY_INCREASE_RATE,
+            MAX_CARS: GAME_CONFIG.MAX_OBSTACLES,
+            DIFFICULTY_INCREASE_RATE: GAME_CONFIG.DIFFICULTY_INCREASE_RATE,
         }
         return isDesktop ? { ...base, ...DESKTOP_SETTINGS } : base
     }

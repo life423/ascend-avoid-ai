@@ -2,7 +2,7 @@
  * Handles UI elements for multiplayer mode
  * Converted to TypeScript and organized in ui/ directory.
  */
-import { GAME_CONSTANTS } from '../constants/gameConstants';
+import { GAME_STATE, PLAYER_STATE } from '../../shared/constants/gameConstants';
 import { generateRandomName } from '../utils/utils';
 
 // Define interfaces for the MultiplayerUI
@@ -657,25 +657,25 @@ export default class MultiplayerUI {
     let statusText = '';
     
     switch (gameState) {
-      case GAME_CONSTANTS.STATE.WAITING:
+      case GAME_STATE.WAITING:
         statusText = 'Waiting for players...';
         this.countdownDisplay.textContent = '';
         break;
         
-      case GAME_CONSTANTS.STATE.STARTING:
+      case GAME_STATE.STARTING:
         statusText = 'Game starting soon!';
         if (state.countdownTime !== undefined) {
           this.countdownDisplay.textContent = state.countdownTime.toString();
         }
         break;
         
-      case GAME_CONSTANTS.STATE.PLAYING:
+      case GAME_STATE.PLAYING:
         statusText = 'Game in progress';
         this.countdownDisplay.textContent = '';
         this.updateArenaIndicator(state);
         break;
         
-      case GAME_CONSTANTS.STATE.GAME_OVER:
+      case GAME_STATE.GAME_OVER:
         statusText = `Game over! ${state.winnerName} wins!`;
         this.countdownDisplay.textContent = '';
         break;
@@ -766,17 +766,17 @@ export default class MultiplayerUI {
       statusSpan.className = 'player-status';
       
       switch (player.state) {
-        case GAME_CONSTANTS.PLAYER_STATE.ALIVE:
+        case PLAYER_STATE.ALIVE:
           statusSpan.textContent = 'Alive';
           statusSpan.classList.add('player-alive');
           break;
           
-        case GAME_CONSTANTS.PLAYER_STATE.DEAD:
+        case PLAYER_STATE.DEAD:
           statusSpan.textContent = 'Eliminated';
           statusSpan.classList.add('player-dead');
           break;
           
-        case GAME_CONSTANTS.PLAYER_STATE.SPECTATING:
+        case PLAYER_STATE.SPECTATING:
           statusSpan.textContent = 'Spectating';
           statusSpan.classList.add('player-spectating');
           break;
@@ -862,21 +862,21 @@ export default class MultiplayerUI {
     let statusText = '';
     
     switch (gameState) {
-      case GAME_CONSTANTS.STATE.WAITING:
+      case GAME_STATE.WAITING:
         statusText = 'Waiting for players...';
         this.countdownDisplay.textContent = '';
         break;
         
-      case GAME_CONSTANTS.STATE.STARTING:
+      case GAME_STATE.STARTING:
         statusText = 'Game starting soon!';
         break;
         
-      case GAME_CONSTANTS.STATE.PLAYING:
+      case GAME_STATE.PLAYING:
         statusText = 'Game in progress';
         this.countdownDisplay.textContent = '';
         break;
         
-      case GAME_CONSTANTS.STATE.GAME_OVER:
+      case GAME_STATE.GAME_OVER:
         statusText = 'Game over!';
         this.countdownDisplay.textContent = '';
         break;

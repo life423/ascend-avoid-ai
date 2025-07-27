@@ -2,7 +2,7 @@
  * ProjectileManager handles the creation, updating, and cleanup of projectiles.
  * Follows the same pattern as ObstacleManager for consistency.
  */
-import { PROJECTILE } from '../constants/gameConstants';
+import { PROJECTILE } from '../../shared/constants/gameConstants';
 import { GameObject } from '../types';
 import Projectile from '../entities/Projectile';
 
