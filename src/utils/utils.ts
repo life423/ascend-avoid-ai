@@ -2,8 +2,6 @@
  * Utility functions for the game
  * Now with TypeScript support.
  */
-import { ScalingInfo } from '../types';
-
 /**
  * Generates a random integer between min and max (inclusive)
  * @param min - The minimum value
@@ -104,76 +102,6 @@ export const BASE_CANVAS_HEIGHT = 550;
 // Aspect ratio of the game
 export const ASPECT_RATIO = BASE_CANVAS_HEIGHT / BASE_CANVAS_WIDTH;
 
-/**
- * Resize the canvas to be responsive while maintaining aspect ratio
- * @param canvas - The canvas element to resize
- * @returns The scale factors for width and height
- */
-export function resizeCanvas(canvas: HTMLCanvasElement): ScalingInfo {
-  // Get container dimensions
-  const container = canvas.parentElement as HTMLElement;
-  const containerWidth = container.clientWidth;
-  const containerHeight = container.clientHeight || 550; // Default if height not set
-  const isDesktop = window.matchMedia("(min-width: 1200px)").matches;
-  
-  let canvasWidth: number;
-  let canvasHeight: number;
-  
-  if (isDesktop) {
-    // DESKTOP: Use container dimensions directly
-    canvasWidth = containerWidth;
-    // Ensure minimum height while respecting container dimensions
-    canvasHeight = Math.max(containerHeight, 550);
-    
-    // Apply max-width constraint if needed
-    const maxWidth = 1200; // Match CSS max-width
-    if (canvasWidth > maxWidth) {
-      canvasWidth = maxWidth;
-      canvasHeight = canvasWidth * ASPECT_RATIO;
-    }
-    
-    // Check if height would exceed window constraints
-    const maxHeight = window.innerHeight * 0.85;
-    if (canvasHeight > maxHeight) {
-      canvasHeight = maxHeight;
-      canvasWidth = canvasHeight / ASPECT_RATIO;
-    }
-    
-    console.log(`DESKTOP CANVAS: ${Math.round(canvasWidth)}x${Math.round(canvasHeight)}`);
-  } else {
-    // MOBILE: Keep existing responsive behavior
-    const bodyWidth = document.body.clientWidth;
-    canvasWidth = Math.min(containerWidth, bodyWidth * 0.95);
-    canvasWidth = Math.max(canvasWidth, 280); // Minimum usable size
-    canvasHeight = canvasWidth * ASPECT_RATIO;
-    
-    // Check if height exceeds window height
-    const maxHeight = window.innerHeight * 0.7;
-    if (canvasHeight > maxHeight) {
-      canvasHeight = maxHeight;
-      canvasWidth = canvasHeight / ASPECT_RATIO;
-    }
-  }
-  
-  // Set both CSS and actual canvas dimensions
-  canvas.style.width = `${canvasWidth}px`;
-  canvas.style.height = `${canvasHeight}px`;
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
-  
-  // Calculate scaling factors for game elements
-  SCALE_FACTOR = canvasWidth / BASE_CANVAS_WIDTH;
-  
-  // Update scale factor related values
-  console.log(`Canvas dimensions: ${Math.round(canvasWidth)}x${Math.round(canvasHeight)} (Scale: ${SCALE_FACTOR.toFixed(2)})`);
-  
-  return {
-    widthScale: canvasWidth / BASE_CANVAS_WIDTH,
-    heightScale: canvasHeight / BASE_CANVAS_HEIGHT,
-    pixelRatio: window.devicePixelRatio || 1,
-    reducedResolution: false // Default value, can be updated by ResponsiveManager
-  };
-}
 
 /**
  * Checks if two rectangles are colliding

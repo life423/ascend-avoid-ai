@@ -1,15 +1,27 @@
 /**
- * Unified game constants shared between client and server
- * This file serves as the single source of truth for all game constants
+ * Unified game constants - single source of truth
  */
 
-// Canvas defaults - improved aspect ratio
+// Canvas defaults
 export const CANVAS = {
   BASE_WIDTH: 600,
   BASE_HEIGHT: 700,
-  MAX_DESKTOP_WIDTH: 1600,  // Increased maximum width for desktop (especially for large monitors)
-  MAX_MOBILE_WIDTH: 800     // Maximum width for mobile
-};
+  MAX_DESKTOP_WIDTH: 1600,
+  MAX_MOBILE_WIDTH: 800
+} as const;
+
+// Game configuration
+export const GAME_CONFIG = {
+  ROOM_NAME: 'game_room',
+  DEFAULT_PLAYER_NAME: 'Anonymous',
+  RECONNECT_ATTEMPTS: 3,
+  RECONNECT_DELAY: 2000,
+  MAX_PLAYERS: 30,
+  STATE_UPDATE_RATE: 1000 / 30,
+  MAX_OBSTACLES: 12,
+  DIFFICULTY_INCREASE_RATE: 0.15,
+  WINNING_LINE: 40
+} as const;
 
 // Player settings
 export const PLAYER = {
@@ -17,7 +29,7 @@ export const PLAYER = {
   BASE_HEIGHT: 30,
   MIN_STEP: 3,
   BASE_SPEED: 5,
-  SIZE_RATIO: 0.04,
+  SIZE_RATIO: 0.04
 } as const;
 
 // Obstacle settings
@@ -26,7 +38,7 @@ export const OBSTACLE = {
   MIN_WIDTH: 30,
   MAX_WIDTH: 60,
   MIN_WIDTH_RATIO: 0.08,
-  MAX_WIDTH_RATIO: 0.18,
+  MAX_WIDTH_RATIO: 0.18
 } as const;
 
 // Projectile settings
@@ -34,48 +46,38 @@ export const PROJECTILE = {
   WIDTH: 4,
   HEIGHT: 8,
   SPEED: 400,
-  BASE_SPEED: 400, // Base speed for projectiles (used in constructor)
+  BASE_SPEED: 400,
   MAX_ACTIVE: 5,
-  MAX_COUNT: 5, // Maximum number of projectiles (used by ProjectileManager)
-  FIRE_RATE: 250, // milliseconds between shots
+  MAX_COUNT: 5,
+  FIRE_RATE: 250,
   COLOR: '#00ffff',
   TRAIL_LENGTH: 3,
-  LIFETIME: 3000, // Projectile lifetime in milliseconds (3 seconds)
-} as const;
-
-// Game settings
-export const GAME = {
-  WINNING_LINE: 40,
-  MAX_PLAYERS: 30,
-  STATE_UPDATE_RATE: 1000 / 30, // 30 updates per second
-  ROOM_NAME: "last_player_standing",
-  MAX_OBSTACLES: 12,
-  DIFFICULTY_INCREASE_RATE: 0.15,
+  LIFETIME: 3000
 } as const;
 
 // Game states
-export const STATE = {
+export const GAME_STATE = {
   READY: 'ready',
-  WAITING: "waiting",
-  STARTING: "starting",
-  PLAYING: "playing",
-  GAME_OVER: "game_over",
-  PAUSED: "paused",
+  WAITING: 'waiting',
+  STARTING: 'starting',
+  PLAYING: 'playing',
+  GAME_OVER: 'game_over',
+  PAUSED: 'paused'
 } as const;
 
 // Player states
 export const PLAYER_STATE = {
-  ALIVE: "alive",
-  DEAD: "dead",
-  SPECTATING: "spectating",
+  ALIVE: 'alive',
+  DEAD: 'dead',
+  SPECTATING: 'spectating'
 } as const;
 
 // Arena settings
 export const ARENA = {
   INITIAL_AREA_PERCENTAGE: 100,
-  SHRINK_INTERVAL: 30000, // 30 seconds between shrinks
-  SHRINK_PERCENTAGE: 10, // Shrink by 10% each time
-  MIN_AREA_PERCENTAGE: 40, // Don't shrink below 40% of original size
+  SHRINK_INTERVAL: 30000,
+  SHRINK_PERCENTAGE: 10,
+  MIN_AREA_PERCENTAGE: 40
 } as const;
 
 // Key mappings
@@ -85,43 +87,20 @@ export const KEYS = {
   LEFT: ['ArrowLeft', 'Left', 'a', 'A'],
   RIGHT: ['ArrowRight', 'Right', 'd', 'D'],
   RESTART: ['r', 'R'],
-  SHOOT: [' ', 'Space', 'Enter'], // Spacebar, Space, and Enter
+  SHOOT: [' ', 'Space', 'Enter']
 } as const;
 
-// Player colors for differentiation - improved contrast with dark background
+// Player colors
 export const PLAYER_COLORS = [
-  "#FF5252", // Red
-  "#FF9800", // Orange
-  "#FFEB3B", // Yellow
-  "#4CAF50", // Green
-  "#00BCD4", // Cyan
-  "#64FFDA", // Mint
-  "#E91E63", // Pink
-  "#3F51B5", // Indigo
-  "#00E5FF", // Light Cyan
-  "#76FF03", // Bright Green
-  "#FFC400", // Amber
-  "#F50057", // Pink
-  "#D500F9", // Purple
-  "#00B0FF", // Light Blue
-  "#F44336", // Red (darker)
-  "#FF5722", // Deep Orange
-  "#651FFF", // Deep Purple
-  "#2979FF", // Bright Blue
-  "#18FFFF", // Aqua
-  "#1DE9B6", // Teal
-  "#00E676", // Green
-  "#C6FF00", // Lime
-  "#FFC107", // Amber
-  "#FF3D00", // Deep Orange
-  "#FF9100", // Orange
-  "#FFEA00", // Yellow
-  "#76FF03"  // Lime
+  '#FF5252', '#FF9800', '#FFEB3B', '#4CAF50', '#00BCD4', '#64FFDA',
+  '#E91E63', '#3F51B5', '#00E5FF', '#76FF03', '#FFC400', '#F50057',
+  '#D500F9', '#00B0FF', '#F44336', '#FF5722', '#651FFF', '#2979FF',
+  '#18FFFF', '#1DE9B6', '#00E676', '#C6FF00', '#FFC107', '#FF3D00',
+  '#FF9100', '#FFEA00', '#76FF03'
 ] as const;
 
-// Device-specific settings - improved for better game feel
+// Device-specific settings
 export const DEVICE_SETTINGS = {
-  // Desktop settings
   DESKTOP: {
     PLAYER_SIZE_RATIO: 0.035,
     MIN_STEP: 10,
@@ -130,7 +109,6 @@ export const DEVICE_SETTINGS = {
     BASE_SPEED: 3.5,
     DIFFICULTY_INCREASE_RATE: 0.18
   },
-  // Mobile settings 
   MOBILE: {
     PLAYER_SIZE_RATIO: 0.045,
     MIN_STEP: 4,
@@ -141,22 +119,24 @@ export const DEVICE_SETTINGS = {
   }
 } as const;
 
-// Export desktop settings directly for backward compatibility
+// Legacy exports
+export const GAME = GAME_CONFIG;
+export const STATE = GAME_STATE;
 export const DESKTOP_SETTINGS = DEVICE_SETTINGS.DESKTOP;
 
-// Bundle all constants for convenient access
-export const GAME_CONSTANTS = {
+export type GameStateType = typeof GAME_STATE[keyof typeof GAME_STATE];
+export type PlayerStateType = typeof PLAYER_STATE[keyof typeof PLAYER_STATE];
+
+export default {
   CANVAS,
+  GAME_CONFIG,
   PLAYER,
   OBSTACLE,
-  PROJECTILE, // Added this
-  GAME,
-  STATE,
+  PROJECTILE,
+  GAME_STATE,
   PLAYER_STATE,
   ARENA,
   KEYS,
+  PLAYER_COLORS,
   DEVICE_SETTINGS
-} as const;
-
-// Export everything as default for legacy imports
-export default GAME_CONSTANTS;
+}

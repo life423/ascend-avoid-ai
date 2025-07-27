@@ -11,11 +11,11 @@ import ResponsiveManager from '../managers/ResponsiveManager'
 import ParticleSystem from '../entities/ParticleSystem'
 import TouchControls from '../ui/TouchControls'
 import { Client, Room } from 'colyseus.js'
-import { GAME_CONFIG } from '../constants/client-constants'
+import { GAME_CONFIG, PLAYER_COLORS } from '../constants/gameConstants'
 import { generateRandomName } from '../utils/utils'
 // ResponsiveManager now handles responsive system integration
 
-const PLAYER_COLORS = ['#FF5722', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#E91E63', '#00BCD4']
+
 
 export default class Game {
     canvas: HTMLCanvasElement
