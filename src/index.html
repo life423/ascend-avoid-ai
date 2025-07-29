@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Ascend Avoid - Multiplayer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1a1a2e;
+      color: white;
+      overflow: hidden;
+      touch-action: none;
+    }
+    
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+    
+    .game-header {
+      padding: 1rem;
+      text-align: center;
+      background: #16213e;
+    }
+    
+    .canvas-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+    
+    #gameCanvas {
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      background: #0f1419;
+      width: min(100%, 600px);
+      height: min(60vh, 400px);
+      aspect-ratio: 3/2;
+    }
+    
+    .controls {
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      background: #16213e;
+    }
+    
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      grid-template-rows: repeat(3, 60px);
+      gap: 4px;
+    }
+    
+    .dpad-btn {
+      background: #0f3460;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    
+    .dpad-btn:active {
+      background: #1e5f8b;
+      transform: scale(0.95);
+    }
+    
+    .dpad-up { grid-column: 2; grid-row: 1; }
+    .dpad-left { grid-column: 1; grid-row: 2; }
+    .dpad-right { grid-column: 3; grid-row: 2; }
+    .dpad-down { grid-column: 2; grid-row: 3; }
+    
+    .status {
+      padding: 0.5rem 1rem;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    @media (min-width: 768px) {
+      .controls {
+        display: none;
+      }
+      
+      #gameCanvas {
+        width: min(80vw, 800px);
+        height: min(70vh, 500px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="game-header">
+      <h1>Ascend Avoid</h1>
+      <div class="status" id="status">Connecting...</div>
+    </div>
+    
+    <div class="canvas-container">
+      <canvas id="gameCanvas"></canvas>
+    </div>
+    
+    <div class="controls">
+      <div class="dpad">
+        <button class="dpad-btn dpad-up" data-direction="up">↑</button>
+        <button class="dpad-btn dpad-left" data-direction="left">←</button>
+        <button class="dpad-btn dpad-right" data-direction="right">→</button>
+        <button class="dpad-btn dpad-down" data-direction="down">↓</button>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module" src="main.js"></script>
+</body>
+</html>

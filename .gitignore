@@ -12,3 +12,6 @@ dist/
 
 # Logs
 *.log
+
+# Private notes
+notes/
