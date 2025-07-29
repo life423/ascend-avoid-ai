@@ -1,1 +1,0 @@
-when changing code. go in safe steps and keep the app working as we extremly reduce the amount of code in this app. we need always safe code changes

@@ -1,0 +1,104 @@
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/Montserrat-VariableFont_wght.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-display: swap;
+  font-optical-sizing: auto; /* Enable optical sizing */
+}
+
+/* Axis defaults: one place for all min/max values */
+:root {
+  --opsz-min: 20;
+  --opsz-max: 36;
+  --wght-min: 300;
+  --wght-max: 700;
+  --wdth-min: 90;
+  --wdth-max: 110;
+}
+
+/* Base typography */
+body {
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-optical-sizing: auto;
+  font-variation-settings:
+    'opsz' clamp(var(--opsz-min), 4vw, var(--opsz-max)),
+    'wght' clamp(var(--wght-min), 2vw + 300, var(--wght-max)),
+    'wdth' clamp(var(--wdth-min), 1vw + 90, var(--wdth-max));
+}
+
+/* Game title: fluid and responsive */
+.game-header h1 {
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-optical-sizing: auto;
+  font-variation-settings:
+    'opsz' clamp(var(--opsz-min), 8vw, var(--opsz-max)),
+    'wght' clamp(var(--wght-min), 10vw + 200, var(--wght-max)),
+    'wdth' clamp(var(--wdth-min), 2vw + 88, var(--wdth-max));
+}
+
+/* UI labels: consistent axes */
+.status, .dpad-btn {
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-optical-sizing: auto;
+  font-variation-settings:
+    'opsz' var(--opsz-min),
+    'wght' var(--wght-min),
+    'wdth' var(--wdth-min);
+}
+
+/* Button press feedback */
+.dpad-btn {
+  transition: font-variation-settings 0.15s ease;
+}
+.dpad-btn:active {
+  font-variation-settings:
+    'opsz' var(--opsz-min),
+    'wght' 800,
+    'wdth' 105;
+}
+
+/* Container for component‑scoped queries */
+.canvas-container {
+  container-type: inline-size;
+}
+
+/* Override axis values via container style queries */
+@container style(--opsz-max: 48), style(--wght-min: 300) {
+  /* Larger container: lighter, more delicate headlines */
+  .game-header h1 { }
+}
+
+@container style(--opsz-max: 20), style(--wght-min: 600) {
+  /* Smaller container: heavier, condensed headlines */
+  .game-header h1 { }
+  .status {
+    font-variation-settings:
+      'opsz' 10,
+      'wght' 600,
+      'wdth' 90;
+  }
+}
+
+/* Game state typography */
+.connecting {
+  font-variation-settings:
+    'opsz' 14,
+    'wght' 400,
+    'wdth' 100;
+  opacity: 0.7;
+}
+.connected {
+  font-variation-settings:
+    'opsz' 14,
+    'wght' 500,
+    'wdth' 100;
+  color: #4ade80;
+}
+.error {
+  font-variation-settings:
+    'opsz' 14,
+    'wght' 600,
+    'wdth' 105;
+  color: #ef4444;
+}
+

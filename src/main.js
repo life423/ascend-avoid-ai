@@ -24,6 +24,7 @@ function connect() {
   
   ws.onopen = () => {
     status.textContent = 'Connected';
+    status.className = 'status connected';
     console.log('Connected to server');
   };
   
@@ -59,11 +60,13 @@ function connect() {
   
   ws.onclose = () => {
     status.textContent = 'Disconnected';
+    status.className = 'status connecting';
     setTimeout(connect, 2000);
   };
   
   ws.onerror = () => {
     status.textContent = 'Connection error';
+    status.className = 'status error';
   };
 }
 
