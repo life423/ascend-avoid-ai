@@ -1,0 +1,91 @@
+/* Mobile-First Game Color Palette (Refined) */
+
+:root {
+  /* Primary Brand Colors */
+  --color-primary: #2E86AB;        /* Vibrant cerulean blue */
+  --color-primary-light: #4FA3C4;  /* Lighter, sky-blue accent */
+  --color-primary-dark: #1B3B4D;   /* Deep navy for contrast */
+  
+  /* Secondary & Accent Colors */
+  --color-secondary: #F29F05;      /* Warm amber for panels */
+  --color-accent: #E84545;         /* Bold crimson for highlights */
+  --color-accent-warm: #F9DC5C;    /* Soft sunflower yellow */
+  
+  /* Canvas & Game Backgrounds */
+  --color-canvas-bg: #162A3A;      /* Dark slate backdrop */
+  --color-canvas-border: #2E86AB;  /* Matches primary for cohesion */
+  --color-game-bg: #0D1B2A;        /* Almost-black navy */
+  
+  /* Text Colors */
+  --color-text-primary: #EAEAEA;   /* Off-white for readability */
+  --color-text-secondary: #B0B0B0; /* Muted light gray */
+  --color-text-muted: #7A7A7A;     /* Mid-tone gray for tertiary info */
+  
+  /* Status & Feedback */
+  --color-success: #28A745;         /* Fresh green for success */
+  --color-warning: #FFC107;         /* Bright amber for warnings */
+  --color-error: #DC3545;           /* Strong red for errors */
+  --color-info: #17A2B8;            /* Teal-blue for info */
+  
+  /* Button States */
+  --color-button-bg: var(--color-primary);
+  --color-button-hover: var(--color-primary-light);
+  --color-button-active: var(--color-accent);
+  --color-button-text: var(--color-text-primary);
+  
+  /* Multiplayer Player Colors */
+  --color-player-1: #E84545; /* Player 1 - Crimson */
+  --color-player-2: #17A2B8; /* Player 2 - Teal */
+  --color-player-3: #28A745; /* Player 3 - Green */
+  --color-player-4: #FFC107; /* Player 4 - Amber */
+  --color-player-5: #8E44AD; /* Player 5 - Purple */
+  --color-player-6: #F39C12; /* Player 6 - Orange */
+  
+  /* Opacity Levels */
+  --opacity-disabled: 0.4;
+  --opacity-muted: 0.7;
+  --opacity-hover: 0.9;
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-warm) 100%);
+  --gradient-game-bg: linear-gradient(180deg, var(--color-game-bg) 0%, var(--color-primary-dark) 100%);
+}
+
+/* Dark theme variations */
+[data-theme="dark"] {
+  --color-game-bg: #0D1B2A;
+  --color-canvas-bg: #121A26;
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #CCCCCC;
+}
+
+/* Accessibility: High Contrast */
+@media (prefers-contrast: high) {
+  :root {
+    --color-primary: #000080;
+    --color-text-primary: #FFFFFF;
+    --color-canvas-border: #FFFFFF;
+  }
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-duration: 0.01ms;
+  }
+}
+
+/* Color Utility Classes */
+.text-primary   { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-muted     { color: var(--color-text-muted); }
+.text-success   { color: var(--color-success); }
+.text-warning   { color: var(--color-warning); }
+.text-error     { color: var(--color-error); }
+.text-info      { color: var(--color-info); }
+
+.bg-primary     { background-color: var(--color-primary); }
+.bg-secondary   { background-color: var(--color-secondary); }
+.bg-game        { background-color: var(--color-game-bg); }
+.bg-canvas      { background-color: var(--color-canvas-bg); }

@@ -1,4 +1,5 @@
 /* Mobile-first multiplayer game styles */
+@import url('./colors.css');
 @import url('./fonts.css');
 
 * {
@@ -8,8 +9,8 @@
 }
 
 body {
-  background: #1a1a2e;
-  color: white;
+  background: var(--color-game-bg);
+  color: var(--color-text-primary);
   overflow: hidden;
   touch-action: none;
   /* Font settings now in fonts.css */
@@ -25,7 +26,7 @@ body {
 .game-header {
   padding: 1rem;
   text-align: center;
-  background: #16213e;
+  background: var(--color-secondary);
   container-type: inline-size; /* Enable container queries */
 }
 
@@ -38,9 +39,9 @@ body {
 }
 
 #gameCanvas {
-  border: 2px solid #0f3460;
+  border: 2px solid var(--color-canvas-border);
   border-radius: 8px;
-  background: #0f1419;
+  background: var(--color-canvas-bg);
   width: min(100%, 600px);
   height: min(60vh, 400px);
   aspect-ratio: 3/2;
@@ -51,7 +52,7 @@ body {
   display: flex;
   justify-content: center;
   gap: 2rem;
-  background: #16213e;
+  background: var(--color-secondary);
 }
 
 .dpad {
@@ -62,19 +63,24 @@ body {
 }
 
 .dpad-btn {
-  background: #0f3460;
+  background: var(--color-button-bg);
   border: none;
   border-radius: 8px;
-  color: white;
+  color: var(--color-button-text);
   touch-action: manipulation;
   user-select: none;
   min-height: 44px; /* Accessibility touch target */
+  transition: background-color 0.15s ease;
   /* Font styles now in fonts.css */
 }
 
 .dpad-btn:active {
-  background: #1e5f8b;
+  background: var(--color-button-active);
   transform: scale(0.95);
+}
+
+.dpad-btn:hover {
+  background: var(--color-button-hover);
 }
 
 .dpad-up { grid-column: 2; grid-row: 1; }

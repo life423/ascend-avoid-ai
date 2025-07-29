@@ -92,13 +92,13 @@ body {
     'opsz' 14,
     'wght' 500,
     'wdth' 100;
-  color: #4ade80;
+  color: var(--color-success);
 }
 .error {
   font-variation-settings:
     'opsz' 14,
     'wght' 600,
     'wdth' 105;
-  color: #ef4444;
+  color: var(--color-error);
 }
 
