@@ -1,73 +1,14 @@
-# Node.js dependencies
+# Dependencies
 node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-.pnpm-debug.log
-.npm
-.yarn
-.pnp.*
-.yarn-integrity
 
-# Package manager locks (uncomment if you want to ignore)
-# package-lock.json
-# yarn.lock
-
-# Build and distribution files
-/dist/
-/build/
-/out/
-/.next/
-/.nuxt/
-/.output/
-/coverage/
-/.nyc_output/
-server/dist/
+# Build outputs
+dist/
 
 # Environment files
-.env
-.env.*
-!.env.example
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*
+
+# OS files
+.DS_Store
 
 # Logs
-logs/
 *.log
-
-# IDE and editor files
-.vscode/
-.idea/
-*.sublime-*
-*.swp
-*.swo
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Claude AI assistant configuration
-.claude/
-
-# Testing
-/coverage/
-/.nyc_output/
-
-# Temporary files
-.tmp/
-.temp/
-.cache/
-
-# Debug
-.debug/
-
-# Security - Never commit setup scripts with credentials
-setup-github-secrets.ps1
-setup-*.ps1
-COMPLETE_DEPLOYMENT_SUMMARY.md
-*.secrets

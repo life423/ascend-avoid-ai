@@ -1,0 +1,1 @@
+always keep the code base organized. and check to make sure you are not writing duplicate code.
