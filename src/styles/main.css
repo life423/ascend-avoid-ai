@@ -9,7 +9,7 @@
 }
 
 body {
-  background: var(--color-game-bg);
+  background: var(--gradient-game-bg);
   color: var(--color-text-primary);
   overflow: hidden;
   touch-action: none;
@@ -21,13 +21,23 @@ body {
   flex-direction: column;
   height: 100vh;
   width: 100vw;
+  background: var(--gradient-game-bg);
+  border: 1px solid var(--color-primary-dark);
 }
 
 .game-header {
   padding: 1rem;
   text-align: center;
-  background: var(--color-secondary);
+  background: var(--gradient-primary);
+  border-bottom: 2px solid var(--color-primary-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   container-type: inline-size; /* Enable container queries */
+}
+
+.game-header h1 {
+  color: var(--color-text-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-bottom: 0.5rem;
 }
 
 .canvas-container {
@@ -36,15 +46,29 @@ body {
   justify-content: center;
   align-items: center;
   padding: 1rem;
+  background: var(--color-primary-dark);
+  border-top: 1px solid var(--color-primary);
+  border-bottom: 1px solid var(--color-primary);
 }
 
 #gameCanvas {
-  border: 2px solid var(--color-canvas-border);
-  border-radius: 8px;
+  border: 3px solid var(--color-primary);
+  border-radius: 12px;
   background: var(--color-canvas-bg);
   width: min(100%, 600px);
   height: min(60vh, 400px);
   aspect-ratio: 3/2;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+#gameCanvas:hover {
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    0 0 0 1px var(--color-primary-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .controls {
@@ -52,35 +76,52 @@ body {
   display: flex;
   justify-content: center;
   gap: 2rem;
-  background: var(--color-secondary);
+  background: var(--gradient-primary);
+  border-top: 2px solid var(--color-primary-light);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .dpad {
   display: grid;
   grid-template-columns: repeat(3, 60px);
   grid-template-rows: repeat(3, 60px);
-  gap: 4px;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  border: 1px solid var(--color-primary-dark);
 }
 
 .dpad-btn {
-  background: var(--color-button-bg);
-  border: none;
-  border-radius: 8px;
+  background: var(--gradient-primary);
+  border: 2px solid var(--color-primary-light);
+  border-radius: 10px;
   color: var(--color-button-text);
   touch-action: manipulation;
   user-select: none;
-  min-height: 44px; /* Accessibility touch target */
-  transition: background-color 0.15s ease;
+  min-height: 44px;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.15s ease;
   /* Font styles now in fonts.css */
 }
 
-.dpad-btn:active {
-  background: var(--color-button-active);
-  transform: scale(0.95);
+.dpad-btn:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-accent-warm);
+  box-shadow: 
+    0 3px 6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-.dpad-btn:hover {
-  background: var(--color-button-hover);
+.dpad-btn:active {
+  background: var(--color-accent);
+  border-color: var(--color-accent-warm);
+  transform: scale(0.95) translateY(1px);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .dpad-up { grid-column: 2; grid-row: 1; }
@@ -90,5 +131,33 @@ body {
 
 .status {
   padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  border: 1px solid var(--color-primary-dark);
+  backdrop-filter: blur(4px);
   /* Font styles now in fonts.css */
+}
+
+.status.connected {
+  background: rgba(40, 167, 69, 0.2);
+  border-color: var(--color-success);
+  box-shadow: 0 0 8px rgba(40, 167, 69, 0.3);
+}
+
+.status.error {
+  background: rgba(220, 53, 69, 0.2);
+  border-color: var(--color-error);
+  box-shadow: 0 0 8px rgba(220, 53, 69, 0.3);
+}
+
+.status.connecting {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: var(--color-warning);
+  box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
