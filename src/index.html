@@ -74,80 +74,70 @@
                 </aside>
             </main>
 
-            <div class="control-panel">
-                <div class="float-menu mobile-only">
-                    <div class="float-trigger">
-                        <span class="menu-dot"></span>
-                        <span class="menu-dot"></span>
-                        <span class="menu-dot"></span>
-                    </div>
-                    <div class="float-options hidden">
-                        <button
-                            class="btn-action guide-btn-mobile"
-                            aria-label="How to play"
-                            title="How to play"
-                        >
-                            Guide
-                        </button>
-                        <button
-                            class="btn-action multiplayer-btn-mobile"
-                            aria-label="Multiplayer mode"
-                            title="Multiplayer mode"
-                        >
-                            Multiplayer
-                        </button>
-                    </div>
+            <div class="float-menu mobile-only">
+                <div class="float-trigger">
+                    <span class="menu-dot"></span>
+                    <span class="menu-dot"></span>
+                    <span class="menu-dot"></span>
                 </div>
+                <div class="float-options hidden">
+                    <button
+                        class="btn-action guide-btn-mobile"
+                        aria-label="How to play"
+                        title="How to play"
+                    >
+                        Guide
+                    </button>
+                    <button
+                        class="btn-action multiplayer-btn-mobile"
+                        aria-label="Multiplayer mode"
+                        title="Multiplayer mode"
+                    >
+                        Multiplayer
+                    </button>
+                </div>
+            </div>
 
-                <div class="modal-panel mobile-only modal hidden">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>How to Play</h3>
-                            <button
-                                class="close-modal"
-                                aria-label="Close instructions"
-                            >
-                                ×
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="modal-instructions">
-                                <p>
-                                    Move the white block to the top without
-                                    hitting the blue blocks.
-                                </p>
-                                <ul>
-                                    <li>Use the D-pad on the left to move</li>
-                                    <li>A button: Fire missile</li>
-                                    <li>B button: Activate boost</li>
-                                </ul>
-                                <p class="note">
-                                    Game speed increases as you score more
-                                    points!
-                                </p>
-                                <p>
-                                    Try to beat your high score and challenge
-                                    your friends in multiplayer mode!
-                                </p>
-                            </div>
+            <div class="modal-panel mobile-only modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>How to Play</h3>
+                        <button
+                            class="close-modal"
+                            aria-label="Close instructions"
+                        >
+                            ×
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="modal-instructions">
+                            <p>
+                                Move the white block to the top without
+                                hitting the blue blocks.
+                            </p>
+                            <ul>
+                                <li>Use the D-pad on the left to move</li>
+                                <li>A button: Fire missile</li>
+                                <li>B button: Activate boost</li>
+                            </ul>
+                            <p class="note">
+                                Game speed increases as you score more
+                                points!
+                            </p>
+                            <p>
+                                Try to beat your high score and challenge
+                                your friends in multiplayer mode!
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="error-panel">
-            <h3>Oops! Something went wrong</h3>
-            <p class="error-text">
-                There was a problem loading the game.
-            </p>
-            <button onclick="window.location.reload()">Reload Game</button>
-        </div>
-
         <script
             type="module"
             src="index.ts"
-            onerror="document.querySelector('.error-panel').style.display='block'; document.querySelector('.error-text').textContent='Failed to load game script. Please check your connection and try again.'"
+            onerror="alert('Failed to load game script. Please refresh the page.')"
         ></script>
     </body>
 </html>

@@ -132,16 +132,7 @@
     justify-content: center;
 }
 
-/* Controls */
-.control-panel {
-    flex: 0 0 120px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);
-    padding: var(--space-sm);
-    width: 100%;
-}
+/* Touch controls are created dynamically by TouchControls.ts */
 
 .float-menu {
     position: absolute;
@@ -370,9 +361,7 @@
         display: none;
     }
     
-    .control-panel {
-        display: none !important;
-    }
+    /* Touch controls hidden on desktop by TouchControls.ts */
 }
 
 @media (max-width: 1199px) {
