@@ -3,8 +3,7 @@
  * Handles initialization, polyfills and responsive behavior.
  */
 
-// Import styles
-import './styles/touch-controls.css'
+// Styles imported via index.css
 
 // Import core game components
 import Game from './core/Game'
@@ -194,16 +193,16 @@ function initializeUIControls() {
     const menuButton = document.querySelector('.float-trigger')
     const menuItems = document.querySelector('.float-options')
     const guideButton = document.querySelector(
-        '.btn-action[data-action="guide"]'
+        '.guide-btn-mobile'
     )
     const multiplayerToggle = document.querySelector(
-        '.btn-action[data-action="multiplayer"]'
+        '.multiplayer-btn-mobile'
     )
     const guideSidebarBtn = document.querySelector(
-        '.btn-action[data-action="guide-desktop"]'
+        '.guide-btn-desktop'
     )
     const multiplayerSidebarBtn = document.querySelector(
-        '.btn-action[data-action="multiplayer-desktop"]'
+        '.multiplayer-btn-desktop'
     )
     const instructionsModal = document.querySelector('.modal-panel')
     const closeModalBtn = document.querySelector('.close-modal')

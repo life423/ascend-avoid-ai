@@ -63,7 +63,7 @@ class ModernUIBridge {
     const { openGuideModal, toggleMultiplayer, toggleFloatMenu, closeAllModals } = useUIStore.getState();
     
     // 🖥️ Desktop: Replace guide button handlers (info panel)
-    const guideButtons = document.querySelectorAll('[data-action*="guide"]');
+    const guideButtons = document.querySelectorAll('.guide-btn-desktop, .guide-btn-mobile');
     guideButtons.forEach(button => {
       button.addEventListener('click', (e) => {
         e.preventDefault();
@@ -73,7 +73,7 @@ class ModernUIBridge {
     });
     
     // 🖥️ Desktop: Replace multiplayer button handlers (info panel)
-    const multiplayerButtons = document.querySelectorAll('[data-action*="multiplayer"]');
+    const multiplayerButtons = document.querySelectorAll('.multiplayer-btn-desktop, .multiplayer-btn-mobile');
     multiplayerButtons.forEach(button => {
       button.addEventListener('click', (e) => {
         e.preventDefault();

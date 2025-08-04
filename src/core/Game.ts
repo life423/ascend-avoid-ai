@@ -112,7 +112,7 @@ export default class Game {
         // Get DOM elements - handle both canvas selectors for compatibility
         this.canvas =
             (document.querySelector(
-                '.game-canvas[data-canvas="primary"]'
+                '.game-canvas'
             ) as HTMLCanvasElement) ||
             (document.getElementById('gameCanvas') as HTMLCanvasElement) ||
             document.createElement('canvas')
@@ -142,10 +142,10 @@ export default class Game {
         }
 
         this.scoreElement = document.querySelector(
-            '.score-value[data-score="current"]'
+            '.score-value.current-score'
         )
         this.highScoreElement = document.querySelector(
-            '.score-value[data-score="high"]'
+            '.score-value.high-score'
         )
 
         // Game state

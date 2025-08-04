@@ -4,18 +4,24 @@
 
 /* Global control panel updated with responsive fix */
 .control-panel {
-    flex: 0 0 auto;
+    flex: 0 0 var(--ctrl-h); /* Reserve space based on control height variable */
     padding: var(--space-sm);
     position: relative;
-    height: auto !important;
+    background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);
+    min-height: var(--ctrl-h);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .touch-controller {
-    display: none;
+    display: flex;
     justify-content: center;
     align-items: center;
     padding: var(--space-sm) 0;
     z-index: var(--z-controls);
+    flex: 1;
 }
 
 /* ============================================
@@ -269,4 +275,59 @@
 .btn-action:disabled:hover {
     transform: none;
     box-shadow: none;
+}
+
+/* ============================================
+   RESPONSIVE TOUCH CONTROLS - SIMPLE FIX
+   ============================================ */
+
+/* Hide touch controls on desktop */
+@media (min-width: 1200px) {
+    .control-panel {
+        display: none !important;
+    }
+}
+
+/* Mobile layout - prevent overlap */
+@media (max-width: 1199px) {
+    .app-root {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .game-main {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: var(--space-sm);
+    }
+    
+    .game-canvas {
+        /* Let ResponsiveManager handle canvas sizing */
+        max-width: 100%;
+        max-height: 100%;
+    }
+    
+    .control-panel {
+        flex: 0 0 120px; /* Fixed height for controls */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);
+        padding: var(--space-sm);
+        width: 100%;
+    }
+}
+
+/* Touch control active states */
+.control-button.active {
+    background-color: rgba(0, 188, 212, 0.6) !important;
+    transform: scale(0.95) !important;
+}
+
+.control-button.action-button.active {
+    transform: rotate(-15deg) scale(0.95) !important;
 }

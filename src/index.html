@@ -15,93 +15,82 @@
     <body>
         <div class="loader"></div>
 
-        <div class="app-root" data-app="ascend-avoid">
+        <div class="app-root">
             <header class="app-header">
                 <h1>Ascend Avoid</h1>
 
-                <div class="score-panel" data-scores="main">
+                <div class="score-panel">
                     <h4>
                         High Score:
-                        <span class="score-value" data-score="high">0</span>
+                        <span class="score-value high-score">0</span>
                     </h4>
                     <h4>
                         Score:
-                        <span class="score-value" data-score="current">0</span>
+                        <span class="score-value current-score">0</span>
                     </h4>
                 </div>
             </header>
 
-            <main class="game-main" data-section="main">
-                <div class="game-area" data-section="game">
-                    <div class="canvas-viewport" data-viewport="main">
-                        <canvas
-                            class="game-canvas"
-                            data-canvas="primary"
-                            aria-label="Cross the Box game"
-                            role="img"
-                        ></canvas>
-                    </div>
+            <main class="game-main">
+                <canvas
+                    class="game-canvas"
+                    aria-label="Cross the Box game"
+                    role="img"
+                ></canvas>
 
-                    <div class="info-panel desktop-only" data-panel="info">
-                        <div class="panel-content" data-content="instructions">
-                            <h3>How to Play:</h3>
-                            <p>
-                                Move the white block to the top without hitting
-                                the blue blocks.
-                            </p>
-                            <ul>
-                                <li>Use arrow keys or WASD to move</li>
-                                <li>Press 'R' to restart the game</li>
-                            </ul>
-                            <p class="note">
-                                Game speed increases as you score more points!
-                            </p>
-                            <p>
-                                Try to beat your high score and challenge your
-                                friends in multiplayer mode!
-                            </p>
-                        </div>
-                        <div class="info-actions">
-                            <button
-                                class="nav-button btn-action"
-                                data-action="guide-desktop"
-                                aria-label="How to play"
-                            >
-                                Guide
-                            </button>
-                            <button
-                                class="nav-button btn-action"
-                                data-action="multiplayer-desktop"
-                                aria-label="Multiplayer mode"
-                            >
-                                Multiplayer
-                            </button>
-                        </div>
+                <aside class="info-panel desktop-only">
+                    <div class="panel-content">
+                        <h3>How to Play:</h3>
+                        <p>
+                            Move the white block to the top without hitting
+                            the blue blocks.
+                        </p>
+                        <ul>
+                            <li>Use arrow keys or WASD to move</li>
+                            <li>Press 'R' to restart the game</li>
+                        </ul>
+                        <p class="note">
+                            Game speed increases as you score more points!
+                        </p>
+                        <p>
+                            Try to beat your high score and challenge your
+                            friends in multiplayer mode!
+                        </p>
                     </div>
-                </div>
+                    <div class="info-actions">
+                        <button
+                            class="nav-button btn-action guide-btn-desktop"
+                            aria-label="How to play"
+                        >
+                            Guide
+                        </button>
+                        <button
+                            class="nav-button btn-action multiplayer-btn-desktop"
+                            aria-label="Multiplayer mode"
+                        >
+                            Multiplayer
+                        </button>
+                    </div>
+                </aside>
             </main>
 
-            <div class="control-panel" data-section="controls">
-                <div class="touch-controller" data-controller="main"></div>
-
-                <div class="float-menu mobile-only" data-menu="primary">
-                    <div class="float-trigger" data-trigger="menu">
+            <div class="control-panel">
+                <div class="float-menu mobile-only">
+                    <div class="float-trigger">
                         <span class="menu-dot"></span>
                         <span class="menu-dot"></span>
                         <span class="menu-dot"></span>
                     </div>
-                    <div class="float-options hidden" data-options="menu">
+                    <div class="float-options hidden">
                         <button
-                            class="btn-action"
-                            data-action="guide"
+                            class="btn-action guide-btn-mobile"
                             aria-label="How to play"
                             title="How to play"
                         >
                             Guide
                         </button>
                         <button
-                            class="btn-action"
-                            data-action="multiplayer"
+                            class="btn-action multiplayer-btn-mobile"
                             aria-label="Multiplayer mode"
                             title="Multiplayer mode"
                         >
@@ -122,10 +111,7 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <div
-                                class="modal-instructions"
-                                data-content="mobile-instructions"
-                            >
+                            <div class="modal-instructions">
                                 <p>
                                     Move the white block to the top without
                                     hitting the blue blocks.
@@ -150,9 +136,9 @@
             </div>
         </div>
 
-        <div class="error-panel" data-error="container">
+        <div class="error-panel">
             <h3>Oops! Something went wrong</h3>
-            <p class="error-text" data-error="message">
+            <p class="error-text">
                 There was a problem loading the game.
             </p>
             <button onclick="window.location.reload()">Reload Game</button>
@@ -161,7 +147,7 @@
         <script
             type="module"
             src="index.ts"
-            onerror="document.querySelector('.error-panel[data-error=&quot;container&quot;]').style.display='block'; document.querySelector('.error-text[data-error=&quot;message&quot;]').textContent='Failed to load game script. Please check your connection and try again.'"
+            onerror="document.querySelector('.error-panel').style.display='block'; document.querySelector('.error-text').textContent='Failed to load game script. Please check your connection and try again.'"
         ></script>
     </body>
 </html>

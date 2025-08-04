@@ -2,23 +2,24 @@
    RESPONSIVE OVERRIDES
    ============================================ */
 
-/* Mobile Layout (up to 1199px) */
-@media (max-width: 1199px) {
-    .app-root {
-        /* Use modern viewport units with 100vh as fallback */
-        height: 100vh;
-        height: 100dvh; /* Dynamic viewport height - accounts for mobile browser chrome */
-        height: 100svh; /* Small viewport height - most conservative */
-        height: calc(var(--vh, 1vh) * 100); /* JS-calculated custom property fallback */
-        max-height: 100dvh;
-        max-height: 100svh;
-    }
+/* Phone and Tablet Layouts - managed by UnifiedResponsiveSystem */
+.viewport-phone-portrait .app-root,
+.viewport-phone-landscape .app-root,
+.viewport-tablet .app-root {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height - accounts for mobile browser chrome */
+    height: 100svh; /* Small viewport height - most conservative */
+    max-height: 100dvh;
+    max-height: 100svh;
+}
     
-    .app-header {
-        padding: var(--space-sm) var(--space-md);
-        padding-top: max(var(--space-sm), env(safe-area-inset-top, 8px));
-        min-height: 50px;
-    }
+.viewport-phone-portrait .app-header,
+.viewport-phone-landscape .app-header,
+.viewport-tablet .app-header {
+    padding: var(--space-sm) var(--space-md);
+    padding-top: max(var(--space-sm), env(safe-area-inset-top, 8px));
+    min-height: 50px;
+}
     
     .app-header h1 {
         font-size: 1.5rem;
@@ -38,53 +39,63 @@
         letter-spacing: 0.025em; /* Subtle distinction */
     }
     
-    .game-main {
-        padding: var(--space-xs);
-    }
-    
-    .game-area {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 0;
-    }
+.viewport-phone-portrait .game-main,
+.viewport-phone-landscape .game-main,
+.viewport-tablet .game-main {
+    padding: var(--space-xs);
+    flex-direction: column;
+}
+
+.viewport-phone-portrait .game-canvas,
+.viewport-phone-landscape .game-canvas,
+.viewport-tablet .game-canvas {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: calc(100vw - 2 * var(--space-xs));
+    max-height: calc(100vh - var(--ctrl-h) - 120px); /* Reserve space for header and controls */
+}
     
     /* Updated mobile control-panel - adaptive sizing based on content */
     .control-panel {
-        flex: 0 0 auto; /* Don't grow/shrink - but let content determine size */
-        /* Remove rigid min-height - let content and viewport constraints determine size */
+        flex: 0 0 var(--ctrl-h); /* Reserve proper space for controls */
         max-height: 25vh; /* Still cap maximum to prevent taking over screen */
         padding: var(--space-xs) var(--space-sm);
         padding-bottom: env(safe-area-inset-bottom, 0); /* iOS home indicator clearance */
         position: relative;
         z-index: var(--z-ui);
         background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
     
     /* Updated mobile touch-controller - responsive sizing */
     .touch-controller {
         display: flex;
         justify-content: center;
-        height: auto;
+        align-items: center;
+        flex: 1;
         /* Responsive sizing based on viewport height - adapts to device constraints */
         min-height: clamp(60px, 12vh, 100px); /* Scale with viewport, never too small or huge */
         padding: var(--control-gap) 0; /* Use shared responsive padding */
     }
     
-    .info-panel {
-        display: none;
-    }
-    
-    .desktop-only {
-        display: none;
-    }
-    
-    .mobile-only {
-        display: block;
-    }
+.viewport-phone-portrait .info-panel,
+.viewport-phone-landscape .info-panel,
+.viewport-tablet .info-panel {
+    display: none;
+}
+
+.viewport-phone-portrait .desktop-only,
+.viewport-phone-landscape .desktop-only,
+.viewport-tablet .desktop-only {
+    display: none;
+}
+
+.viewport-phone-portrait .mobile-only,
+.viewport-phone-landscape .mobile-only,
+.viewport-tablet .mobile-only {
+    display: block;
 }
 
 /* Very Small Screens - Progressive space negotiation */
@@ -95,10 +106,7 @@
     
     .game-canvas {
         border-width: 1px !important;
-        max-width: calc(100vw - 0.625rem);
-        /* Reduce max-height further on small screens to ensure controls fit */
-        max-height: calc(100dvh - var(--ctrl-h) - 6rem);
-        max-height: calc(100svh - var(--ctrl-h) - 6rem);
+        /* Let ResponsiveManager handle sizing */
     }
     
     .app-header {
@@ -182,46 +190,26 @@
     }
 }
 
-/* Desktop Layout (from 1200px up) */
-@media (min-width: 1200px) {
-    .app-root {
-        height: 100vh;
-        width: 100vw;
-        max-width: none;
-    }
-    
-    /* Hide control-panel and float-menu on desktop */
-    .control-panel,
-    .float-menu {
-        display: none;
-    }
-    
-    /* Enhanced desktop touch-controller hide */
-    .touch-controller {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        position: absolute !important;
-        left: -9999px !important;
-    }
-    
-    /* .info-panel styles moved to game-layout.css to avoid cascade conflicts */
-    
-    .game-area {
-        display: grid;
-        grid-template-columns: 1fr 280px;
-        gap: var(--space-lg);
-        height: 100%;
-    }
-    
-    .desktop-only {
-        display: block;
-    }
-    
-    .mobile-only {
-        display: none;
-    }
+/* Desktop and TV Layouts */
+.viewport-desktop .app-root,
+.viewport-tv .app-root {
+    height: 100vh;
+    width: 100vw;
+    max-width: none;
+}
+
+.viewport-desktop .game-main {
+    flex-direction: row;
+}
+
+.viewport-desktop .desktop-only,
+.viewport-tv .desktop-only {
+    display: block;
+}
+
+.viewport-desktop .mobile-only,
+.viewport-tv .mobile-only {
+    display: none;
 }
 
 /* Chrome Mobile Specific Fixes */
@@ -238,9 +226,7 @@
 }
 
 .chrome-mobile .game-canvas {
-    /* More conservative canvas sizing for Chrome mobile */
-    max-height: calc(100vh - 150px) !important;
-    max-height: calc(var(--vh, 1vh) * 100 - 150px) !important;
+    /* Let ResponsiveManager handle Chrome mobile sizing */
 }
 
 /* ============================================

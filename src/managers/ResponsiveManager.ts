@@ -200,12 +200,10 @@ export default class ResponsiveManager {
     resizeCanvas(): void {
         if (!this.canvas) return
 
-        // Get the canvas viewport container
-        const viewport = this.canvas.closest(
-            '.canvas-viewport[data-viewport="main"]'
-        ) as HTMLElement
-        if (!viewport) {
-            console.warn('Canvas viewport container not found')
+        // Canvas is now directly in game-main, no viewport wrapper needed
+        const gameMain = this.canvas.closest('.game-main') as HTMLElement
+        if (!gameMain) {
+            console.warn('Game main container not found')
             return
         }
 
@@ -217,7 +215,7 @@ export default class ResponsiveManager {
             // Desktop: Calculate based on the CSS Grid layout
             // The grid is: grid-template-columns: 1fr 280px with gap: 16px
             const gameMain = document.querySelector(
-                '.game-main[data-section="main"]'
+                '.game-main'
             ) as HTMLElement | null
             
             if (gameMain) {
@@ -252,7 +250,7 @@ export default class ResponsiveManager {
                 '.app-header'
             ) as HTMLElement | null
             const controlPanel = document.querySelector(
-                '.control-panel[data-section="controls"]'
+                '.control-panel'
             ) as HTMLElement | null
 
             // Get actual heights of fixed elements - use modern measurement approach

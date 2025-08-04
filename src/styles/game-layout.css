@@ -62,40 +62,14 @@
    GAME AREA & CANVAS LAYOUT
    ============================================ */
 .game-main {
-    flex: 1 1 0; /* Allow shrinking when space is tight - critical for mobile */
+    flex: 1 1 auto; /* Take available space but allow controls to have their space */
     min-height: 0; /* Secret sauce - allows flex child to shrink below content size */
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden;
     padding: var(--space-md);
-}
-
-.game-area {
-    max-height: 100%;
-    width: 100%;
-    max-width: 1200px;
-    display: grid;
-    grid-template-rows: 1fr;
-    grid-template-columns: 1fr;
-    overflow: hidden;
     gap: var(--space-lg);
-}
-
-/* Canvas viewport - combines positioning from both files */
-.canvas-viewport {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    background: var(--primary-dark);
-    border-radius: var(--border-radius);
-    position: relative;
-    /* Responsive constraints for proper scaling */
-    min-height: 0;
-    min-width: 0;
-    max-width: 100%;
-    max-height: 100%;
 }
 
 /* Game canvas - the actual rendering surface */
@@ -107,12 +81,7 @@
     box-shadow: 0 0 20px var(--divider-line);
     /* Prevent touch interactions from scrolling */
     touch-action: none;
-    /* Critical: Canvas must respect container limits to prevent overflow */
-    width: 100%;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%; /* Never exceed parent container */
-    object-fit: contain;
+    /* Let ResponsiveManager handle all sizing */
 }
 
 /* ============================================
@@ -369,19 +338,16 @@
    These are just the desktop-specific layout adjustments
    ============================================ */
 @media (min-width: 1200px) {
+    .game-main {
+        flex-direction: row;
+    }
+    
     .info-panel {
         display: flex;
-        grid-column: 2;
         width: 280px;
         min-width: 280px;
         max-width: 280px;
-    }
-    
-    .game-area {
-        display: grid;
-        grid-template-columns: 1fr 280px;
-        gap: var(--space-lg);
-        height: 100%;
+        flex: 0 0 280px;
     }
     
     .desktop-only {
