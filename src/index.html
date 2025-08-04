@@ -2,63 +2,37 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <!-- Responsive viewport meta tag with proper settings -->
-        <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover, maximum-scale=1.0, minimum-scale=1.0"
-        />
-        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-        <!-- Mobile web app capable meta tags -->
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta
-            name="apple-mobile-web-app-status-bar-style"
-            content="black-translucent"
-        />
-        <!-- Theme color for browser UI elements -->
-        <meta name="theme-color" content="#0a192f" />
-
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Ascend Avoid</title>
-        
-        <!-- Google Fonts - Montserrat -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-        
+        <link
+            href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
         <link rel="stylesheet" href="styles/index.css" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-        <!-- optional PNG fallbacks for old browsers -->
-        <link rel="alternate icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     </head>
-    <body>
-        <!-- Loading indicator -->
-        <div class="loader"></div>
-        
-        <!-- Orientation change overlay -->
-        <div class="orientation-overlay">
-            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMGJjZDQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjEgMTJhOS4wMSA5LjAxIDAgMCAxLTkgOSIvPjxwYXRoIGQ9Ik0zIDEyYTkuMDEgOS4wMSAwIDAgMCA5IDkiLz48cGF0aCBkPSJNMjEgMTJjMC00Ljk3LTQuMDMtOS05LTkiLz48cGF0aCBkPSJNMyAxMmMwLTQuOTcgNC4wMy05IDktOSIvPjxwYXRoIGQ9Ige1UiAyMnYtNGgtNHY0Ii8+PHBhdGggZD0iTTEyIDJ2NGg0VjIiLz48L3N2Zz4=" alt="Rotate device">
-            <h3>Please rotate your device</h3>
-            <p>For the best gaming experience, please use landscape orientation.</p>
-        </div>
 
-        <!-- Root app container -->
+    <body>
+        <div class="loader"></div>
+
         <div class="app-root" data-app="ascend-avoid">
-            <!-- Header section - stays at top in natural flow -->
             <header class="app-header">
                 <h1>Ascend Avoid</h1>
-                
-                <!-- Score display -->
+
                 <div class="score-panel" data-scores="main">
-                    <h4>High Score: <span class="score-value" data-score="high">0</span></h4>
-                    <h4>Score: <span class="score-value" data-score="current">0</span></h4>
+                    <h4>
+                        High Score:
+                        <span class="score-value" data-score="high">0</span>
+                    </h4>
+                    <h4>
+                        Score:
+                        <span class="score-value" data-score="current">0</span>
+                    </h4>
                 </div>
             </header>
 
-            <!-- Main game section - takes remaining height and centers only game content -->
             <main class="game-main" data-section="main">
-                <!-- Game layout container with semantic ID -->
                 <div class="game-area" data-section="game">
-                    <!-- Canvas viewport wrapper for proper centering -->
                     <div class="canvas-viewport" data-viewport="main">
                         <canvas
                             class="game-canvas"
@@ -67,14 +41,13 @@
                             role="img"
                         ></canvas>
                     </div>
-                    
-                    <!-- Desktop: Sidebar container for instructions -->
+
                     <div class="info-panel desktop-only" data-panel="info">
                         <div class="panel-content" data-content="instructions">
                             <h3>How to Play:</h3>
                             <p>
-                                Move the white block to the top without hitting the blue
-                                blocks.
+                                Move the white block to the top without hitting
+                                the blue blocks.
                             </p>
                             <ul>
                                 <li>Use arrow keys or WASD to move</li>
@@ -84,8 +57,8 @@
                                 Game speed increases as you score more points!
                             </p>
                             <p>
-                                Try to beat your high score and challenge your friends in
-                                multiplayer mode!
+                                Try to beat your high score and challenge your
+                                friends in multiplayer mode!
                             </p>
                         </div>
                         <div class="info-actions">
@@ -109,223 +82,244 @@
             </main>
 
             <div class="control-panel" data-section="controls">
-            <div class="touch-controller" data-controller="main">
-                <!-- Touch controls will be inserted here by JavaScript -->
-            </div>
+                <div class="touch-controller" data-controller="main"></div>
 
-            <!-- Floating action menu for game controls -->
-            <div class="float-menu mobile-only" data-menu="primary">
-                <div class="float-trigger" data-trigger="menu">
-                    <span class="menu-dot"></span>
-                    <span class="menu-dot"></span>
-                    <span class="menu-dot"></span>
-                </div>
-                <div class="float-options hidden" data-options="menu">
-                    <button
-                        class="btn-action" data-action="guide"
-                        aria-label="How to play"
-                        title="How to play"
-                    >
-                        Guide
-                    </button>
-                    <button
-                        class="btn-action" data-action="multiplayer"
-                        aria-label="Multiplayer mode"
-                        title="Multiplayer mode"
-                    >
-                        Multiplayer
-                    </button>
-                </div>
-            </div>
-
-            <!-- Mobile: Game instructions modal -->
-            <div class="modal-panel mobile-only modal hidden">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>How to Play</h3>
+                <div class="float-menu mobile-only" data-menu="primary">
+                    <div class="float-trigger" data-trigger="menu">
+                        <span class="menu-dot"></span>
+                        <span class="menu-dot"></span>
+                        <span class="menu-dot"></span>
+                    </div>
+                    <div class="float-options hidden" data-options="menu">
                         <button
-                            class="close-modal"
-                            aria-label="Close instructions"
+                            class="btn-action"
+                            data-action="guide"
+                            aria-label="How to play"
+                            title="How to play"
                         >
-                            ×
+                            Guide
+                        </button>
+                        <button
+                            class="btn-action"
+                            data-action="multiplayer"
+                            aria-label="Multiplayer mode"
+                            title="Multiplayer mode"
+                        >
+                            Multiplayer
                         </button>
                     </div>
-                    <div class="modal-body">
-                        <div class="modal-instructions" data-content="mobile-instructions">
-                            <p>
-                                Move the white block to the top without hitting
-                                the blue blocks.
-                            </p>
-                            <ul>
-                                <li>Use the D-pad on the left to move</li>
-                                <li>A button: Fire missile</li>
-                                <li>B button: Activate boost</li>
-                            </ul>
-                            <p class="note">
-                                Game speed increases as you score more points!
-                            </p>
-                            <p>
-                                Try to beat your high score and challenge your
-                                friends in multiplayer mode!
-                            </p>
+                </div>
+
+                <div class="modal-panel mobile-only modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>How to Play</h3>
+                            <button
+                                class="close-modal"
+                                aria-label="Close instructions"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div
+                                class="modal-instructions"
+                                data-content="mobile-instructions"
+                            >
+                                <p>
+                                    Move the white block to the top without
+                                    hitting the blue blocks.
+                                </p>
+                                <ul>
+                                    <li>Use the D-pad on the left to move</li>
+                                    <li>A button: Fire missile</li>
+                                    <li>B button: Activate boost</li>
+                                </ul>
+                                <p class="note">
+                                    Game speed increases as you score more
+                                    points!
+                                </p>
+                                <p>
+                                    Try to beat your high score and challenge
+                                    your friends in multiplayer mode!
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        </div>
 
-        <!-- Game error handling -->
         <div class="error-panel" data-error="container">
             <h3>Oops! Something went wrong</h3>
-            <p class="error-text" data-error="message">There was a problem loading the game.</p>
+            <p class="error-text" data-error="message">
+                There was a problem loading the game.
+            </p>
             <button onclick="window.location.reload()">Reload Game</button>
         </div>
 
-        <!-- Game scripts - Using Vite entry point -->
         <script
             type="module"
             src="index.ts"
             onerror="document.querySelector('.error-panel[data-error=&quot;container&quot;]').style.display='block'; document.querySelector('.error-text[data-error=&quot;message&quot;]').textContent='Failed to load game script. Please check your connection and try again.'"
         ></script>
 
-        <!-- UI Controls and Navigation Script -->
         <script>
-            // Initialize when DOM is ready
             document.addEventListener('DOMContentLoaded', function () {
-                // Get all UI elements
-                const menuButton = document.querySelector('.float-trigger');
-                const menuItems = document.querySelector('.float-options');
-                const floatMenu = document.querySelector('.float-menu');
-                const guideButton = document.querySelector('.btn-action[data-action="guide"]');
-                const multiplayerToggle = document.querySelector('.btn-action[data-action="multiplayer"]');
-                const guideSidebarBtn = document.querySelector('.btn-action[data-action="guide-desktop"]');
-                const multiplayerSidebarBtn = document.querySelector('.btn-action[data-action="multiplayer-desktop"]');
-                const instructionsModal = document.querySelector('.modal-panel');
-                const closeModalBtn = document.querySelector('.close-modal');
-                
-                // Helper function to close menu
+                const menuButton = document.querySelector('.float-trigger')
+                const menuItems = document.querySelector('.float-options')
+                const floatMenu = document.querySelector('.float-menu')
+                const guideButton = document.querySelector(
+                    '.btn-action[data-action="guide"]'
+                )
+                const multiplayerToggle = document.querySelector(
+                    '.btn-action[data-action="multiplayer"]'
+                )
+                const guideSidebarBtn = document.querySelector(
+                    '.btn-action[data-action="guide-desktop"]'
+                )
+                const multiplayerSidebarBtn = document.querySelector(
+                    '.btn-action[data-action="multiplayer-desktop"]'
+                )
+                const instructionsModal = document.querySelector('.modal-panel')
+                const closeModalBtn = document.querySelector('.close-modal')
+
                 function closeMenu() {
                     if (menuItems) {
-                        menuItems.classList.add('hidden');
+                        menuItems.classList.add('hidden')
                     }
-                }
-                
-                // Helper function to open menu
-                function openMenu() {
-                    if (menuItems) {
-                        menuItems.classList.remove('hidden');
-                    }
-                }
-                
-                // Menu button toggle - works for both click and touch
-                if (menuButton && menuItems) {
-                    ['click', 'touchstart'].forEach(eventType => {
-                        menuButton.addEventListener(eventType, function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            // Toggle menu visibility
-                            if (menuItems.classList.contains('hidden')) {
-                                openMenu();
-                            } else {
-                                closeMenu();
-                            }
-                        }, { passive: false });
-                    });
-                }
-                
-                // Guide button handlers
-                function openInstructionsModal() {
-                    if (instructionsModal) {
-                        instructionsModal.classList.remove('hidden');
-                        document.body.classList.add('modal-open');
-                        closeMenu();
-                    }
-                }
-                
-                if (guideButton) {
-                    guideButton.addEventListener('click', openInstructionsModal);
-                }
-                
-                if (guideSidebarBtn) {
-                    guideSidebarBtn.addEventListener('click', openInstructionsModal);
-                }
-                
-                // Close modal button
-                if (closeModalBtn) {
-                    closeModalBtn.addEventListener('click', function() {
-                        if (instructionsModal) {
-                            instructionsModal.classList.add('hidden');
-                            document.body.classList.remove('modal-open');
-                        }
-                    });
-                }
-                
-                // Multiplayer toggle function
-                function toggleMultiplayer() {
-                    const game = window.game;
-                    if (game && typeof game.switchGameMode === 'function') {
-                        const newMode = game.isMultiplayerMode ? 'singlePlayer' : 'multiplayer';
-                        game.switchGameMode(newMode)
-                            .then(() => {
-                                console.log(`Switched to ${newMode} mode`);
-                                closeMenu();
-                            })
-                            .catch(err => {
-                                console.error('Failed to switch game mode:', err);
-                            });
-                    }
-                }
-                
-                if (multiplayerToggle) {
-                    multiplayerToggle.addEventListener('click', toggleMultiplayer);
-                }
-                
-                if (multiplayerSidebarBtn) {
-                    multiplayerSidebarBtn.addEventListener('click', toggleMultiplayer);
-                }
-                
-                // Close menu when clicking outside - FIXED SELECTOR
-                document.addEventListener('click', function(e) {
-                    if (menuItems && !menuItems.classList.contains('hidden')) {
-                        // Check if click is outside the floating menu
-                        if (!e.target.closest('.float-menu')) {
-                            closeMenu();
-                        }
-                    }
-                });
-                
-                // Handle touch events for mobile
-                document.addEventListener('touchstart', function(e) {
-                    if (menuItems && !menuItems.classList.contains('hidden')) {
-                        // Check if touch is outside the floating menu
-                        if (!e.target.closest('.float-menu')) {
-                            closeMenu();
-                        }
-                    }
-                }, { passive: true });
-                
-                // Close modal when clicking outside content
-                if (instructionsModal) {
-                    instructionsModal.addEventListener('click', function(e) {
-                        if (e.target === instructionsModal) {
-                            instructionsModal.classList.add('hidden');
-                            document.body.classList.remove('modal-open');
-                        }
-                    });
                 }
 
-                // Prevent page scrolling on mobile (but allow modal scrolling)
-                document.addEventListener('touchmove', function(e) {
-                    if (e.target.closest('.modal-content')) {
-                        // Allow scrolling inside modal
-                        return;
+                function openMenu() {
+                    if (menuItems) {
+                        menuItems.classList.remove('hidden')
                     }
-                    // Prevent scrolling elsewhere
-                    e.preventDefault();
-                }, { passive: false });
-            });
+                }
+
+                if (menuButton && menuItems) {
+                    ;['click', 'touchstart'].forEach(eventType => {
+                        menuButton.addEventListener(
+                            eventType,
+                            function (e) {
+                                e.preventDefault()
+                                e.stopPropagation()
+
+                                if (menuItems.classList.contains('hidden')) {
+                                    openMenu()
+                                } else {
+                                    closeMenu()
+                                }
+                            },
+                            { passive: false }
+                        )
+                    })
+                }
+
+                function openInstructionsModal() {
+                    if (instructionsModal) {
+                        instructionsModal.classList.remove('hidden')
+                        document.body.classList.add('modal-open')
+                        closeMenu()
+                    }
+                }
+
+                if (guideButton) {
+                    guideButton.addEventListener('click', openInstructionsModal)
+                }
+
+                if (guideSidebarBtn) {
+                    guideSidebarBtn.addEventListener(
+                        'click',
+                        openInstructionsModal
+                    )
+                }
+
+                if (closeModalBtn) {
+                    closeModalBtn.addEventListener('click', function () {
+                        if (instructionsModal) {
+                            instructionsModal.classList.add('hidden')
+                            document.body.classList.remove('modal-open')
+                        }
+                    })
+                }
+
+                function toggleMultiplayer() {
+                    const game = window.game
+                    if (game && typeof game.switchGameMode === 'function') {
+                        const newMode = game.isMultiplayerMode
+                            ? 'singlePlayer'
+                            : 'multiplayer'
+                        game.switchGameMode(newMode)
+                            .then(() => {
+                                console.log(`Switched to ${newMode} mode`)
+                                closeMenu()
+                            })
+                            .catch(err => {
+                                console.error(
+                                    'Failed to switch game mode:',
+                                    err
+                                )
+                            })
+                    }
+                }
+
+                if (multiplayerToggle) {
+                    multiplayerToggle.addEventListener(
+                        'click',
+                        toggleMultiplayer
+                    )
+                }
+
+                if (multiplayerSidebarBtn) {
+                    multiplayerSidebarBtn.addEventListener(
+                        'click',
+                        toggleMultiplayer
+                    )
+                }
+
+                document.addEventListener('click', function (e) {
+                    if (menuItems && !menuItems.classList.contains('hidden')) {
+                        if (!e.target.closest('.float-menu')) {
+                            closeMenu()
+                        }
+                    }
+                })
+
+                document.addEventListener(
+                    'touchstart',
+                    function (e) {
+                        if (
+                            menuItems &&
+                            !menuItems.classList.contains('hidden')
+                        ) {
+                            if (!e.target.closest('.float-menu')) {
+                                closeMenu()
+                            }
+                        }
+                    },
+                    { passive: true }
+                )
+
+                if (instructionsModal) {
+                    instructionsModal.addEventListener('click', function (e) {
+                        if (e.target === instructionsModal) {
+                            instructionsModal.classList.add('hidden')
+                            document.body.classList.remove('modal-open')
+                        }
+                    })
+                }
+
+                document.addEventListener(
+                    'touchmove',
+                    function (e) {
+                        if (e.target.closest('.modal-content')) {
+                            return
+                        }
+                        e.preventDefault()
+                    },
+                    { passive: false }
+                )
+            })
         </script>
     </body>
 </html>
