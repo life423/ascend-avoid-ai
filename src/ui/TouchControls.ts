@@ -137,30 +137,41 @@ export default class TouchControls {
      * D-pad on left, two action buttons on right
      */
     private createControlElements(): void {
-        // Get the container for controls using the new selector system
-        const containerElement = document.querySelector(
-            '.touch-controller[data-controller="main"]'
-        )
-        if (!containerElement) {
-            console.log('Touch controls container not found, creating one')
-            // Create the container if it doesn't exist
+        // Get the touch controls area from the HTML structure
+        const touchControlsArea = document.querySelector('.touch-controls-area')
+        
+        if (touchControlsArea) {
+            // Create the container within the touch-controls-area
             this.container = document.createElement('div')
             this.container.className = 'touch-controller'
             this.container.setAttribute('data-controller', 'main')
-            // Use relative positioning within the CSS layout flow instead of fixed
             this.container.style.position = 'relative'
             this.container.style.width = '100%'
+            this.container.style.height = '100%'
             this.container.style.display = 'flex'
             this.container.style.justifyContent = 'space-between'
             this.container.style.alignItems = 'center'
-            this.container.style.padding = '10px 10px 30px 10px'
-            this.container.style.pointerEvents = 'none' // Parent container doesn't intercept clicks
-            this.container.style.background =
-                'linear-gradient(to top, rgba(10, 25, 47, 0.8), transparent)'
-
-            document.body.appendChild(this.container)
+            this.container.style.padding = '0 var(--space-md)'
+            this.container.style.pointerEvents = 'none'
+            
+            touchControlsArea.appendChild(this.container)
         } else {
-            this.container = containerElement as HTMLElement
+            console.warn('Touch controls area not found in HTML structure')
+            // Fallback to body if touch-controls-area doesn't exist
+            this.container = document.createElement('div')
+            this.container.className = 'touch-controller'
+            this.container.style.position = 'fixed'
+            this.container.style.bottom = '0'
+            this.container.style.left = '0'
+            this.container.style.right = '0'
+            this.container.style.height = 'var(--ctrl-h)'
+            this.container.style.display = 'flex'
+            this.container.style.justifyContent = 'space-between'
+            this.container.style.alignItems = 'center'
+            this.container.style.padding = '0 var(--space-md)'
+            this.container.style.pointerEvents = 'none'
+            
+            document.body.appendChild(this.container)
         }
 
         // Create left side controls (D-pad)
@@ -434,6 +445,12 @@ export default class TouchControls {
                 }, 100)
             }
         }
+        
+        // Also hide the touch-controls-area container on desktop
+        const touchControlsArea = document.querySelector('.touch-controls-area')
+        if (touchControlsArea && window.innerWidth >= 1200) {
+            (touchControlsArea as HTMLElement).style.display = 'none'
+        }
     }
     /**
      * Show the touch controls
@@ -453,10 +470,14 @@ export default class TouchControls {
             // Reinitialize the adapter
             if (this.container) {
                 this.controlsAdapter = new TouchControlsAdapter(this.container);
-                // Fix for TypeScript error - container is definitely HTMLElement here
-                const containerElement = this.container as HTMLElement;
-                containerElement.style.display = 'flex';
+                (this.container as HTMLElement).style.display = 'flex';
             }
+        }
+        
+        // Also show the touch-controls-area container
+        const touchControlsArea = document.querySelector('.touch-controls-area')
+        if (touchControlsArea) {
+            (touchControlsArea as HTMLElement).style.display = 'flex'
         }
     }
 

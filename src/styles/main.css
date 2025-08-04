@@ -53,11 +53,25 @@
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.game-canvas-container {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: var(--space-md);
+}
+
+.touch-controls-area {
+    flex: 0 0 var(--ctrl-h);
+    display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
-    padding: var(--space-md);
-    gap: var(--space-lg);
+    position: relative;
 }
 
 .game-canvas {
@@ -345,6 +359,16 @@
         flex-direction: row;
     }
     
+    .game-canvas-container {
+        flex: 1 1 auto;
+        padding: var(--space-md);
+        gap: var(--space-lg);
+    }
+    
+    .touch-controls-area {
+        display: none;
+    }
+    
     .info-panel {
         display: flex;
         width: 280px;
@@ -375,9 +399,11 @@
         flex: 1 1 auto;
         min-height: 0;
         display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: var(--space-sm);
+        flex-direction: column;
+    }
+    
+    .game-canvas-container {
+        padding: var(--space-sm) var(--space-sm) 0;
     }
     
     .game-canvas {

@@ -32,13 +32,14 @@
             </header>
 
             <main class="game-main">
-                <canvas
-                    class="game-canvas"
-                    aria-label="Cross the Box game"
-                    role="img"
-                ></canvas>
+                <div class="game-canvas-container">
+                    <canvas
+                        class="game-canvas"
+                        aria-label="Cross the Box game"
+                        role="img"
+                    ></canvas>
 
-                <aside class="info-panel desktop-only">
+                    <aside class="info-panel desktop-only">
                     <div class="panel-content">
                         <h3>How to Play:</h3>
                         <p>
@@ -71,7 +72,12 @@
                             Multiplayer
                         </button>
                     </div>
-                </aside>
+                    </aside>
+                </div>
+                
+                <div class="touch-controls-area mobile-only">
+                    <!-- Touch controls will be dynamically inserted here -->
+                </div>
             </main>
 
             <div class="float-menu mobile-only">
