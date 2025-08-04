@@ -403,7 +403,11 @@
     }
     
     .game-canvas-container {
-        padding: var(--space-sm) var(--space-sm) 0;
+        /* padding: 0; */
+    }
+    
+    .touch-controls-area {
+        flex: 1;
     }
     
     .game-canvas {
