@@ -1,22 +1,15 @@
 /* ============================================
-   COMBINED GAME LAYOUT & CANVAS STYLES
-   Merges layout.css and canvas.css for better organization
-   
-   Modern CSS: Cascade layers for controlled specificity
+   MAIN STYLES - Consolidated
    ============================================ */
 
-@layer base, components, utilities;
-
-/* ============================================
-   MAIN APP LAYOUT STRUCTURE
-   ============================================ */
+/* App Layout */
 .app-root {
     width: 100%;
     max-width: 1200px;
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 🔒 Hard viewport boundary - prevents controls being pushed off-screen */
+    overflow: hidden;
     position: relative;
     margin: 0 auto;
 }
@@ -40,9 +33,6 @@
     -webkit-text-fill-color: transparent;
 }
 
-/* ============================================
-   SCORE DISPLAY
-   ============================================ */
 .score-panel {
     display: flex;
     justify-content: center;
@@ -58,12 +48,10 @@
     color: var(--accent-secondary);
 }
 
-/* ============================================
-   GAME AREA & CANVAS LAYOUT
-   ============================================ */
+/* Game Area */
 .game-main {
-    flex: 1 1 auto; /* Take available space but allow controls to have their space */
-    min-height: 0; /* Secret sauce - allows flex child to shrink below content size */
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -72,36 +60,25 @@
     gap: var(--space-lg);
 }
 
-/* Game canvas - the actual rendering surface */
 .game-canvas {
     display: block;
     background: #000;
     border: 4px solid var(--accent-primary);
     border-radius: var(--border-radius);
     box-shadow: 0 0 20px var(--divider-line);
-    /* Prevent touch interactions from scrolling */
     touch-action: none;
-    /* Let ResponsiveManager handle all sizing */
 }
 
-/* ============================================
-   DESKTOP SIDEBAR LAYOUT
-   ============================================ */
-@layer components {
+/* Desktop Info Panel */
 .info-panel {
     display: none;
     background: var(--primary-light);
     border-radius: var(--border-radius);
-    /* Modern CSS: Logical properties for internationalization */
     border-inline-start: 4px solid var(--accent-primary);
     box-shadow: var(--shadow-medium);
-    /* Surgical flexbox fix */
     flex-direction: column;
-    /* Modern CSS: Logical sizing */
     block-size: 100%;
     padding: var(--space-lg);
-    /* Container queries support */
-    container-type: size;
 }
 
 .panel-content {
@@ -126,22 +103,12 @@
     color: var(--text-light);
 }
 
-.panel-content p + p {
-    margin-top: var(--space-md);
-}
-
 .panel-content ul {
     margin: 0;
     padding-left: var(--space-xl);
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-}
-
-.panel-content li {
-    margin: 0;
-    line-height: 1.5;
-    color: var(--text-light);
 }
 
 .panel-content .note {
@@ -156,58 +123,125 @@
 }
 
 .info-actions {
-    /* Surgical fix: push buttons to bottom */
     margin-top: auto;
     display: flex;
     gap: 0.75rem;
-    /* Modern CSS: Logical padding */
-    padding-block: var(--space-lg) 1.5rem; /* breathing room */
+    padding-block: var(--space-lg) 1.5rem;
     border-block-start: 2px solid var(--divider-line);
     align-items: center;
     justify-content: center;
 }
 
-/* Make buttons stretch equal width (your optional enhancement) */
-.info-actions button {
-    flex: 1 1 0;
-    /* Modern CSS: Dynamic button sizing */
-    --button-count: 2;
-    min-inline-size: calc(100% / var(--button-count) - 0.75rem);
+/* Controls */
+.control-panel {
+    flex: 0 0 120px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(to top, rgba(10, 25, 47, 0.9), transparent);
+    padding: var(--space-sm);
+    width: 100%;
 }
-} /* End @layer components */
 
-/* ============================================
-   NAVIGATION BUTTONS
-   ============================================ */
-.nav-button {
-    padding: var(--space-md) var(--space-xl);
+.float-menu {
+    position: absolute;
+    bottom: var(--space-md);
+    right: var(--space-md);
+    z-index: var(--z-ui);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.float-trigger {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-medium);
+    transition: transform var(--transition);
+    border: none;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.float-trigger:hover {
+    transform: scale(1.1);
+}
+
+.menu-dot {
+    width: 4px;
+    height: 4px;
+    background: var(--text-dark);
+    border-radius: 50%;
+    display: block;
+}
+
+.float-options {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--space-sm);
+    transition: all 0.3s ease;
+    transform-origin: bottom right;
+    position: absolute;
+    bottom: 70px;
+    right: 5px;
+    z-index: var(--z-overlay);
+    background: var(--nav-bg);
+    padding: var(--space-sm);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-heavy);
+    border: 1px solid var(--accent-primary);
+}
+
+.float-options.hidden {
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    display: none;
+}
+
+/* Buttons */
+.nav-button, .btn-action {
+    padding: var(--space-sm) var(--space-md);
     background: var(--accent-primary);
     color: var(--text-dark);
     border: none;
     border-radius: var(--border-radius);
-    font-weight: 600;
+    font-weight: bold;
     cursor: pointer;
     transition: all var(--transition);
     text-transform: uppercase;
-    font-size: 0.875rem;
-    letter-spacing: 0.5px;
-    min-width: 100px;
-    flex: 1;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
 }
 
-.nav-button:hover {
+.nav-button:hover, .btn-action:hover {
     background: var(--accent-secondary);
     transform: translateY(-2px);
     box-shadow: var(--shadow-medium);
 }
 
-.nav-button:active {
-    transform: translateY(0);
+.float-options button {
+    margin-bottom: var(--space-sm);
+    width: 120px;
+    text-align: center;
 }
 
-/* ============================================
-   MODAL SYSTEM
-   ============================================ */
+.float-options button:last-child {
+    margin-bottom: 0;
+}
+
+/* Modal */
 .modal-panel {
     position: fixed;
     top: 0;
@@ -291,9 +325,21 @@
     margin: var(--space-md) 0;
 }
 
-/* ============================================
-   VISIBILITY & LAYOUT UTILITIES
-   ============================================ */
+/* Touch control active states */
+.control-button.active {
+    background-color: rgba(0, 188, 212, 0.6) !important;
+    transform: scale(0.95) !important;
+}
+
+.control-button.action-button.active {
+    transform: rotate(-15deg) scale(0.95) !important;
+}
+
+/* Utilities */
+.hidden {
+    display: none !important;
+}
+
 .desktop-only {
     display: none;
 }
@@ -302,41 +348,7 @@
     display: block;
 }
 
-.hidden {
-    display: none !important;
-}
-
-/* Text alignment utilities */
-.text-center {
-    text-align: center;
-}
-
-.text-left {
-    text-align: left;
-}
-
-.text-right {
-    text-align: right;
-}
-
-/* Spacing utilities using consistent design tokens */
-.mt-sm { margin-top: var(--space-sm); }
-.mt-md { margin-top: var(--space-md); }
-.mt-lg { margin-top: var(--space-lg); }
-
-.mb-sm { margin-bottom: var(--space-sm); }
-.mb-md { margin-bottom: var(--space-md); }
-.mb-lg { margin-bottom: var(--space-lg); }
-
-.p-sm { padding: var(--space-sm); }
-.p-md { padding: var(--space-md); }
-.p-lg { padding: var(--space-lg); }
-
-/* ============================================
-   RESPONSIVE OVERRIDES FOR DESKTOP
-   Note: Main responsive rules are in responsive.css
-   These are just the desktop-specific layout adjustments
-   ============================================ */
+/* Responsive */
 @media (min-width: 1200px) {
     .game-main {
         flex-direction: row;
@@ -356,5 +368,55 @@
     
     .mobile-only {
         display: none;
+    }
+    
+    .control-panel {
+        display: none !important;
+    }
+}
+
+@media (max-width: 1199px) {
+    .app-root {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .game-main {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: var(--space-sm);
+    }
+    
+    .game-canvas {
+        max-width: 100%;
+        max-height: 100%;
+    }
+}
+
+@media (max-width: 400px) {
+    .game-canvas {
+        border-width: 1px !important;
+    }
+    
+    .app-header {
+        padding: var(--space-sm);
+        min-height: 3.5rem;
+    }
+    
+    .score-panel {
+        gap: var(--space-xs);
+        padding: var(--space-xs) 0;
+        margin: var(--space-xs) 0 0;
+    }
+    
+    .score-panel h4 {
+        font-size: 0.6875rem;
+        margin: 0;
+        opacity: 0.7;
+        letter-spacing: 0.025em;
     }
 }

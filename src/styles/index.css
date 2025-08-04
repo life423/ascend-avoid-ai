@@ -3,11 +3,9 @@
    Organized by separation of concerns
    ============================================ */
 
-/* Import styles in dependency order */
+/* Import consolidated styles */
 @import './base.css';      /* CSS variables, resets, typography */
-@import './game-layout.css';   /* Canvas wrapper sizing & centering */
-@import './controls.css';  /* Touch UI: buttons, D-pad layout */
-@import './responsive.css'; /* Media queries, viewport helpers */
+@import './main.css';      /* All layout, components, responsive */
 
 /* ============================================
    MODAL SYSTEM & UTILITIES
