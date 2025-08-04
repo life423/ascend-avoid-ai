@@ -459,16 +459,9 @@ class GameApplication {
         }
       }
       
-      // CRITICAL: Initialize the game (this was missing!)
-      if ((gameInstance as any).init) {
-        try {
-          await (gameInstance as any).init();
-          console.log('Game initialization completed');
-        } catch (error) {
-          console.error('Game initialization failed:', error);
-          throw error;
-        }
-      }
+      // NOTE: Game.init() is called automatically from the constructor,
+      // so we don't need to call it again here
+      console.log('Game creation and initialization completed');
       
       // Hide loading screen
       this.hideLoader();
